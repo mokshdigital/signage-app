@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 import { Vehicle } from '@/types/database';
 
 export default function VehiclesPage() {
@@ -19,6 +19,7 @@ export default function VehiclesPage() {
     const fetchVehicles = async () => {
         try {
             setLoading(true);
+            const supabase = createClient();
             const { data, error } = await supabase
                 .from('vehicles')
                 .select('*')
@@ -45,7 +46,7 @@ export default function VehiclesPage() {
 
         try {
             setSubmitting(true);
-
+            const supabase = createClient();
             const { error } = await supabase.from('vehicles').insert([
                 {
                     name: formData.name,
@@ -82,6 +83,7 @@ export default function VehiclesPage() {
         if (!confirm('Are you sure you want to delete this vehicle?')) return;
 
         try {
+            const supabase = createClient();
             const { error } = await supabase.from('vehicles').delete().eq('id', id);
 
             if (error) throw error;

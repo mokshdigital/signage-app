@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { useAuth } from '@/lib/auth-context';
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,15 @@ export default function DashboardLayout({
 }) {
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+  const { user, loading, signOut } = useAuth();
+  const router = useRouter();
+
+  // Redirect to login if not authenticated
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/login');
+    }
+  }, [user, loading, router]);
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: '📊' },
@@ -18,12 +28,27 @@ export default function DashboardLayout({
     { name: 'Equipment', href: '/dashboard/equipment', icon: '🔧' },
     { name: 'Vehicles', href: '/dashboard/vehicles', icon: '🚗' },
     { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋' },
+    { name: 'Account', href: '/dashboard/account', icon: '👤' },
   ];
 
-  const handleLogout = () => {
-    // TODO: Implement logout functionality with Supabase
-    console.log('Logout clicked');
+  const handleLogout = async () => {
+    await signOut();
   };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -62,9 +87,17 @@ export default function DashboardLayout({
             </Link>
           </div>
 
-          {/* Dashboard Title & Logout */}
+          {/* Dashboard Title, User Info & Logout */}
           <div className="flex items-center gap-4">
-            <span className="hidden sm:inline text-gray-600">Dashboard</span>
+            <span className="hidden sm:inline text-gray-600">
+              {user?.email || 'Dashboard'}
+            </span>
+            <Link
+              href="/dashboard/account"
+              className="hidden sm:inline px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
+            >
+              Account
+            </Link>
             <button
               onClick={handleLogout}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"

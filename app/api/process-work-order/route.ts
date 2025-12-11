@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -44,6 +44,7 @@ export async function POST(request: NextRequest) {
         }
 
         // Fetch work order from database
+        const supabase = createClient();
         const { data: workOrder, error: fetchError } = await supabase
             .from('work_orders')
             .select('*')

@@ -1,12 +1,13 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 import { WorkOrder, WorkOrderFile } from '@/types/database';
 
 const MAX_ASSOCIATED_FILES = 9; // 9 associated files + 1 work order = 10 total
 
 export default function WorkOrdersPage() {
+    const supabase = createClient();
     const [workOrders, setWorkOrders] = useState<WorkOrder[]>([]);
     const [loading, setLoading] = useState(true);
     const [uploading, setUploading] = useState(false);

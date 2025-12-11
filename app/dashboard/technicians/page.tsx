@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { supabase } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase';
 import { Technician } from '@/types/database';
 
 export default function TechniciansPage() {
@@ -19,6 +19,7 @@ export default function TechniciansPage() {
     const fetchTechnicians = async () => {
         try {
             setLoading(true);
+            const supabase = createClient();
             const { data, error } = await supabase
                 .from('technicians')
                 .select('*')
@@ -52,6 +53,7 @@ export default function TechniciansPage() {
                 .map(skill => skill.trim())
                 .filter(skill => skill.length > 0);
 
+            const supabase = createClient();
             const { error } = await supabase.from('technicians').insert([
                 {
                     name: formData.name,
@@ -83,6 +85,7 @@ export default function TechniciansPage() {
         if (!confirm('Are you sure you want to delete this technician?')) return;
 
         try {
+            const supabase = createClient();
             const { error } = await supabase
                 .from('technicians')
                 .delete()
