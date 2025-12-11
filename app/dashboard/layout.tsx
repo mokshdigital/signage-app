@@ -14,11 +14,26 @@ export default function DashboardLayout({
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user, loading, signOut } = useAuth();
   const router = useRouter();
+  const [authCheckComplete, setAuthCheckComplete] = useState(false);
 
   // Redirect to login if not authenticated
   useEffect(() => {
-    if (!loading && !user) {
+    console.log('[Dashboard] Auth state:', { user: user?.email, loading, authCheckComplete });
+
+    // Wait for loading to complete before making any decisions
+    if (loading) {
+      console.log('[Dashboard] Still loading auth...');
+      return;
+    }
+
+    // Mark auth check as complete
+    setAuthCheckComplete(true);
+
+    if (!user) {
+      console.log('[Dashboard] No user found, redirecting to login');
       router.push('/login');
+    } else {
+      console.log('[Dashboard] User authenticated:', user.email);
     }
   }, [user, loading, router]);
 
@@ -35,7 +50,8 @@ export default function DashboardLayout({
     await signOut();
   };
 
-  if (loading) {
+  // Show loading while auth is being checked
+  if (loading || !authCheckComplete) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -49,6 +65,7 @@ export default function DashboardLayout({
   if (!user) {
     return null;
   }
+
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -111,9 +128,8 @@ export default function DashboardLayout({
       <div className="flex pt-16">
         {/* Sidebar */}
         <aside
-          className={`${
-            isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          } fixed lg:static lg:translate-x-0 left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out z-20`}
+          className={`${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+            } fixed lg:static lg:translate-x-0 left-0 top-16 bottom-0 w-64 bg-white border-r border-gray-200 transition-transform duration-300 ease-in-out z-20`}
         >
           <nav className="p-4 space-y-2">
             {navItems.map((item) => {
@@ -122,11 +138,10 @@ export default function DashboardLayout({
                 <Link
                   key={item.href}
                   href={item.href}
-                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
-                    isActive
+                  className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
                       ? 'bg-blue-50 text-blue-700 font-medium'
                       : 'text-gray-700 hover:bg-gray-100'
-                  }`}
+                    }`}
                 >
                   <span className="text-xl">{item.icon}</span>
                   <span>{item.name}</span>

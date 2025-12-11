@@ -28,8 +28,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
+        console.log('[AuthProvider] Initializing auth...');
+
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
+            console.log('[AuthProvider] Initial session:', session?.user?.email || 'none');
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
@@ -38,7 +41,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         // Listen for auth changes
         const {
             data: { subscription },
-        } = supabase.auth.onAuthStateChange((_event, session) => {
+        } = supabase.auth.onAuthStateChange((event, session) => {
+            console.log('[AuthProvider] Auth state change:', event, session?.user?.email || 'none');
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
@@ -46,6 +50,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         return () => subscription.unsubscribe();
     }, [supabase]);
+
 
     const signIn = async (email: string, password: string) => {
         console.log('[Auth] signIn called with email:', email);
