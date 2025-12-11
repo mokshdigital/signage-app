@@ -11,10 +11,14 @@ if (!supabaseAnonKey) {
     throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
 }
 
+// TypeScript now knows these are strings after the checks above
+const SUPABASE_URL: string = supabaseUrl;
+const SUPABASE_ANON_KEY: string = supabaseAnonKey;
+
 // Client-side Supabase client (for use in client components)
 // This client handles auth state and cookies automatically in the browser
 export function createClient() {
-    return createSupabaseClient(supabaseUrl, supabaseAnonKey, {
+    return createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
         auth: {
             persistSession: true,
             autoRefreshToken: true,
