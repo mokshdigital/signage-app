@@ -10,6 +10,7 @@ interface AuthContextType {
     session: Session | null;
     loading: boolean;
     signIn: (email: string, password: string) => Promise<{ error: AuthError | null }>;
+    signUp: (email: string, password: string, fullName: string) => Promise<{ error: AuthError | null; needsConfirmation?: boolean }>;
     signInWithGoogle: () => Promise<void>;
     signOut: () => Promise<void>;
     refreshSession: () => Promise<void>;
@@ -60,6 +61,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return { error };
     };
 
+    const signUp = async (email: string, password: string, fullName: string) => {
+        setLoading(true);
+        const { data, error } = await supabase.auth.signUp({
+            email,
+            password,
+            options: {
+                data: {
+                    full_name: fullName,
+                    name: fullName,
+                },
+            },
+        });
+
+        if (!error && data.session) {
+            // User is auto-confirmed, set session
+            setSession(data.session);
+            setUser(data.user);
+        }
+
+        setLoading(false);
+        // Check if email confirmation is required
+        const needsConfirmation = !error && !data.session && data.user;
+        return { error, needsConfirmation };
+    };
+
     const signInWithGoogle = async () => {
         const { error } = await supabase.auth.signInWithOAuth({
             provider: 'google',
@@ -93,6 +119,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         session,
         loading,
         signIn,
+        signUp,
         signInWithGoogle,
         signOut,
         refreshSession,

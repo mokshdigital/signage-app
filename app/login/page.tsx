@@ -5,12 +5,18 @@ import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 
+type TabType = 'signin' | 'signup';
+
 export default function LoginPage() {
+    const [activeTab, setActiveTab] = useState<TabType>('signin');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [confirmPassword, setConfirmPassword] = useState('');
+    const [fullName, setFullName] = useState('');
     const [error, setError] = useState<string | null>(null);
+    const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const { signIn, signInWithGoogle, user, loading: authLoading } = useAuth();
+    const { signIn, signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
     const router = useRouter();
 
     // Redirect if already authenticated
@@ -20,13 +26,31 @@ export default function LoginPage() {
         }
     }, [user, authLoading, router]);
 
+    // Clear messages when switching tabs
+    useEffect(() => {
+        setError(null);
+        setSuccess(null);
+    }, [activeTab]);
+
+    const validateEmail = (email: string): boolean => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    };
+
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
         setError(null);
+        setSuccess(null);
         setLoading(true);
 
         if (!email || !password) {
             setError('Please enter both email and password');
+            setLoading(false);
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address');
             setLoading(false);
             return;
         }
@@ -41,13 +65,70 @@ export default function LoginPage() {
         }
     };
 
-    const handleGoogleLogin = async () => {
+    const handleSignUp = async (e: React.FormEvent) => {
+        e.preventDefault();
         setError(null);
+        setSuccess(null);
+        setLoading(true);
+
+        // Validation
+        if (!fullName.trim()) {
+            setError('Full name is required');
+            setLoading(false);
+            return;
+        }
+
+        if (!email || !password || !confirmPassword) {
+            setError('Please fill in all fields');
+            setLoading(false);
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            setError('Please enter a valid email address');
+            setLoading(false);
+            return;
+        }
+
+        if (password.length < 6) {
+            setError('Password must be at least 6 characters long');
+            setLoading(false);
+            return;
+        }
+
+        if (password !== confirmPassword) {
+            setError('Passwords do not match');
+            setLoading(false);
+            return;
+        }
+
+        const { error, needsConfirmation } = await signUp(email, password, fullName.trim());
+
+        if (error) {
+            setError(error.message || 'Failed to create account');
+            setLoading(false);
+        } else if (needsConfirmation) {
+            setSuccess('Account created! Please check your email to confirm your account before signing in.');
+            setLoading(false);
+            // Clear form
+            setEmail('');
+            setPassword('');
+            setConfirmPassword('');
+            setFullName('');
+        } else {
+            // Auto-confirmed, redirect to dashboard
+            router.push('/dashboard');
+        }
+    };
+
+    const handleGoogleAuth = async () => {
+        setError(null);
+        setSuccess(null);
         setLoading(true);
         try {
             await signInWithGoogle();
         } catch (err: any) {
-            setError(err.message || 'Failed to sign in with Google');
+            setError(err.message || `Failed to ${activeTab === 'signin' ? 'sign in' : 'sign up'} with Google`);
             setLoading(false);
         }
     };
@@ -73,21 +154,74 @@ export default function LoginPage() {
                         </div>
                     </div>
                     <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-                        Sign in to your account
+                        {activeTab === 'signin' ? 'Sign in to your account' : 'Create your account'}
                     </h2>
                     <p className="mt-2 text-center text-sm text-gray-600">
                         Tops Lighting Signage Dashboard
                     </p>
                 </div>
 
-                <form className="mt-8 space-y-6" onSubmit={handleEmailLogin}>
+                {/* Tabs */}
+                <div className="flex rounded-lg border border-gray-200 bg-white p-1">
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('signin')}
+                        className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === 'signin'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                        }`}
+                    >
+                        Sign In
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setActiveTab('signup')}
+                        className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${
+                            activeTab === 'signup'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                        }`}
+                    >
+                        Sign Up
+                    </button>
+                </div>
+
+                <form
+                    className="mt-8 space-y-6"
+                    onSubmit={activeTab === 'signin' ? handleEmailLogin : handleSignUp}
+                >
                     {error && (
                         <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md text-sm">
                             {error}
                         </div>
                     )}
 
+                    {success && (
+                        <div className="bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md text-sm">
+                            {success}
+                        </div>
+                    )}
+
                     <div className="rounded-md shadow-sm -space-y-px">
+                        {activeTab === 'signup' && (
+                            <div>
+                                <label htmlFor="fullName" className="sr-only">
+                                    Full Name
+                                </label>
+                                <input
+                                    id="fullName"
+                                    name="fullName"
+                                    type="text"
+                                    autoComplete="name"
+                                    required
+                                    value={fullName}
+                                    onChange={(e) => setFullName(e.target.value)}
+                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                                    placeholder="Full Name"
+                                />
+                            </div>
+                        )}
                         <div>
                             <label htmlFor="email" className="sr-only">
                                 Email address
@@ -100,7 +234,13 @@ export default function LoginPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-t-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${
+                                    activeTab === 'signup' && fullName
+                                        ? ''
+                                        : activeTab === 'signin'
+                                        ? 'rounded-t-md'
+                                        : 'rounded-t-md'
+                                } focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                                 placeholder="Email address"
                             />
                         </div>
@@ -112,26 +252,50 @@ export default function LoginPage() {
                                 id="password"
                                 name="password"
                                 type="password"
-                                autoComplete="current-password"
+                                autoComplete={activeTab === 'signin' ? 'current-password' : 'new-password'}
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${
+                                    activeTab === 'signup' && confirmPassword
+                                        ? ''
+                                        : 'rounded-b-md'
+                                } focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                                 placeholder="Password"
                             />
                         </div>
+                        {activeTab === 'signup' && (
+                            <div>
+                                <label htmlFor="confirmPassword" className="sr-only">
+                                    Confirm Password
+                                </label>
+                                <input
+                                    id="confirmPassword"
+                                    name="confirmPassword"
+                                    type="password"
+                                    autoComplete="new-password"
+                                    required
+                                    value={confirmPassword}
+                                    onChange={(e) => setConfirmPassword(e.target.value)}
+                                    className="appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-b-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                                    placeholder="Confirm Password"
+                                />
+                            </div>
+                        )}
                     </div>
 
-                    <div className="flex items-center justify-between">
-                        <div className="text-sm">
-                            <Link
-                                href="/forgot-password"
-                                className="font-medium text-blue-600 hover:text-blue-500"
-                            >
-                                Forgot your password?
-                            </Link>
+                    {activeTab === 'signin' && (
+                        <div className="flex items-center justify-between">
+                            <div className="text-sm">
+                                <Link
+                                    href="/forgot-password"
+                                    className="font-medium text-blue-600 hover:text-blue-500"
+                                >
+                                    Forgot your password?
+                                </Link>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     <div>
                         <button
@@ -161,10 +325,10 @@ export default function LoginPage() {
                                             d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                         ></path>
                                     </svg>
-                                    Signing in...
+                                    {activeTab === 'signin' ? 'Signing in...' : 'Creating account...'}
                                 </span>
                             ) : (
-                                'Sign in'
+                                activeTab === 'signin' ? 'Sign in' : 'Sign up'
                             )}
                         </button>
                     </div>
@@ -182,7 +346,7 @@ export default function LoginPage() {
                         <div className="mt-6">
                             <button
                                 type="button"
-                                onClick={handleGoogleLogin}
+                                onClick={handleGoogleAuth}
                                 disabled={loading}
                                 className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50 disabled:bg-gray-100 disabled:cursor-not-allowed"
                             >
@@ -196,7 +360,7 @@ export default function LoginPage() {
                                     <path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" fill="#FBBC05" />
                                     <path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" fill="#EA4335" />
                                 </svg>
-                                Sign in with Google
+                                {activeTab === 'signin' ? 'Sign in with Google' : 'Sign up with Google'}
                             </button>
                         </div>
                     </div>
@@ -205,4 +369,3 @@ export default function LoginPage() {
         </div>
     );
 }
-
