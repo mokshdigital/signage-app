@@ -67,9 +67,11 @@ export default function LoginPage() {
         } else {
             console.log('[Login] Success! Redirecting to dashboard...');
             setLoading(false);
-            router.push('/dashboard');
+            // Use hard redirect to ensure page fully reloads with new session
+            window.location.href = '/dashboard';
         }
     };
+
 
 
     const handleSignUp = async (e: React.FormEvent) => {
@@ -175,8 +177,8 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setActiveTab('signin')}
                         className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === 'signin'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                             }`}
                     >
                         Sign In
@@ -185,8 +187,8 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setActiveTab('signup')}
                         className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === 'signup'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                             }`}
                     >
                         Sign Up
@@ -241,10 +243,10 @@ export default function LoginPage() {
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
                                 className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${activeTab === 'signup' && fullName
-                                        ? ''
-                                        : activeTab === 'signin'
-                                            ? 'rounded-t-md'
-                                            : 'rounded-t-md'
+                                    ? ''
+                                    : activeTab === 'signin'
+                                        ? 'rounded-t-md'
+                                        : 'rounded-t-md'
                                     } focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                                 placeholder="Email address"
                             />
@@ -262,8 +264,8 @@ export default function LoginPage() {
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
                                 className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${activeTab === 'signup' && confirmPassword
-                                        ? ''
-                                        : 'rounded-b-md'
+                                    ? ''
+                                    : 'rounded-b-md'
                                     } focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                                 placeholder="Password"
                             />
