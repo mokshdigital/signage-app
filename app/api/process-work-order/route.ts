@@ -59,7 +59,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        const workOrder = workOrderData as WorkOrder;
+        // Type assertion - Supabase returns unknown, so we assert the type
+        const workOrder = workOrderData as unknown as WorkOrder;
 
         // Check if already processed
         if (workOrder.processed) {
