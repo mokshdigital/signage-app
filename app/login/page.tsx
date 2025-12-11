@@ -22,9 +22,11 @@ export default function LoginPage() {
     // Redirect if already authenticated
     useEffect(() => {
         if (!authLoading && user) {
-            router.push('/dashboard');
+            console.log('[Login] User already authenticated, redirecting to dashboard');
+            window.location.href = '/dashboard';
         }
-    }, [user, authLoading, router]);
+    }, [user, authLoading]);
+
 
     // Clear messages when switching tabs
     useEffect(() => {

@@ -31,11 +31,12 @@ export default function DashboardLayout({
 
     if (!user) {
       console.log('[Dashboard] No user found, redirecting to login');
-      router.push('/login');
+      window.location.href = '/login';
     } else {
       console.log('[Dashboard] User authenticated:', user.email);
     }
-  }, [user, loading, router]);
+  }, [user, loading]);
+
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: '📊' },
@@ -139,8 +140,8 @@ export default function DashboardLayout({
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                      ? 'bg-blue-50 text-blue-700 font-medium'
-                      : 'text-gray-700 hover:bg-gray-100'
+                    ? 'bg-blue-50 text-blue-700 font-medium'
+                    : 'text-gray-700 hover:bg-gray-100'
                     }`}
                 >
                   <span className="text-xl">{item.icon}</span>
