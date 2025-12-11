@@ -23,7 +23,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    
+
     // Use useMemo to ensure we only create one client instance
     const supabase = useMemo(() => createClient(), []);
 
@@ -48,20 +48,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }, [supabase]);
 
     const signIn = async (email: string, password: string) => {
+        console.log('[Auth] signIn called with email:', email);
         setLoading(true);
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
 
+        console.log('[Auth] signInWithPassword result:', { data, error });
+
         if (!error && data.session) {
+            console.log('[Auth] Sign in successful, setting session');
             setSession(data.session);
             setUser(data.user);
+        } else if (error) {
+            console.error('[Auth] Sign in error:', error);
         }
 
         setLoading(false);
         return { error };
     };
+
 
     const signUp = async (email: string, password: string, fullName: string) => {
         setLoading(true);
