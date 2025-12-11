@@ -1,6 +1,6 @@
 'use client';
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { createClient } from './supabase';
 import { useRouter } from 'next/navigation';
@@ -23,7 +23,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
     const router = useRouter();
-    const supabase = createClient();
+    
+    // Use useMemo to ensure we only create one client instance
+    const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
         // Get initial session

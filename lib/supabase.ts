@@ -15,16 +15,23 @@ if (!supabaseAnonKey) {
 const SUPABASE_URL: string = supabaseUrl;
 const SUPABASE_ANON_KEY: string = supabaseAnonKey;
 
+// Singleton client instance to avoid multiple GoTrueClient instances
+let supabaseClient: ReturnType<typeof createSupabaseClient> | null = null;
+
 // Client-side Supabase client (for use in client components)
 // This client handles auth state and cookies automatically in the browser
+// Uses singleton pattern to prevent multiple instances
 export function createClient() {
-    return createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-        auth: {
-            persistSession: true,
-            autoRefreshToken: true,
-            detectSessionInUrl: true,
-        },
-    });
+    if (!supabaseClient) {
+        supabaseClient = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+            auth: {
+                persistSession: true,
+                autoRefreshToken: true,
+                detectSessionInUrl: true,
+            },
+        });
+    }
+    return supabaseClient;
 }
 
 // Default export for backward compatibility
