@@ -33,4 +33,38 @@ You can check out [the Next.js GitHub repository](https://github.com/vercel/next
 
 The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
 
+### Environment Variables Required
+
+**IMPORTANT**: Before deploying to Vercel, you must set the following environment variables in your Vercel project settings:
+
+1. Go to your Vercel project dashboard
+2. Navigate to **Settings** → **Environment Variables**
+3. Add the following variables:
+
+#### Required Variables:
+- `NEXT_PUBLIC_SUPABASE_URL` - Your Supabase project URL
+- `NEXT_PUBLIC_SUPABASE_ANON_KEY` - Your Supabase anonymous/public key
+- `GEMINI_API_KEY` - Your Google Gemini API key
+
+#### Optional Variables:
+- `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (for admin operations)
+- `NEXT_PUBLIC_APP_URL` - Your app URL (defaults to Vercel deployment URL)
+
+### How to Get Your Keys:
+
+1. **Supabase Keys**: 
+   - Go to your Supabase project dashboard
+   - Navigate to **Settings** → **API**
+   - Copy the `Project URL` (for `NEXT_PUBLIC_SUPABASE_URL`)
+   - Copy the `anon public` key (for `NEXT_PUBLIC_SUPABASE_ANON_KEY`)
+
+2. **Gemini API Key**:
+   - Go to [Google AI Studio](https://makersuite.google.com/app/apikey)
+   - Create a new API key
+   - Copy it to `GEMINI_API_KEY`
+
+### After Adding Environment Variables:
+- Redeploy your application in Vercel
+- The build should now succeed
+
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
