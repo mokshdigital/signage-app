@@ -117,6 +117,7 @@ export default function LoginPage() {
             setFullName('');
         } else {
             // Auto-confirmed, redirect to dashboard
+            setLoading(false);
             router.push('/dashboard');
         }
     };
