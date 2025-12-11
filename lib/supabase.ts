@@ -1,4 +1,6 @@
 import { createClient as createSupabaseClient } from '@supabase/supabase-js';
+import { Database } from '@/types/supabase';
+
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
@@ -16,14 +18,14 @@ const SUPABASE_URL: string = supabaseUrl;
 const SUPABASE_ANON_KEY: string = supabaseAnonKey;
 
 // Singleton client instance to avoid multiple GoTrueClient instances
-let supabaseClient: ReturnType<typeof createSupabaseClient> | null = null;
+let supabaseClient: ReturnType<typeof createSupabaseClient<Database>> | null = null;
 
 // Client-side Supabase client (for use in client components)
 // This client handles auth state and cookies automatically in the browser
 // Uses singleton pattern to prevent multiple instances
 export function createClient() {
     if (!supabaseClient) {
-        supabaseClient = createSupabaseClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
+        supabaseClient = createSupabaseClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
             auth: {
                 persistSession: true,
                 autoRefreshToken: true,
