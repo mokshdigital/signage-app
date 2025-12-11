@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@/lib/supabase';
+import { WorkOrder, WorkOrderFile } from '@/types/database';
 
 // Initialize Gemini AI
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
@@ -45,18 +46,20 @@ export async function POST(request: NextRequest) {
 
         // Fetch work order from database
         const supabase = createClient();
-        const { data: workOrder, error: fetchError } = await supabase
+        const { data: workOrderData, error: fetchError } = await supabase
             .from('work_orders')
             .select('*')
             .eq('id', workOrderId)
             .single();
 
-        if (fetchError || !workOrder) {
+        if (fetchError || !workOrderData) {
             return NextResponse.json(
                 { error: 'Work order not found' },
                 { status: 404 }
             );
         }
+
+        const workOrder = workOrderData as WorkOrder;
 
         // Check if already processed
         if (workOrder.processed) {
@@ -67,10 +70,12 @@ export async function POST(request: NextRequest) {
         }
 
         // Fetch all files for this work order
-        const { data: files, error: filesError } = await supabase
+        const { data: filesData, error: filesError } = await supabase
             .from('work_order_files')
             .select('*')
             .eq('work_order_id', workOrderId);
+
+        const files = (filesData || []) as WorkOrderFile[];
 
         if (filesError || !files || files.length === 0) {
             return NextResponse.json(
