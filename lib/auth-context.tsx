@@ -3,7 +3,6 @@
 import { createContext, useContext, useEffect, useState, useMemo, ReactNode } from 'react';
 import { User, Session, AuthError } from '@supabase/supabase-js';
 import { createClient } from './supabase';
-import { useRouter } from 'next/navigation';
 
 interface AuthContextType {
     user: User | null;
@@ -22,17 +21,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const [user, setUser] = useState<User | null>(null);
     const [session, setSession] = useState<Session | null>(null);
     const [loading, setLoading] = useState(true);
-    const router = useRouter();
 
     // Use useMemo to ensure we only create one client instance
     const supabase = useMemo(() => createClient(), []);
 
     useEffect(() => {
-        console.log('[AuthProvider] Initializing auth...');
-
         // Get initial session
         supabase.auth.getSession().then(({ data: { session } }) => {
-            console.log('[AuthProvider] Initial session:', session?.user?.email || 'none');
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
@@ -42,7 +37,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const {
             data: { subscription },
         } = supabase.auth.onAuthStateChange((event, session) => {
-            console.log('[AuthProvider] Auth state change:', event, session?.user?.email || 'none');
             setSession(session);
             setUser(session?.user ?? null);
             setLoading(false);
@@ -51,32 +45,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         return () => subscription.unsubscribe();
     }, [supabase]);
 
-
     const signIn = async (email: string, password: string) => {
-        console.log('[Auth] signIn called with email:', email);
-        setLoading(true);
         const { data, error } = await supabase.auth.signInWithPassword({
             email,
             password,
         });
 
-        console.log('[Auth] signInWithPassword result:', { data, error });
-
         if (!error && data.session) {
-            console.log('[Auth] Sign in successful, setting session');
             setSession(data.session);
             setUser(data.user);
-        } else if (error) {
-            console.error('[Auth] Sign in error:', error);
         }
 
-        setLoading(false);
         return { error };
     };
 
-
     const signUp = async (email: string, password: string, fullName: string) => {
-        setLoading(true);
         const { data, error } = await supabase.auth.signUp({
             email,
             password,
@@ -94,7 +77,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             setUser(data.user);
         }
 
-        setLoading(false);
         // Check if email confirmation is required (user created but no session means confirmation needed)
         const needsConfirmation = !error && !data.session && !!data.user;
         return { error, needsConfirmation };
@@ -110,16 +92,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
         if (error) {
             console.error('Error signing in with Google:', error);
+            throw error;
         }
     };
 
     const signOut = async () => {
-        setLoading(true);
         await supabase.auth.signOut();
         setSession(null);
         setUser(null);
-        setLoading(false);
-        router.push('/login');
     };
 
     const refreshSession = async () => {
@@ -149,4 +129,3 @@ export function useAuth() {
     }
     return context;
 }
-

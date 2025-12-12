@@ -1,8 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
+import { usePathname } from 'next/navigation';
+import { useState } from 'react';
 import { useAuth } from '@/lib/auth-context';
 
 export default function DashboardLayout({
@@ -13,30 +13,6 @@ export default function DashboardLayout({
   const pathname = usePathname();
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const { user, loading, signOut } = useAuth();
-  const router = useRouter();
-  const [authCheckComplete, setAuthCheckComplete] = useState(false);
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    console.log('[Dashboard] Auth state:', { user: user?.email, loading, authCheckComplete });
-
-    // Wait for loading to complete before making any decisions
-    if (loading) {
-      console.log('[Dashboard] Still loading auth...');
-      return;
-    }
-
-    // Mark auth check as complete
-    setAuthCheckComplete(true);
-
-    if (!user) {
-      console.log('[Dashboard] No user found, redirecting to login');
-      window.location.href = '/login';
-    } else {
-      console.log('[Dashboard] User authenticated:', user.email);
-    }
-  }, [user, loading]);
-
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: '📊' },
@@ -49,10 +25,13 @@ export default function DashboardLayout({
 
   const handleLogout = async () => {
     await signOut();
+    // Hard redirect after logout
+    window.location.href = '/login';
   };
 
-  // Show loading while auth is being checked
-  if (loading || !authCheckComplete) {
+  // Show loading spinner while auth is being checked
+  // Middleware handles the actual redirect if not authenticated
+  if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
@@ -63,10 +42,18 @@ export default function DashboardLayout({
     );
   }
 
+  // If loading is complete and no user, show a brief loading state
+  // The middleware should have redirected, but just in case
   if (!user) {
-    return null;
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Redirecting...</p>
+        </div>
+      </div>
+    );
   }
-
 
   return (
     <div className="min-h-screen bg-gray-50">

@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import { useAuth } from '@/lib/auth-context';
 import Link from 'next/link';
 
@@ -16,17 +15,7 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const { signIn, signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
-    const router = useRouter();
-
-    // Redirect if already authenticated
-    useEffect(() => {
-        if (!authLoading && user) {
-            console.log('[Login] User already authenticated, redirecting to dashboard');
-            window.location.href = '/dashboard';
-        }
-    }, [user, authLoading]);
-
+    const { signIn, signUp, signInWithGoogle } = useAuth();
 
     // Clear messages when switching tabs
     useEffect(() => {
@@ -45,8 +34,6 @@ export default function LoginPage() {
         setSuccess(null);
         setLoading(true);
 
-        console.log('[Login] handleEmailLogin called');
-
         if (!email || !password) {
             setError('Please enter both email and password');
             setLoading(false);
@@ -59,22 +46,19 @@ export default function LoginPage() {
             return;
         }
 
-        console.log('[Login] Calling signIn...');
         const { error } = await signIn(email, password);
-        console.log('[Login] signIn returned, error:', error);
 
         if (error) {
             setError(error.message || 'Failed to sign in');
             setLoading(false);
         } else {
-            console.log('[Login] Success! Redirecting to dashboard...');
-            setLoading(false);
-            // Use hard redirect to ensure page fully reloads with new session
-            window.location.href = '/dashboard';
+            // Successful login - do a hard redirect to let middleware handle it
+            // Small delay to ensure session is saved
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 100);
         }
     };
-
-
 
     const handleSignUp = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -128,8 +112,9 @@ export default function LoginPage() {
             setFullName('');
         } else {
             // Auto-confirmed, redirect to dashboard
-            setLoading(false);
-            router.push('/dashboard');
+            setTimeout(() => {
+                window.location.href = '/dashboard';
+            }, 100);
         }
     };
 
@@ -144,17 +129,6 @@ export default function LoginPage() {
             setLoading(false);
         }
     };
-
-    if (authLoading) {
-        return (
-            <div className="min-h-screen flex items-center justify-center bg-gray-50">
-                <div className="text-center">
-                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-                    <p className="mt-4 text-gray-600">Loading...</p>
-                </div>
-            </div>
-        );
-    }
 
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
@@ -179,8 +153,8 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setActiveTab('signin')}
                         className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === 'signin'
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                             }`}
                     >
                         Sign In
@@ -189,8 +163,8 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setActiveTab('signup')}
                         className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === 'signup'
-                            ? 'bg-blue-600 text-white'
-                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                                ? 'bg-blue-600 text-white'
+                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                             }`}
                     >
                         Sign Up
@@ -244,11 +218,7 @@ export default function LoginPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${activeTab === 'signup' && fullName
-                                    ? ''
-                                    : activeTab === 'signin'
-                                        ? 'rounded-t-md'
-                                        : 'rounded-t-md'
+                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${activeTab === 'signin' ? 'rounded-t-md' : ''
                                     } focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                                 placeholder="Email address"
                             />
@@ -265,9 +235,7 @@ export default function LoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${activeTab === 'signup' && confirmPassword
-                                    ? ''
-                                    : 'rounded-b-md'
+                                className={`appearance-none rounded-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 ${activeTab === 'signin' ? 'rounded-b-md' : ''
                                     } focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm`}
                                 placeholder="Password"
                             />

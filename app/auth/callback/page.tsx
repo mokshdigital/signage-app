@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase';
 
 export default function AuthCallbackPage() {
-    const router = useRouter();
     const [error, setError] = useState<string | null>(null);
 
     useEffect(() => {
@@ -25,8 +23,8 @@ export default function AuthCallbackPage() {
                 }
 
                 if (session) {
-                    // Successfully authenticated, redirect to dashboard
-                    router.replace('/dashboard');
+                    // Successfully authenticated, hard redirect to dashboard
+                    window.location.href = '/dashboard';
                     return;
                 }
             }
@@ -44,8 +42,8 @@ export default function AuthCallbackPage() {
                     return;
                 }
 
-                // Successfully authenticated, redirect to dashboard
-                router.replace('/dashboard');
+                // Successfully authenticated, hard redirect to dashboard
+                window.location.href = '/dashboard';
                 return;
             }
 
@@ -62,15 +60,15 @@ export default function AuthCallbackPage() {
             const { data: { session } } = await supabase.auth.getSession();
 
             if (session) {
-                router.replace('/dashboard');
+                window.location.href = '/dashboard';
             } else {
                 // No session found, redirect to login
-                router.replace('/login');
+                window.location.href = '/login';
             }
         };
 
         handleCallback();
-    }, [router]);
+    }, []);
 
     if (error) {
         return (
@@ -85,7 +83,7 @@ export default function AuthCallbackPage() {
                         <h2 className="text-xl font-semibold text-gray-900 mb-2">Authentication Failed</h2>
                         <p className="text-gray-600 mb-6">{error}</p>
                         <button
-                            onClick={() => router.push('/login')}
+                            onClick={() => window.location.href = '/login'}
                             className="w-full py-2 px-4 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
                         >
                             Back to Login
