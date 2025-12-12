@@ -63,16 +63,69 @@ signage-app/
 │   │   │   └── page.tsx
 │   │   └── work-orders/          # Work order management
 │   │       └── page.tsx
+│   ├── demo/                     # Component demo page
+│   │   └── page.tsx
 │   ├── layout.tsx                # Root layout
 │   └── page.tsx                  # Redirect to login/dashboard
-├── components/                   # Reusable React components (future)
+├── components/                   # Reusable React components
+│   ├── ui/                       # UI primitives (Button, Input, Modal, etc.)
+│   │   ├── Button.tsx
+│   │   ├── Input.tsx
+│   │   ├── Select.tsx
+│   │   ├── Textarea.tsx
+│   │   ├── Modal.tsx
+│   │   ├── Card.tsx
+│   │   ├── Badge.tsx
+│   │   ├── Alert.tsx
+│   │   ├── Avatar.tsx
+│   │   ├── LoadingSpinner.tsx
+│   │   ├── EmptyState.tsx
+│   │   ├── ConfirmDialog.tsx
+│   │   └── index.ts
+│   ├── tables/                   # Table components
+│   │   ├── DataTable.tsx
+│   │   └── index.ts
+│   ├── forms/                    # Form components
+│   │   ├── TechnicianForm.tsx
+│   │   ├── EquipmentForm.tsx
+│   │   ├── VehicleForm.tsx
+│   │   └── index.ts
+│   ├── work-orders/              # Work order specific components
+│   │   ├── WorkOrderUploadForm.tsx
+│   │   ├── WorkOrderFilesModal.tsx
+│   │   ├── WorkOrderAnalysisModal.tsx
+│   │   └── index.ts
+│   ├── layout/                   # Layout components
+│   │   ├── Header.tsx
+│   │   ├── Sidebar.tsx
+│   │   └── index.ts
+│   ├── providers/                # React providers
+│   │   ├── ToastProvider.tsx
+│   │   └── index.ts
+│   ├── ErrorBoundary.tsx         # Error boundary component
+│   └── index.ts                  # Main barrel export
+├── hooks/                        # Custom React hooks
+│   ├── useAsync.ts               # Async operation hook
+│   ├── useModal.ts               # Modal state hook
+│   ├── useCrud.ts                # Generic CRUD hook
+│   ├── useConfirmDialog.ts       # Confirmation dialog hook
+│   └── index.ts
+├── services/                     # Business logic services
+│   ├── technicians.service.ts    # Technician CRUD operations
+│   ├── equipment.service.ts      # Equipment CRUD operations
+│   ├── vehicles.service.ts       # Vehicle CRUD operations
+│   ├── work-orders.service.ts    # Work order operations
+│   ├── crud.service.ts           # Generic CRUD factory
+│   └── index.ts
 ├── lib/                          # Utility libraries
 │   ├── supabase.ts               # Legacy Supabase client (backward compat)
-│   └── supabase/                 # Modern Supabase SSR clients
-│       ├── client.ts             # Browser-side client (Client Components)
-│       ├── server.ts             # Server-side client (Server Components)
-│       ├── middleware.ts         # Middleware session helper
-│       └── api.ts                # API route client
+│   ├── supabase/                 # Modern Supabase SSR clients
+│   │   ├── client.ts             # Browser-side client (Client Components)
+│   │   ├── server.ts             # Server-side client (Server Components)
+│   │   ├── middleware.ts         # Middleware session helper
+│   │   └── api.ts                # API route client
+│   ├── utils.ts                  # Utility functions
+│   └── constants.ts              # Application constants
 ├── types/                        # TypeScript type definitions
 │   ├── database.ts               # Database table interfaces
 │   ├── supabase.ts               # Supabase generated types
@@ -85,6 +138,7 @@ signage-app/
 ├── .env.local                    # Environment variables (not in git)
 ├── next.config.ts                # Next.js configuration
 ├── tailwind.config.ts            # Tailwind CSS configuration
+├── IMPLEMENTATION_PLAN.md        # Refactoring implementation plan
 └── tsconfig.json                 # TypeScript configuration
 ```
 

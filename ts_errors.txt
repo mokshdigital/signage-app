@@ -1,0 +1,34 @@
+app/dashboard/equipment/page.tsx(17,9): error TS2339: Property 'createItem' does not exist on type '{ items: Equipment[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Equipment>) => Promise<Equipment>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/equipment/page.tsx(18,9): error TS2339: Property 'updateItem' does not exist on type '{ items: Equipment[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Equipment>) => Promise<Equipment>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/equipment/page.tsx(19,9): error TS2339: Property 'deleteItem' does not exist on type '{ items: Equipment[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Equipment>) => Promise<Equipment>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/equipment/page.tsx(20,28): error TS2345: Argument of type '{ getByStatus(status: "available" | "in-use" | "maintenance"): Promise<Equipment[]>; getAvailableCount(): Promise<number>; getAll(): Promise<Equipment[]>; ... 4 more ...; getWhere(column: keyof Equipment, operator: "eq" | ... 6 more ... | "ilike", value: unknown): Promise<...>; }' is not assignable to parameter of type 'CrudService<Equipment>'.
+  Types of property 'create' are incompatible.
+    Type '(item: Omit<Equipment, "id" | "created_at">) => Promise<Equipment>' is not assignable to type '(item: Partial<Equipment>) => Promise<Equipment>'.
+      Types of parameters 'item' and 'item' are incompatible.
+        Type 'Partial<Equipment>' is not assignable to type 'Omit<Equipment, "id" | "created_at">'.
+          Types of property 'name' are incompatible.
+            Type 'string | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.
+app/dashboard/technicians/page.tsx(17,9): error TS2339: Property 'createItem' does not exist on type '{ items: Technician[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Technician>) => Promise<Technician>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/technicians/page.tsx(18,9): error TS2339: Property 'updateItem' does not exist on type '{ items: Technician[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Technician>) => Promise<Technician>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/technicians/page.tsx(19,9): error TS2339: Property 'deleteItem' does not exist on type '{ items: Technician[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Technician>) => Promise<Technician>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/technicians/page.tsx(20,29): error TS2345: Argument of type '{ findBySkill(skill: string): Promise<Technician[]>; getAll(): Promise<Technician[]>; getById(id: string): Promise<Technician | null>; create(item: Omit<...>): Promise<...>; update(id: string, updates: Partial<...>): Promise<...>; delete(id: string): Promise<...>; getWhere(column: keyof Technician, operator: "eq" | ...' is not assignable to parameter of type 'CrudService<Technician>'.
+  Types of property 'create' are incompatible.
+    Type '(item: Omit<Technician, "id" | "created_at">) => Promise<Technician>' is not assignable to type '(item: Partial<Technician>) => Promise<Technician>'.
+      Types of parameters 'item' and 'item' are incompatible.
+        Type 'Partial<Technician>' is not assignable to type 'Omit<Technician, "id" | "created_at">'.
+          Types of property 'name' are incompatible.
+            Type 'string | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.
+app/dashboard/vehicles/page.tsx(17,9): error TS2339: Property 'createItem' does not exist on type '{ items: Vehicle[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Vehicle>) => Promise<Vehicle>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/vehicles/page.tsx(18,9): error TS2339: Property 'updateItem' does not exist on type '{ items: Vehicle[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Vehicle>) => Promise<Vehicle>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/vehicles/page.tsx(19,9): error TS2339: Property 'deleteItem' does not exist on type '{ items: Vehicle[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<Vehicle>) => Promise<Vehicle>; ... 6 more ...; isEmpty: boolean; }'.
+app/dashboard/vehicles/page.tsx(20,26): error TS2345: Argument of type '{ getByStatus(status: "available" | "in-use" | "maintenance"): Promise<Vehicle[]>; getAvailableCount(): Promise<number>; getAll(): Promise<Vehicle[]>; ... 4 more ...; getWhere(column: keyof Vehicle, operator: "eq" | ... 6 more ... | "ilike", value: unknown): Promise<...>; }' is not assignable to parameter of type 'CrudService<Vehicle>'.
+  Types of property 'create' are incompatible.
+    Type '(item: Omit<Vehicle, "id" | "created_at">) => Promise<Vehicle>' is not assignable to type '(item: Partial<Vehicle>) => Promise<Vehicle>'.
+      Types of parameters 'item' and 'item' are incompatible.
+        Type 'Partial<Vehicle>' is not assignable to type 'Omit<Vehicle, "id" | "created_at">'.
+          Types of property 'name' are incompatible.
+            Type 'string | undefined' is not assignable to type 'string'.
+              Type 'undefined' is not assignable to type 'string'.
+app/dashboard/work-orders/page.tsx(21,9): error TS2339: Property 'deleteItem' does not exist on type '{ items: WorkOrder[]; loading: boolean; error: Error | null; actionLoading: boolean; create: (item: Partial<WorkOrder>) => Promise<WorkOrder>; ... 6 more ...; isEmpty: boolean; }'.
