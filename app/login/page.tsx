@@ -30,34 +30,47 @@ export default function LoginPage() {
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
+        console.log('handleEmailLogin called');
         setError(null);
         setSuccess(null);
         setLoading(true);
 
         if (!email || !password) {
+            console.log('Missing email or password');
             setError('Please enter both email and password');
             setLoading(false);
             return;
         }
 
         if (!validateEmail(email)) {
+            console.log('Invalid email');
             setError('Please enter a valid email address');
             setLoading(false);
             return;
         }
 
-        const { error } = await signIn(email, password);
+        console.log('Calling signIn with email:', email);
+        try {
+            const { error } = await signIn(email, password);
+            console.log('signIn returned, error:', error);
 
-        if (error) {
-            setError(error.message || 'Failed to sign in');
+            if (error) {
+                setError(error.message || 'Failed to sign in');
+                setLoading(false);
+            } else {
+                console.log('Login successful, redirecting...');
+                // Successful login - do a hard redirect to let middleware handle it
+                // Small delay to ensure session is saved
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 100);
+            }
+        } catch (err) {
+            console.error('signIn threw an error:', err);
+            setError('An unexpected error occurred');
             setLoading(false);
-        } else {
-            // Successful login - do a hard redirect to let middleware handle it
-            // Small delay to ensure session is saved
-            setTimeout(() => {
-                window.location.href = '/dashboard';
-            }, 100);
         }
+
     };
 
     const handleSignUp = async (e: React.FormEvent) => {
@@ -153,8 +166,8 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setActiveTab('signin')}
                         className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === 'signin'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                             }`}
                     >
                         Sign In
@@ -163,8 +176,8 @@ export default function LoginPage() {
                         type="button"
                         onClick={() => setActiveTab('signup')}
                         className={`flex-1 py-2 px-4 text-sm font-medium rounded-md transition-colors ${activeTab === 'signup'
-                                ? 'bg-blue-600 text-white'
-                                : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
+                            ? 'bg-blue-600 text-white'
+                            : 'text-gray-700 hover:text-gray-900 hover:bg-gray-50'
                             }`}
                     >
                         Sign Up
