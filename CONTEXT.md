@@ -178,6 +178,14 @@ All entity pages support:
 5. **Pages**: Create new pages in `app/dashboard/`
 6. **Build**: `npm run build` to verify production build
 
+## Session Log
+
+Development sessions are tracked in `SESSION-LOG.md`. This file contains:
+- Pre-session history (features built before formal logging)
+- Dated session entries with objectives, changes, and commits
+
+**Always update SESSION-LOG.md** at the end of each development session.
+
 ## Future Enhancements
 - ~~User onboarding flow (profile completion after first sign-in)~~ ✅ Implemented
 - ~~User profiles with name, phone, photo, role/title~~ ✅ Implemented
