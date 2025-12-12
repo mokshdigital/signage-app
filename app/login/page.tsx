@@ -15,7 +15,17 @@ export default function LoginPage() {
     const [error, setError] = useState<string | null>(null);
     const [success, setSuccess] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
-    const { signIn, signUp, signInWithGoogle } = useAuth();
+    const [redirecting, setRedirecting] = useState(false);
+    const { signIn, signUp, signInWithGoogle, user, loading: authLoading } = useAuth();
+
+    // Redirect if already authenticated
+    useEffect(() => {
+        if (!authLoading && user) {
+            console.log('User already authenticated, redirecting to dashboard...');
+            setRedirecting(true);
+            window.location.href = '/dashboard';
+        }
+    }, [user, authLoading]);
 
     // Clear messages when switching tabs
     useEffect(() => {
@@ -27,6 +37,7 @@ export default function LoginPage() {
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         return emailRegex.test(email);
     };
+
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -143,10 +154,25 @@ export default function LoginPage() {
         }
     };
 
+    // Show loading while checking auth or redirecting
+    if (authLoading || redirecting) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-gray-50">
+                <div className="text-center">
+                    <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
+                    <p className="mt-4 text-gray-600">
+                        {redirecting ? 'Redirecting to dashboard...' : 'Loading...'}
+                    </p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
             <div className="max-w-md w-full space-y-8">
                 <div>
+
                     <div className="flex justify-center">
                         <div className="w-16 h-16 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-2xl">
                             TL
