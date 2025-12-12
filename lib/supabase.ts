@@ -1,40 +1,21 @@
-import { createClient as createSupabaseClient } from '@supabase/supabase-js';
-import { Database } from '@/types/supabase';
+// Re-export from the new supabase client structure for backward compatibility
+// Use @/lib/supabase/client for client components
+// Use @/lib/supabase/server for server components
 
+import { createBrowserClient } from '@supabase/ssr'
+import { Database } from '@/types/supabase'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
 
-if (!supabaseUrl) {
-    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_URL');
-}
-
-if (!supabaseAnonKey) {
-    throw new Error('Missing env.NEXT_PUBLIC_SUPABASE_ANON_KEY');
-}
-
-// TypeScript now knows these are strings after the checks above
-const SUPABASE_URL: string = supabaseUrl;
-const SUPABASE_ANON_KEY: string = supabaseAnonKey;
-
-// Singleton client instance to avoid multiple GoTrueClient instances
-let supabaseClient: ReturnType<typeof createSupabaseClient<Database>> | null = null;
-
-// Client-side Supabase client (for use in client components)
-// This client handles auth state and cookies automatically in the browser
-// Uses singleton pattern to prevent multiple instances
+// Browser-side Supabase client for use in Client Components
+// This maintains backward compatibility with existing code
 export function createClient() {
-    if (!supabaseClient) {
-        supabaseClient = createSupabaseClient<Database>(SUPABASE_URL, SUPABASE_ANON_KEY, {
-            auth: {
-                persistSession: true,
-                autoRefreshToken: true,
-                detectSessionInUrl: true,
-            },
-        });
-    }
-    return supabaseClient;
+    return createBrowserClient<Database>(
+        supabaseUrl,
+        supabaseAnonKey
+    )
 }
 
 // Default export for backward compatibility
-export const supabase = createClient();
+export const supabase = createClient()

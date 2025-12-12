@@ -148,6 +148,49 @@ export interface Database {
                 }
                 Relationships: []
             }
+            user_profiles: {
+                Row: {
+                    id: string
+                    display_name: string
+                    avatar_url: string | null
+                    phone: string | null
+                    alternate_email: string | null
+                    title: string | null
+                    onboarding_completed: boolean
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id: string
+                    display_name: string
+                    avatar_url?: string | null
+                    phone?: string | null
+                    alternate_email?: string | null
+                    title?: string | null
+                    onboarding_completed?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    display_name?: string
+                    avatar_url?: string | null
+                    phone?: string | null
+                    alternate_email?: string | null
+                    title?: string | null
+                    onboarding_completed?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "user_profiles_id_fkey"
+                        columns: ["id"]
+                        referencedRelation: "auth.users"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
         }
         Views: {
             [_ in never]: never

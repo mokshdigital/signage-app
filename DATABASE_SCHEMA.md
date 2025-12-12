@@ -182,10 +182,48 @@ Stores multiple files associated with each work order (work orders, plans, speci
 
 ---
 
+### 6. `user_profiles`
+Stores extended user profile information collected during onboarding.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, REFERENCES auth.users(id) ON DELETE CASCADE | User's auth ID |
+| `display_name` | TEXT | NOT NULL | User's display name |
+| `avatar_url` | TEXT | | Profile picture URL |
+| `phone` | TEXT | | Phone number |
+| `alternate_email` | TEXT | | Secondary email address |
+| `title` | TEXT | | Role/title (set by administrator) |
+| `onboarding_completed` | BOOLEAN | DEFAULT FALSE | Whether onboarding is complete |
+| `created_at` | TIMESTAMP | DEFAULT NOW() | Record creation timestamp |
+| `updated_at` | TIMESTAMP | DEFAULT NOW() | Last update timestamp |
+
+#### Indexes
+- `idx_user_profiles_onboarding` on `onboarding_completed`
+- `idx_user_profiles_phone` on `phone`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**:
+  - `Users can view own profile`: SELECT where auth.uid() = id
+  - `Users can create own profile`: INSERT where auth.uid() = id
+  - `Users can update own profile`: UPDATE where auth.uid() = id
+  - `Service role has full access`: ALL for service_role
+
+#### Notes
+- The `title` field is intended to be set by administrators only
+- `onboarding_completed` must be true for users to access the dashboard
+- Auto-updates `updated_at` timestamp on any updates via trigger
+
+---
+
 ## Relationships
 
 ### Current Relationships
-Currently, there are no foreign key relationships between tables (except `work_orders.uploaded_by` → `auth.users.id`).
+- `work_orders.uploaded_by` → `auth.users.id`
+- `work_order_files.work_order_id` → `work_orders.id` (CASCADE DELETE)
+- `user_profiles.id` → `auth.users.id` (CASCADE DELETE)
+
 
 ### Planned Relationships (Future)
 1. **Work Order Assignments**

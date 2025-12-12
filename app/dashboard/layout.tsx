@@ -1,18 +1,46 @@
-'use client';
+'use client'
 
-import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { useState } from 'react';
-import { useAuth } from '@/lib/auth-context';
+import Link from 'next/link'
+import { usePathname, useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { createClient } from '@/lib/supabase/client'
+import type { User } from '@supabase/supabase-js'
 
 export default function DashboardLayout({
   children,
 }: {
-  children: React.ReactNode;
+  children: React.ReactNode
 }) {
-  const pathname = usePathname();
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const { user, loading, signOut } = useAuth();
+  const pathname = usePathname()
+  const router = useRouter()
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true)
+  const [user, setUser] = useState<User | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  const supabase = createClient()
+
+  useEffect(() => {
+    // Get initial user
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      setUser(user)
+      setLoading(false)
+    })
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        setUser(session?.user ?? null)
+      }
+    )
+
+    return () => subscription.unsubscribe()
+  }, [supabase])
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
 
   const navItems = [
     { name: 'Dashboard', href: '/dashboard', icon: '📊' },
@@ -20,17 +48,9 @@ export default function DashboardLayout({
     { name: 'Equipment', href: '/dashboard/equipment', icon: '🔧' },
     { name: 'Vehicles', href: '/dashboard/vehicles', icon: '🚗' },
     { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋' },
-    { name: 'Account', href: '/dashboard/account', icon: '👤' },
-  ];
+  ]
 
-  const handleLogout = async () => {
-    await signOut();
-    // Hard redirect after logout
-    window.location.href = '/login';
-  };
-
-  // Show loading spinner while auth is being checked
-  // Middleware handles the actual redirect if not authenticated
+  // Show loading while checking auth
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
@@ -39,20 +59,7 @@ export default function DashboardLayout({
           <p className="mt-4 text-gray-600">Loading...</p>
         </div>
       </div>
-    );
-  }
-
-  // If loading is complete and no user, show a brief loading state
-  // The middleware should have redirected, but just in case
-  if (!user) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-50">
-        <div className="text-center">
-          <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
-          <p className="mt-4 text-gray-600">Redirecting...</p>
-        </div>
-      </div>
-    );
+    )
   }
 
   return (
@@ -92,19 +99,13 @@ export default function DashboardLayout({
             </Link>
           </div>
 
-          {/* Dashboard Title, User Info & Logout */}
+          {/* User Info & Logout */}
           <div className="flex items-center gap-4">
             <span className="hidden sm:inline text-gray-600">
-              {user?.email || 'Dashboard'}
+              {user?.email || 'User'}
             </span>
-            <Link
-              href="/dashboard/account"
-              className="hidden sm:inline px-3 py-1.5 text-sm text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md transition-colors"
-            >
-              Account
-            </Link>
             <button
-              onClick={handleLogout}
+              onClick={handleSignOut}
               className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 transition-colors"
             >
               Logout
@@ -121,20 +122,20 @@ export default function DashboardLayout({
         >
           <nav className="p-4 space-y-2">
             {navItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive
-                    ? 'bg-blue-50 text-blue-700 font-medium'
-                    : 'text-gray-700 hover:bg-gray-100'
+                      ? 'bg-blue-50 text-blue-700 font-medium'
+                      : 'text-gray-700 hover:bg-gray-100'
                     }`}
                 >
                   <span className="text-xl">{item.icon}</span>
                   <span>{item.name}</span>
                 </Link>
-              );
+              )
             })}
           </nav>
         </aside>
@@ -153,5 +154,5 @@ export default function DashboardLayout({
         </main>
       </div>
     </div>
-  );
+  )
 }

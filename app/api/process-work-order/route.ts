@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { GoogleGenerativeAI } from '@google/generative-ai';
-import { createClient } from '@/lib/supabase';
+import { createClient } from '@/lib/supabase/api';
 import { WorkOrder, WorkOrderFile } from '@/types/database';
 
 // Initialize Gemini AI
@@ -76,7 +76,7 @@ export async function POST(request: NextRequest) {
             .select('*')
             .eq('work_order_id', workOrderId);
 
-        const files = (filesData || []) as WorkOrderFile[];
+        const files = (filesData || []) as unknown as WorkOrderFile[];
 
         if (filesError || !files || files.length === 0) {
             return NextResponse.json(
