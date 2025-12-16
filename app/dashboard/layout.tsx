@@ -15,6 +15,7 @@ export default function DashboardLayout({
 }) {
   const router = useRouter()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false)
   const [user, setUser] = useState<User | null>(null)
   const [loading, setLoading] = useState(true)
 
@@ -54,7 +55,7 @@ export default function DashboardLayout({
 
   return (
     <PermissionsProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
         {/* Top Navigation Bar */}
         <Header
           user={user}
@@ -62,15 +63,18 @@ export default function DashboardLayout({
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
 
-        <div className="flex pt-16 min-h-screen">
+        {/* Main Layout Area */}
+        <div className="flex flex-1 overflow-hidden pt-16">
           {/* Sidebar */}
           <Sidebar
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
+            isCollapsed={isSidebarCollapsed}
+            onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
           />
 
           {/* Main Content */}
-          <main className="flex-1 p-6 lg:p-8 w-full overflow-hidden">
+          <main className="flex-1 overflow-y-auto bg-gray-50 p-6 lg:p-8 w-full">
             <div className="max-w-7xl mx-auto">{children}</div>
           </main>
         </div>
