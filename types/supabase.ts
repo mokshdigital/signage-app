@@ -70,6 +70,33 @@ export interface Database {
                     }
                 ]
             }
+            office_staff: {
+                Row: {
+                    id: string
+                    name: string
+                    email: string | null
+                    phone: string | null
+                    title: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    email?: string | null
+                    phone?: string | null
+                    title?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    email?: string | null
+                    phone?: string | null
+                    title?: string | null
+                    created_at?: string
+                }
+                Relationships: []
+            },
             technicians: {
                 Row: {
                     id: string
