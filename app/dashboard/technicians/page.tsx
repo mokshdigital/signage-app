@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Technician } from '@/types/database';
 import { techniciansService } from '@/services/technicians.service';
 import { useCrud, useModal, useConfirmDialog } from '@/hooks';
-import { Button, Modal, Card, Badge, ConfirmDialog, Alert } from '@/components/ui';
+import { Button, Modal, Card, Badge, ConfirmDialog, Alert, PlusIcon } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
 import { TechnicianForm, TechnicianFormData } from '@/components/forms';
 import { toast } from '@/components/providers';
@@ -129,7 +129,7 @@ export default function TechniciansPage() {
         <div className="space-y-6">
             <div className="flex justify-between items-center">
                 <h1 className="text-2xl font-bold text-gray-900">Technicians</h1>
-                <Button onClick={() => openModal()} leftIcon="➕">
+                <Button onClick={() => openModal()} leftIcon={<PlusIcon />}>
                     Add Technician
                 </Button>
             </div>

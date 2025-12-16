@@ -18,6 +18,8 @@ import {
     Avatar,
     AvatarGroup,
     ConfirmDialog,
+    PlusIcon,
+    SearchIcon,
 } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
 
@@ -89,7 +91,7 @@ export default function ComponentsDemoPage() {
                         <div className="flex flex-wrap gap-3">
                             <Button loading>Loading</Button>
                             <Button disabled>Disabled</Button>
-                            <Button leftIcon="➕">With Icon</Button>
+                            <Button leftIcon={<PlusIcon />}>With Icon</Button>
                         </div>
                     </div>
                 </Card>
@@ -115,7 +117,7 @@ export default function ComponentsDemoPage() {
                         />
                         <Input
                             label="With Icon"
-                            leftIcon="🔍"
+                            leftIcon={<SearchIcon />}
                             placeholder="Search..."
                         />
                         <Select

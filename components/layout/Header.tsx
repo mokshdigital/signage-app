@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
-import { Button } from '@/components/ui';
+import { Button, LogoutIcon } from '@/components/ui';
 
 interface HeaderProps {
     user: User | null;
@@ -63,7 +63,7 @@ export function Header({ user, onSignOut, onToggleSidebar }: HeaderProps) {
                         onClick={onSignOut}
                         variant="danger"
                         size="sm"
-                        leftIcon="🚪"
+                        leftIcon={<LogoutIcon />}
                     >
                         Logout
                     </Button>

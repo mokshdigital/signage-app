@@ -55,6 +55,11 @@ signage-app/
 │   ├── dashboard/                # Dashboard pages (protected)
 │   │   ├── layout.tsx            # Dashboard layout with sidebar
 │   │   ├── page.tsx              # Dashboard home
+│   │   ├── admin/                # Admin pages (requires permissions)
+│   │   │   ├── roles/            # Role management
+│   │   │   │   └── page.tsx
+│   │   │   └── users/            # User management
+│   │   │       └── page.tsx
 │   │   ├── technicians/          # Technician management
 │   │   │   └── page.tsx
 │   │   ├── equipment/            # Equipment management
@@ -109,12 +114,14 @@ signage-app/
 │   ├── useModal.ts               # Modal state hook
 │   ├── useCrud.ts                # Generic CRUD hook
 │   ├── useConfirmDialog.ts       # Confirmation dialog hook
+│   ├── usePermissions.tsx        # RBAC permissions hook with context
 │   └── index.ts
 ├── services/                     # Business logic services
 │   ├── technicians.service.ts    # Technician CRUD operations
 │   ├── equipment.service.ts      # Equipment CRUD operations
 │   ├── vehicles.service.ts       # Vehicle CRUD operations
 │   ├── work-orders.service.ts    # Work order operations
+│   ├── rbac.service.ts           # Role-based access control operations
 │   ├── crud.service.ts           # Generic CRUD factory
 │   └── index.ts
 ├── lib/                          # Utility libraries
@@ -129,10 +136,12 @@ signage-app/
 ├── types/                        # TypeScript type definitions
 │   ├── database.ts               # Database table interfaces
 │   ├── supabase.ts               # Supabase generated types
+│   ├── rbac.ts                   # RBAC type definitions
 │   └── user-profile.ts           # User profile types for onboarding
 ├── database_migrations/          # SQL migration files
 │   ├── 001_initial_schema.sql    # Initial tables
-│   └── 002_user_profiles.sql     # User profiles table
+│   ├── 002_user_profiles.sql     # User profiles table
+│   └── 003_rbac_schema.sql       # Roles and permissions tables
 ├── middleware.ts                 # Next.js middleware (auth + onboarding)
 ├── public/                       # Static assets
 ├── .env.local                    # Environment variables (not in git)
@@ -223,6 +232,19 @@ All entity pages support:
 - Real-time status updates
 - Visual indicators for availability
 
+### 5. Role-Based Access Control (RBAC)
+- **Permission-based access**: 37 permissions across 10 resources
+- **Admin UI**: Manage roles at `/dashboard/admin/roles`
+- **User Management**: Assign roles at `/dashboard/admin/users`
+- **Conditional UI**: Sidebar items visibility based on permissions
+- **React Integration**:
+  - `PermissionsProvider` context wrapping dashboard
+  - `usePermissions` hook for permission checks
+  - `RequirePermission` component for conditional rendering
+- **Default Role**: Super Admin with full system access
+- **Resources**: users, roles, permissions, work_orders, technicians, equipment, vehicles, reports, settings, dashboard
+- **Actions**: create, read, update, delete, manage, assign
+
 ## Development Workflow
 
 1. **Local Development**: `npm run dev` (runs on http://localhost:3000)
@@ -243,8 +265,8 @@ Development sessions are tracked in `SESSION-LOG.md`. This file contains:
 ## Future Enhancements
 - ~~User onboarding flow (profile completion after first sign-in)~~ ✅ Implemented
 - ~~User profiles with name, phone, photo, role/title~~ ✅ Implemented
-- Admin panel for assigning user titles/roles
-- Role-based access control (Admin, Technician, etc.)
+- ~~Role-based access control (Admin, Technician, etc.)~~ ✅ Implemented
+- Admin panel for assigning user titles *(use RBAC admin pages now)*
 - Work order assignment to technicians
 - Calendar/scheduling view
 - Mobile app (React Native)

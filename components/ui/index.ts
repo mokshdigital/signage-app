@@ -37,3 +37,5 @@ export type { AlertProps } from './Alert';
 
 export { Avatar, AvatarGroup } from './Avatar';
 export type { AvatarProps } from './Avatar';
+
+export { PlusIcon, UploadIcon, SearchIcon, LogoutIcon } from './Icons';

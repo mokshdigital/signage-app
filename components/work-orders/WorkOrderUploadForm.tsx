@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Button, Card, Input, Alert } from '@/components/ui';
+import { Button, Card, Alert, UploadIcon } from '@/components/ui';
 
 interface WorkOrderUploadFormProps {
     onSubmit: (mainFile: File, associatedFiles: File[]) => Promise<void>;
@@ -162,7 +162,7 @@ export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUp
                     <Button
                         type="submit"
                         loading={isLoading}
-                        leftIcon="⬆️"
+                        leftIcon={<UploadIcon />}
                     >
                         Upload & Process
                     </Button>

@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import type { User } from '@supabase/supabase-js'
 import { Header, Sidebar } from '@/components/layout'
 import { LoadingSpinner } from '@/components/ui'
+import { PermissionsProvider } from '@/hooks/usePermissions'
 
 export default function DashboardLayout({
   children,
@@ -52,26 +53,29 @@ export default function DashboardLayout({
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Top Navigation Bar */}
-      <Header
-        user={user}
-        onSignOut={handleSignOut}
-        onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
-      />
-
-      <div className="flex pt-16 min-h-screen">
-        {/* Sidebar */}
-        <Sidebar
-          isOpen={isSidebarOpen}
-          onClose={() => setIsSidebarOpen(false)}
+    <PermissionsProvider>
+      <div className="min-h-screen bg-gray-50">
+        {/* Top Navigation Bar */}
+        <Header
+          user={user}
+          onSignOut={handleSignOut}
+          onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
 
-        {/* Main Content */}
-        <main className="flex-1 p-6 lg:p-8 w-full overflow-hidden">
-          <div className="max-w-7xl mx-auto">{children}</div>
-        </main>
+        <div className="flex pt-16 min-h-screen">
+          {/* Sidebar */}
+          <Sidebar
+            isOpen={isSidebarOpen}
+            onClose={() => setIsSidebarOpen(false)}
+          />
+
+          {/* Main Content */}
+          <main className="flex-1 p-6 lg:p-8 w-full overflow-hidden">
+            <div className="max-w-7xl mx-auto">{children}</div>
+          </main>
+        </div>
       </div>
-    </div>
+    </PermissionsProvider>
   )
 }
+

@@ -6,3 +6,10 @@ export { useAsync } from './useAsync';
 export { useModal } from './useModal';
 export { useCrud } from './useCrud';
 export { useConfirmDialog } from './useConfirmDialog';
+export {
+    usePermissions,
+    useHasPermission,
+    PermissionsProvider,
+    RequirePermission
+} from './usePermissions';
+

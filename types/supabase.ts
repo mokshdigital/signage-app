@@ -156,6 +156,7 @@ export interface Database {
                     phone: string | null
                     alternate_email: string | null
                     title: string | null
+                    role_id: string | null
                     onboarding_completed: boolean
                     created_at: string
                     updated_at: string
@@ -167,6 +168,7 @@ export interface Database {
                     phone?: string | null
                     alternate_email?: string | null
                     title?: string | null
+                    role_id?: string | null
                     onboarding_completed?: boolean
                     created_at?: string
                     updated_at?: string
@@ -178,6 +180,7 @@ export interface Database {
                     phone?: string | null
                     alternate_email?: string | null
                     title?: string | null
+                    role_id?: string | null
                     onboarding_completed?: boolean
                     created_at?: string
                     updated_at?: string
@@ -187,6 +190,100 @@ export interface Database {
                         foreignKeyName: "user_profiles_id_fkey"
                         columns: ["id"]
                         referencedRelation: "auth.users"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "user_profiles_role_id_fkey"
+                        columns: ["role_id"]
+                        referencedRelation: "roles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            roles: {
+                Row: {
+                    id: string
+                    name: string
+                    display_name: string
+                    description: string | null
+                    is_system: boolean
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    display_name: string
+                    description?: string | null
+                    is_system?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    display_name?: string
+                    description?: string | null
+                    is_system?: boolean
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            }
+            permissions: {
+                Row: {
+                    id: string
+                    name: string
+                    resource: string
+                    action: string
+                    description: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    resource: string
+                    action: string
+                    description?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    resource?: string
+                    action?: string
+                    description?: string | null
+                    created_at?: string
+                }
+                Relationships: []
+            }
+            role_permissions: {
+                Row: {
+                    role_id: string
+                    permission_id: string
+                    created_at: string
+                }
+                Insert: {
+                    role_id: string
+                    permission_id: string
+                    created_at?: string
+                }
+                Update: {
+                    role_id?: string
+                    permission_id?: string
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "role_permissions_role_id_fkey"
+                        columns: ["role_id"]
+                        referencedRelation: "roles"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "role_permissions_permission_id_fkey"
+                        columns: ["permission_id"]
+                        referencedRelation: "permissions"
                         referencedColumns: ["id"]
                     }
                 ]
@@ -203,3 +300,4 @@ export interface Database {
         }
     }
 }
+
