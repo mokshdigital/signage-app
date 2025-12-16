@@ -46,32 +46,42 @@ export function Modal({
     const modalRef = useRef<HTMLDivElement>(null);
     const previousActiveElement = useRef<HTMLElement | null>(null);
 
-    // Handle escape key and focus management
+    // Handle focus management and body scroll
+    useEffect(() => {
+        if (isOpen) {
+            // Store the currently focused element
+            previousActiveElement.current = document.activeElement as HTMLElement;
+
+            // Prevent body scroll
+            document.body.style.overflow = 'hidden';
+
+            // Focus the modal
+            modalRef.current?.focus();
+        }
+
+        return () => {
+            document.body.style.overflow = 'unset';
+            // Restore focus to previously active element when modal closes
+            if (isOpen) {
+                previousActiveElement.current?.focus();
+            }
+        };
+    }, [isOpen]);
+
+    // Handle escape key
     useEffect(() => {
         if (!isOpen) return;
 
-        // Store the currently focused element
-        previousActiveElement.current = document.activeElement as HTMLElement;
-
-        // Handle escape key
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && closeOnEscape) {
                 onClose();
             }
         };
 
-        // Prevent body scroll
-        document.body.style.overflow = 'hidden';
         document.addEventListener('keydown', handleEscape);
 
-        // Focus the modal
-        modalRef.current?.focus();
-
         return () => {
-            document.body.style.overflow = 'unset';
             document.removeEventListener('keydown', handleEscape);
-            // Restore focus to previously active element
-            previousActiveElement.current?.focus();
         };
     }, [isOpen, onClose, closeOnEscape]);
 
