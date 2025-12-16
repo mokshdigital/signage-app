@@ -25,7 +25,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
 
     const mainNavItems: NavItem[] = [
         { name: 'Dashboard', href: '/dashboard', icon: '📊', permission: 'dashboard:read' },
-        { name: 'Technicians', href: '/dashboard/technicians', icon: '👷', permission: 'technicians:read' },
+        { name: 'People', href: '/dashboard/people', icon: '👥', permission: 'technicians:read' }, // Using technicians permission for now as baseline
         { name: 'Equipment', href: '/dashboard/equipment', icon: '🔧', permission: 'equipment:read' },
         { name: 'Vehicles', href: '/dashboard/vehicles', icon: '🚗', permission: 'vehicles:read' },
         { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋', permission: 'work_orders:read' },

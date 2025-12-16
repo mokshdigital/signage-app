@@ -29,6 +29,15 @@ export interface Vehicle {
     created_at: string;
 }
 
+export interface OfficeStaff {
+    id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    title: string | null;
+    created_at: string;
+}
+
 export interface WorkOrderFile {
     id: string;
     work_order_id: string;

@@ -1,32 +1,32 @@
 'use client';
 
 import { useState } from 'react';
-import { Technician } from '@/types/database';
-import { techniciansService } from '@/services/technicians.service';
+import { OfficeStaff } from '@/types/database';
+import { officeStaffService } from '@/services/office-staff.service';
 import { useCrud, useModal, useConfirmDialog } from '@/hooks';
-import { Button, Modal, Card, Badge, ConfirmDialog, Alert, PlusIcon } from '@/components/ui';
+import { Button, Modal, Card, ConfirmDialog, Alert, PlusIcon } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
-import { TechnicianForm, TechnicianFormData } from '@/components/forms';
+import { OfficeStaffForm, OfficeStaffFormData } from '@/components/forms';
 import { toast } from '@/components/providers';
 
-export default function TechniciansPage() {
+export function OfficeStaffTab() {
     // CRUD Hook
     const {
-        items: technicians,
+        items: staff,
         loading,
         error: crudError,
         createItem,
         updateItem,
         deleteItem
-    } = useCrud<Technician>(techniciansService);
+    } = useCrud<OfficeStaff>(officeStaffService);
 
     // Modal State
     const {
         isOpen: isModalOpen,
         open: openModal,
         close: closeModal,
-        data: editingTechnician
-    } = useModal<Technician>();
+        data: editingStaff
+    } = useModal<OfficeStaff>();
 
     // Delete Confirmation Hook
     const { confirm, dialogProps } = useConfirmDialog();
@@ -35,76 +35,77 @@ export default function TechniciansPage() {
     const [submitting, setSubmitting] = useState(false);
 
     // Handlers
-    const handleCreateOrUpdate = async (formData: TechnicianFormData) => {
+    const handleCreateOrUpdate = async (formData: OfficeStaffFormData) => {
         setSubmitting(true);
         try {
-            if (editingTechnician) {
-                await updateItem(editingTechnician.id, formData);
-                toast.success('Technician updated successfully');
+            if (editingStaff) {
+                await updateItem(editingStaff.id, formData);
+                toast.success('Staff member updated successfully');
             } else {
                 await createItem(formData);
-                toast.success('Technician added successfully');
+                toast.success('Staff member added successfully');
             }
             closeModal();
         } catch (error: any) {
-            toast.error('Failed to save technician', { description: error.message });
+            toast.error('Failed to save staff member', { description: error.message });
         } finally {
             setSubmitting(false);
         }
     };
 
-    const handleDelete = async (tech: Technician) => {
+    const handleDelete = async (item: OfficeStaff) => {
         const isConfirmed = await confirm({
-            title: 'Delete Technician',
-            message: `Are you sure you want to delete ${tech.name}? This action cannot be undone.`,
+            title: 'Delete Staff Member',
+            message: `Are you sure you want to delete ${item.name}? This action cannot be undone.`,
             variant: 'danger',
             confirmLabel: 'Delete',
         });
 
         if (isConfirmed) {
             try {
-                await deleteItem(tech.id);
-                toast.success('Technician deleted');
+                await deleteItem(item.id);
+                toast.success('Staff member deleted');
             } catch (error: any) {
-                toast.error('Failed to delete technician', { description: error.message });
+                toast.error('Failed to delete staff member', { description: error.message });
             }
         }
     };
 
     // Columns Definition
-    const columns: Column<Technician>[] = [
-        { key: 'name', header: 'Name', sortable: true },
-        { key: 'email', header: 'Email', sortable: true },
-        { key: 'phone', header: 'Phone' },
+    const columns: Column<OfficeStaff>[] = [
+        { key: 'name', header: 'Name', sortable: true, width: '25%' },
         {
-            key: 'skills',
-            header: 'Skills',
-            render: (tech) => (
-                <div className="flex flex-wrap gap-1">
-                    {tech.skills && tech.skills.length > 0 ? (
-                        tech.skills.map((skill, idx) => (
-                            <Badge key={idx} variant="info" size="sm">
-                                {skill}
-                            </Badge>
-                        ))
-                    ) : (
-                        <span className="text-gray-400 text-sm">-</span>
-                    )}
-                </div>
+            key: 'title',
+            header: 'Title',
+            sortable: true,
+            render: (item) => (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                    {item.title || 'Staff'}
+                </span>
             )
+        },
+        {
+            key: 'email',
+            header: 'Email',
+            render: (item) => item.email || <span className="text-gray-400 italic">No email</span>
+        },
+        {
+            key: 'phone',
+            header: 'Phone',
+            render: (item) => item.phone || <span className="text-gray-400 italic">No phone</span>
         },
         {
             key: 'actions',
             header: 'Actions',
             align: 'right',
-            render: (tech) => (
+            render: (item) => (
                 <div className="flex justify-end gap-2">
                     <Button
                         size="sm"
                         variant="ghost"
                         onClick={(e) => {
                             e.stopPropagation();
-                            openModal(tech);
+                            openModal(item);
                         }}
                     >
                         Edit
@@ -115,7 +116,7 @@ export default function TechniciansPage() {
                         className="text-red-600 hover:text-red-700 hover:bg-red-50"
                         onClick={(e) => {
                             e.stopPropagation();
-                            handleDelete(tech);
+                            handleDelete(item);
                         }}
                     >
                         Delete
@@ -128,9 +129,12 @@ export default function TechniciansPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Technicians</h1>
+                <div className="flex flex-col">
+                    <h2 className="text-xl font-semibold text-gray-900">Office Staff</h2>
+                    <p className="text-sm text-gray-500">Manage office personnel and roles.</p>
+                </div>
                 <Button onClick={() => openModal()} leftIcon={<PlusIcon />}>
-                    Add Technician
+                    Add Staff Member
                 </Button>
             </div>
 
@@ -142,14 +146,14 @@ export default function TechniciansPage() {
 
             <Card noPadding>
                 <DataTable
-                    data={technicians}
+                    data={staff}
                     columns={columns}
-                    keyExtractor={(t) => t.id}
+                    keyExtractor={(s) => s.id}
                     loading={loading}
-                    emptyMessage="No technicians found"
-                    emptyDescription="Get started by adding your first technician."
+                    emptyMessage="No office staff found"
+                    emptyDescription="Get started by adding your first staff member."
                     emptyAction={{
-                        label: 'Add Technician',
+                        label: 'Add Staff',
                         onClick: () => openModal()
                     }}
                 />
@@ -159,13 +163,13 @@ export default function TechniciansPage() {
             <Modal
                 isOpen={isModalOpen}
                 onClose={closeModal}
-                title={editingTechnician ? 'Edit Technician' : 'Add Technician'}
+                title={editingStaff ? 'Edit Staff Member' : 'Add Staff Member'}
                 size="md"
                 showCloseButton={false}
                 footer={null}
             >
-                <TechnicianForm
-                    initialData={editingTechnician || undefined}
+                <OfficeStaffForm
+                    initialData={editingStaff || undefined}
                     onSubmit={handleCreateOrUpdate}
                     isLoading={submitting}
                     onCancel={closeModal}
@@ -175,7 +179,7 @@ export default function TechniciansPage() {
             {/* Delete Confirmation */}
             <ConfirmDialog
                 {...dialogProps}
-                loading={loading} // Use generic loading state for delete action since deleteItem sets loading
+                loading={loading}
             />
         </div>
     );
