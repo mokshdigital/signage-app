@@ -9,6 +9,29 @@ import { DataTable, Column } from '@/components/tables';
 import { VehicleForm, VehicleFormData } from '@/components/forms';
 import { toast } from '@/components/providers';
 
+// Tag component for vehicle details
+function VehicleTag({ label, value, variant = 'default' }: {
+    label: string;
+    value: string | null;
+    variant?: 'default' | 'info' | 'purple' | 'warning'
+}) {
+    if (!value) return null;
+
+    const variants = {
+        default: 'bg-gray-50 text-gray-600 border-gray-200',
+        info: 'bg-blue-50 text-blue-700 border-blue-200',
+        purple: 'bg-purple-50 text-purple-700 border-purple-200',
+        warning: 'bg-amber-50 text-amber-700 border-amber-200',
+    };
+
+    return (
+        <span className={`inline-flex items-center gap-1 px-2 py-0.5 text-xs font-medium rounded border ${variants[variant]}`}>
+            <span className="text-gray-400">{label}:</span>
+            <span>{value}</span>
+        </span>
+    );
+}
+
 export default function VehiclesPage() {
     // CRUD Hook
     const {
@@ -71,17 +94,67 @@ export default function VehiclesPage() {
         }
     };
 
+    // Custom cell renderer for vehicle info with tags
+    const VehicleInfoCell = ({ item }: { item: Vehicle }) => (
+        <div className="py-2">
+            {/* Main Info Row */}
+            <div className="flex items-center gap-3 mb-2">
+                <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                        <span className="font-semibold text-gray-900">{item.name}</span>
+                        {item.make && (
+                            <span className="text-sm text-gray-500">• {item.make}</span>
+                        )}
+                    </div>
+                    {item.type && (
+                        <span className="text-sm text-gray-500">{item.type}</span>
+                    )}
+                </div>
+            </div>
+
+            {/* Tags Row */}
+            <div className="flex flex-wrap gap-1.5">
+                <VehicleTag label="Plate" value={item.license_plate} variant="info" />
+                <VehicleTag label="VIN" value={item.vin} variant="purple" />
+                <VehicleTag label="GVW" value={item.gross_weight} variant="warning" />
+                <VehicleTag label="Reg" value={item.registration} variant="default" />
+            </div>
+        </div>
+    );
+
     // Columns Definition
     const columns: Column<Vehicle>[] = [
-        { key: 'name', header: 'Name', sortable: true },
-        { key: 'license_plate', header: 'License Plate', sortable: true },
-        { key: 'type', header: 'Type', sortable: true },
+        {
+            key: 'name',
+            header: 'Vehicle',
+            sortable: true,
+            render: (item) => <VehicleInfoCell item={item} />
+        },
+        {
+            key: 'driver',
+            header: 'Driver',
+            sortable: true,
+            render: (item) => (
+                <div className="flex items-center gap-2">
+                    {item.driver ? (
+                        <>
+                            <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-full flex items-center justify-center text-white text-xs font-medium">
+                                {item.driver.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2)}
+                            </div>
+                            <span className="text-gray-900">{item.driver}</span>
+                        </>
+                    ) : (
+                        <span className="text-gray-400 italic">Unassigned</span>
+                    )}
+                </div>
+            )
+        },
         {
             key: 'status',
             header: 'Status',
             render: (item) => (
                 <Badge variant={getStatusVariant(item.status)}>
-                    {item.status}
+                    {item.status.replace('-', ' ').replace(/\b\w/g, l => l.toUpperCase())}
                 </Badge>
             )
         },
@@ -120,7 +193,12 @@ export default function VehiclesPage() {
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
-                <h1 className="text-2xl font-bold text-gray-900">Vehicles</h1>
+                <div>
+                    <h1 className="text-2xl font-bold text-gray-900">Vehicles</h1>
+                    <p className="text-sm text-gray-500 mt-1">
+                        Manage your fleet vehicles, assignments, and registrations
+                    </p>
+                </div>
                 <Button onClick={() => openModal()} leftIcon={<PlusIcon />}>
                     Add Vehicle
                 </Button>
@@ -152,7 +230,7 @@ export default function VehiclesPage() {
                 isOpen={isModalOpen}
                 onClose={closeModal}
                 title={editingVehicle ? 'Edit Vehicle' : 'Add Vehicle'}
-                size="md"
+                size="lg"
                 showCloseButton={false}
                 footer={null}
             >

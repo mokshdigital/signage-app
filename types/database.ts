@@ -18,7 +18,12 @@ export interface Equipment {
 export interface Vehicle {
     id: string;
     name: string;
+    make: string | null;
     license_plate: string | null;
+    driver: string | null;
+    registration: string | null;
+    gross_weight: string | null;
+    vin: string | null;
     type: string | null;
     status: 'available' | 'in-use' | 'maintenance';
     created_at: string;
