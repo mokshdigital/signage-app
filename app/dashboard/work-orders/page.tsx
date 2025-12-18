@@ -1,14 +1,15 @@
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { WorkOrder, WorkOrderFile, Client, ProjectManager } from '@/types/database';
+import { WorkOrder, WorkOrderFile, Client, ProjectManager, JobType } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { clientsService } from '@/services/clients.service';
 import { useCrud, useModal, useConfirmDialog } from '@/hooks';
-import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay, Modal, LoadingSpinner } from '@/components/ui';
+import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay, Modal, LoadingSpinner, Input } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
+import { Search, Filter, X } from 'lucide-react';
 import {
     WorkOrderUploadForm,
     WorkOrderFilesModal,
@@ -77,6 +78,82 @@ export default function WorkOrdersPage() {
 
     // Map of user IDs to profiles for "Uploaded By" column
     const [uploaders, setUploaders] = useState<Record<string, { name: string }>>({});
+
+    // Filter States
+    const [searchTerm, setSearchTerm] = useState('');
+    const [filters, setFilters] = useState({
+        status: 'all' as 'all' | 'analyzed' | 'pending',
+        jobType: 'all',
+        client: 'all',
+        date: ''
+    });
+    const [jobTypes, setJobTypes] = useState<JobType[]>([]);
+
+    // Fetch initial data (clients, job types)
+    useEffect(() => {
+        const loadFilterData = async () => {
+            // Load Clients if not already loaded
+            if (clients.length === 0) {
+                try {
+                    const data = await clientsService.getAll();
+                    setClients(data);
+                } catch (error) {
+                    console.error('Failed to load clients', error);
+                }
+            }
+            // Load Job Types
+            try {
+                const types = await workOrdersService.getJobTypes();
+                setJobTypes(types);
+            } catch (error) {
+                console.error('Failed to load job types', error);
+            }
+        };
+        loadFilterData();
+    }, []);
+
+    // Filter Logic
+    const filteredOrders = useMemo(() => {
+        return workOrders.filter(order => {
+            // Text Search
+            const searchLower = searchTerm.toLowerCase();
+            const matchesSearch = !searchTerm ||
+                (order.work_order_number?.toLowerCase().includes(searchLower)) ||
+                (order.site_address?.toLowerCase().includes(searchLower)) ||
+                (order.client?.name?.toLowerCase().includes(searchLower)) ||
+                (order.uploaded_by && uploaders[order.uploaded_by]?.name?.toLowerCase().includes(searchLower));
+
+            // Status Filter
+            const matchesStatus = filters.status === 'all' ||
+                (filters.status === 'analyzed' && order.processed) ||
+                (filters.status === 'pending' && !order.processed);
+
+            // Job Type Filter
+            const matchesJobType = filters.jobType === 'all' || order.job_type_id === filters.jobType;
+
+            // Client Filter
+            const matchesClient = filters.client === 'all' || order.client_id === filters.client;
+
+            // Date Filter
+            let matchesDate = true;
+            if (filters.date) {
+                const orderDate = new Date(order.created_at).toISOString().split('T')[0];
+                matchesDate = orderDate === filters.date;
+            }
+
+            return matchesSearch && matchesStatus && matchesJobType && matchesClient && matchesDate;
+        });
+    }, [workOrders, searchTerm, filters, uploaders]);
+
+    const clearFilters = () => {
+        setSearchTerm('');
+        setFilters({
+            status: 'all',
+            jobType: 'all',
+            client: 'all',
+            date: ''
+        });
+    };
 
     // Fetch uploaders when work orders change
     useEffect(() => {
@@ -248,12 +325,6 @@ export default function WorkOrdersPage() {
     // Columns Definition
     const columns: Column<WorkOrder>[] = [
         {
-            key: 'created_at',
-            header: 'Uploaded Date',
-            sortable: true,
-            render: (order) => <span className="text-sm text-gray-600">{formatTableDate(order.created_at)}</span>
-        },
-        {
             key: 'work_order_number',
             header: 'WO #',
             sortable: true,
@@ -315,6 +386,12 @@ export default function WorkOrdersPage() {
                     </span>
                 );
             }
+        },
+        {
+            key: 'created_at',
+            header: 'Uploaded Date',
+            sortable: true,
+            render: (order) => <span className="text-sm text-gray-600">{formatTableDate(order.created_at)}</span>
         }
     ];
 
@@ -331,15 +408,95 @@ export default function WorkOrdersPage() {
                 </Alert>
             )}
 
+            {/* Filters Toolbar */}
+            <Card noPadding className="mb-6 p-4">
+                <div className="space-y-4">
+                    {/* Search Row */}
+                    <div className="relative">
+                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                        <Input
+                            placeholder="Search by WO #, Address, Client, or Uploader..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            className="pl-10 w-full"
+                        />
+                    </div>
+
+                    {/* Filters Row */}
+                    <div className="flex flex-wrap gap-4 items-center">
+                        <div className="flex items-center gap-2">
+                            <Filter className="h-4 w-4 text-gray-500" />
+                            <span className="text-sm font-medium text-gray-700">Filters:</span>
+                        </div>
+
+                        {/* Status Filter */}
+                        <select
+                            className="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                            value={filters.status}
+                            onChange={(e) => setFilters({ ...filters, status: e.target.value as any })}
+                        >
+                            <option value="all">All Status</option>
+                            <option value="analyzed">Analyzed</option>
+                            <option value="pending">Pending</option>
+                        </select>
+
+                        {/* Job Type Filter */}
+                        <select
+                            className="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                            value={filters.jobType}
+                            onChange={(e) => setFilters({ ...filters, jobType: e.target.value })}
+                        >
+                            <option value="all">All Job Types</option>
+                            {jobTypes.map(type => (
+                                <option key={type.id} value={type.id}>{type.name}</option>
+                            ))}
+                        </select>
+
+                        {/* Client Filter */}
+                        <select
+                            className="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                            value={filters.client}
+                            onChange={(e) => setFilters({ ...filters, client: e.target.value })}
+                        >
+                            <option value="all">All Clients</option>
+                            {clients.map(client => (
+                                <option key={client.id} value={client.id}>{client.name}</option>
+                            ))}
+                        </select>
+
+                        {/* Date Filter */}
+                        <input
+                            type="date"
+                            className="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                            value={filters.date}
+                            onChange={(e) => setFilters({ ...filters, date: e.target.value })}
+                        />
+
+                        {/* Clear Filters Button */}
+                        {(searchTerm || filters.status !== 'all' || filters.jobType !== 'all' || filters.client !== 'all' || filters.date) && (
+                            <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={clearFilters}
+                                className="ml-auto text-gray-500 hover:text-gray-700"
+                            >
+                                <X className="h-4 w-4 mr-1" />
+                                Clear Filters
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </Card>
+
             {/* Main List */}
             <Card noPadding>
                 <DataTable
-                    data={workOrders}
+                    data={filteredOrders}
                     columns={columns}
                     keyExtractor={(o) => o.id}
                     loading={loadingOrders}
-                    emptyMessage="No work orders found"
-                    emptyDescription="Upload a work order above to see it here."
+                    emptyMessage="No matching work orders found"
+                    emptyDescription="Try adjusting your filters or search terms."
                 />
             </Card>
 
