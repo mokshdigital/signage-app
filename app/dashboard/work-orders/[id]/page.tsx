@@ -62,6 +62,7 @@ export default function WorkOrderDetailPage() {
     const [selectedTechIds, setSelectedTechIds] = useState<string[]>([]);
     const [savingAssignments, setSavingAssignments] = useState(false);
     const [isEditingAssignments, setIsEditingAssignments] = useState(false);
+    const [techSearchQuery, setTechSearchQuery] = useState('');
 
     // Files modal
     const [isFilesOpen, setIsFilesOpen] = useState(false);
@@ -556,34 +557,45 @@ export default function WorkOrderDetailPage() {
                                 </div>
                             ) : (
                                 <>
+                                    <Input
+                                        placeholder="Search technicians..."
+                                        value={techSearchQuery}
+                                        onChange={(e) => setTechSearchQuery(e.target.value)}
+                                        className="mb-2"
+                                    />
                                     <div className="max-h-[250px] overflow-y-auto space-y-2">
-                                        {technicians.map(tech => (
-                                            <label
-                                                key={tech.id}
-                                                className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedTechIds.includes(tech.id)
-                                                    ? 'bg-blue-50 border border-blue-200'
-                                                    : 'hover:bg-gray-50 border border-transparent'
-                                                    }`}
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={selectedTechIds.includes(tech.id)}
-                                                    onChange={() => handleTechToggle(tech.id)}
-                                                    className="w-4 h-4 text-blue-600 rounded"
-                                                />
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-sm truncate">
-                                                        {safeRender(tech.name)}
-                                                    </p>
-                                                    {tech.skills && tech.skills.length > 0 && (
-                                                        <p className="text-xs text-gray-500 truncate">
-                                                            {tech.skills.slice(0, 2).join(', ')}
-                                                            {tech.skills.length > 2 && ` +${tech.skills.length - 2}`}
+                                        {technicians
+                                            .filter(tech =>
+                                                tech.name.toLowerCase().includes(techSearchQuery.toLowerCase()) ||
+                                                (tech.skills || []).some(skill => skill.toLowerCase().includes(techSearchQuery.toLowerCase()))
+                                            )
+                                            .map(tech => (
+                                                <label
+                                                    key={tech.id}
+                                                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedTechIds.includes(tech.id)
+                                                        ? 'bg-blue-50 border border-blue-200'
+                                                        : 'hover:bg-gray-50 border border-transparent'
+                                                        }`}
+                                                >
+                                                    <input
+                                                        type="checkbox"
+                                                        checked={selectedTechIds.includes(tech.id)}
+                                                        onChange={() => handleTechToggle(tech.id)}
+                                                        className="w-4 h-4 text-blue-600 rounded"
+                                                    />
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-medium text-sm truncate">
+                                                            {safeRender(tech.name)}
                                                         </p>
-                                                    )}
-                                                </div>
-                                            </label>
-                                        ))}
+                                                        {tech.skills && tech.skills.length > 0 && (
+                                                            <p className="text-xs text-gray-500 truncate">
+                                                                {tech.skills.slice(0, 2).join(', ')}
+                                                                {tech.skills.length > 2 && ` +${tech.skills.length - 2}`}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </label>
+                                            ))}
                                     </div>
                                     <div className="flex gap-2">
                                         {selectedTechIds.length > 0 && (
