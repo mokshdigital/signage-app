@@ -24,7 +24,8 @@ import {
 import {
     WorkOrderFilesModal,
     WorkOrderAnalysisModal,
-    ShipmentManager
+    ShipmentManager,
+    WorkOrderTasks
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
@@ -544,6 +545,12 @@ export default function WorkOrderDetailPage() {
                             </div>
                         )}
                     </Card>
+
+                    {/* Tasks Section */}
+                    <WorkOrderTasks
+                        workOrderId={workOrderId}
+                        availableTechnicians={workOrder.assignments || []}
+                    />
 
                     {/* Shipments Section */}
                     <Card noPadding>

@@ -15,7 +15,8 @@ export default function SettingsLayout({
     const tabs = [
         { name: 'Roles', href: '/dashboard/settings/roles', permission: 'roles:manage' },
         { name: 'Users', href: '/dashboard/settings/users', permission: 'users:manage' },
-        { name: 'Job Types', href: '/dashboard/settings/job-types', permission: 'settings:manage' } // Assuming settings:manage covers this
+        { name: 'Job Types', href: '/dashboard/settings/job-types', permission: 'settings:manage' },
+        { name: 'Checklist Templates', href: '/dashboard/settings/checklist-templates', permission: 'settings:manage' }
     ];
 
     return (

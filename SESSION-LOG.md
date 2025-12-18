@@ -152,6 +152,27 @@ The AI extracts structured information from work orders:
    - Added `Avatar` and `AvatarGroup` components
    - Updated component exports in barrel files
 
+### Session Update: Work Order Tasks & AI Integration
+- **UI Implementation**:
+    - Created `components/work-orders/WorkOrderTasks.tsx` to manage tasks, assignments, and checklists.
+    - Integrated `WorkOrderTasks` into `app/dashboard/work-orders/[id]/page.tsx` (Detail Page).
+    - Added "Tasks & Execution" section to the UI.
+- **AI Integration**:
+    - Updated `app/api/process-work-order/route.ts` prompt to extract `scope_of_work` and `suggested_tasks`.
+    - Implemented logic to automatically create 'Pending' tasks in `work_order_tasks` upon AI processing.
+- **Type Definitions**:
+    - Manually updated `types/supabase.ts` to include `work_order_tasks`, `task_assignments`, `task_checklists`, `checklist_templates`, and `checklist_template_items`. This ensures type safety for the `createClient` used in API routes.
+- **Refactoring & Fixes**:
+    - Fixed lint errors in `Settings` page (imports, button variants).
+    - Fixed lint errors in `WorkOrderTasks` (imports, button variants).
+
+### Next Steps
+- Manual verification of the entire flow:
+    1.  Upload a work order -> Verify AI creates tasks.
+    2.  Assign techs on detail page -> Verify they appear in task assignment dropdown.
+    3.  Create/Manage tasks and checklists manually.
+    4.  Create a template in Settings -> Apply to a task.
+- Deployment to Vercel.ion
 4. **Documentation Updates**
    - Updated `CONTEXT.md` with new components and features
    - Updated `PHASE_LOG.md` with Phase 5 completion
@@ -462,3 +483,22 @@ When starting a new development session, add an entry following this format:
 
 ### Git Commit
 `feat: Refactor Admin to Settings tab and add Job Types management`
+
+### Git Commit
+`feat: Refactor Admin to Settings tab and add Job Types management`
+
+## December 18, 2024 (Session 6)
+**Objective**: Enhance Header with User Profile Dropdown.
+
+### Key Changes
+1.  **User Profile Component**:
+    *   Created `UserProfile` component with Avatar, Name, and Dropdown menu.
+    *   Implemented "Profile Settings" link and "Sign Out" functionality.
+2.  **Logic Updates**:
+    *   Updated `usePermissions` hook to fetch and expose full `user_profile` data (avatar, display name).
+    *   Updated `Header` to use the new `UserProfile` component.
+3.  **New Page**:
+    *   Added `/dashboard/profile` page to view user account details.
+
+### Git Commit
+`feat: Implement User Profile dropdown and Profile Settings page`

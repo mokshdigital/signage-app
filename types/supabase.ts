@@ -522,6 +522,181 @@ export interface Database {
                         referencedColumns: ["id"]
                     }
                 ]
+            },
+            checklist_templates: {
+                Row: {
+                    id: string
+                    name: string
+                    description: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    description?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    description?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            },
+            checklist_template_items: {
+                Row: {
+                    id: string
+                    template_id: string
+                    content: string
+                    sort_order: number
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    template_id: string
+                    content: string
+                    sort_order?: number
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    template_id?: string
+                    content?: string
+                    sort_order?: number
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "checklist_template_items_template_id_fkey"
+                        columns: ["template_id"]
+                        referencedRelation: "checklist_templates"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            work_order_tasks: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    name: string
+                    description: string | null
+                    status: string
+                    priority: string
+                    due_date: string | null
+                    block_reason: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    name: string
+                    description?: string | null
+                    status?: string
+                    priority?: string
+                    due_date?: string | null
+                    block_reason?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    name?: string
+                    description?: string | null
+                    status?: string
+                    priority?: string
+                    due_date?: string | null
+                    block_reason?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_tasks_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            task_assignments: {
+                Row: {
+                    id: string
+                    task_id: string
+                    technician_id: string
+                    assigned_at: string
+                }
+                Insert: {
+                    id?: string
+                    task_id: string
+                    technician_id: string
+                    assigned_at?: string
+                }
+                Update: {
+                    id?: string
+                    task_id?: string
+                    technician_id?: string
+                    assigned_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "task_assignments_task_id_fkey"
+                        columns: ["task_id"]
+                        referencedRelation: "work_order_tasks"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "task_assignments_technician_id_fkey"
+                        columns: ["technician_id"]
+                        referencedRelation: "technicians"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            task_checklists: {
+                Row: {
+                    id: string
+                    task_id: string
+                    content: string
+                    is_completed: boolean
+                    completed_by_id: string | null
+                    completed_at: string | null
+                    sort_order: number
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    task_id: string
+                    content: string
+                    is_completed?: boolean
+                    completed_by_id?: string | null
+                    completed_at?: string | null
+                    sort_order?: number
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    task_id?: string
+                    content?: string
+                    is_completed?: boolean
+                    completed_by_id?: string | null
+                    completed_at?: string | null
+                    sort_order?: number
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "task_checklists_task_id_fkey"
+                        columns: ["task_id"]
+                        referencedRelation: "work_order_tasks"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
         }
         Views: {

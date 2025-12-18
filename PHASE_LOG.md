@@ -427,4 +427,39 @@
 - ✅ **Job Types Management**
   - Implemented UI for managing system Job Types
   - Connected to `job_types` table in Supabase
+- ✅ **User Experience Polish**
+  - Replaced Logout button with rich **User Profile Dropdown**
+  - Added "Profile Settings" page for viewing account details
+  - Improved Avatar component integration
 
+
+
+## Phase 12-C: Task Management & AI Checklists
+**Date**: December 18-19, 2024
+**Objective**: Implement granular task tracking, technician assignments, and AI-driven checklists for work orders.
+
+### Completed Tasks
+- ✅ **Database Schema Implementation**
+  - Created `work_order_tasks` for individual actionable items
+  - Created `task_assignments` for technician linking
+  - Created `task_checklists` for granular sub-items
+  - Created `checklist_templates` & `checklist_template_items` for standardized processes
+- ✅ **Service Layer**
+  - CRUD operations for Tasks, Checklists, and Templates
+  - Task progress calculation
+  - Logic to apply templates to tasks
+- ✅ **UI Development**
+  - `WorkOrderTasks` component embedded in Work Order Detail page
+  - Task creation, editing, deletion, and assignment UI
+  - Checklist management (add, toggle, delete)
+  - "Checklist Templates" settings page for managing standard lists
+- ✅ **AI Integration**
+  - Updated Gemini prompt to extract `scope_of_work` and `suggested_tasks`
+  - Automated creation of "Pending" tasks from AI analysis
+- ✅ **Type Safety**
+  - Updated `types/supabase.ts` with new schema definitions
+
+### Current Status
+- **Tasks**: Fully functional with status, priority, and progress tracking
+- **Templates**: Can be created and applied to tasks
+- **AI**: Automatically suggests tasks from documents

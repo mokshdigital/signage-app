@@ -7,7 +7,12 @@ import {
     WorkOrderShipment,
     ReceiverOption,
     Technician,
-    OfficeStaff
+    OfficeStaff,
+    WorkOrderTask,
+    TaskAssignment,
+    TaskChecklist,
+    ChecklistTemplate,
+    ChecklistTemplateItem
 } from '@/types/database';
 
 /**
@@ -661,6 +666,309 @@ export const workOrdersService = {
             ...acc,
             [profile.id]: { name: profile.display_name }
         }), {});
+    },
+
+
+    // =============================================
+    // TASKS & CHECKLISTS
+    // =============================================
+
+    /**
+     * Get tasks for a work order
+     */
+    async getTasks(workOrderId: string): Promise<WorkOrderTask[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_tasks')
+            .select(`
+                *,
+                assignments:task_assignments(*, technician:technicians(*)),
+                checklists:task_checklists(*)
+            `)
+            .eq('work_order_id', workOrderId)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching tasks:', error);
+            throw new Error(`Failed to fetch tasks: ${error.message}`);
+        }
+
+        // Calculate progress for each task
+        const tasks = (data || []).map((task: any) => {
+            const total = task.checklists?.length || 0;
+            const completed = task.checklists?.filter((c: any) => c.is_completed).length || 0;
+            return {
+                ...task,
+                progress: total > 0 ? Math.round((completed / total) * 100) : 0
+            };
+        });
+
+        return tasks as WorkOrderTask[];
+    },
+
+    /**
+     * Create a new task
+     */
+    async createTask(task: Partial<WorkOrderTask>): Promise<WorkOrderTask> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_tasks')
+            .insert([{
+                work_order_id: task.work_order_id,
+                name: task.name,
+                description: task.description || null,
+                status: task.status || 'Pending',
+                priority: task.priority || 'Medium',
+                due_date: task.due_date || null,
+            }])
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to create task: ${error.message}`);
+        }
+
+        return data as WorkOrderTask;
+    },
+
+    /**
+     * Update a task
+     */
+    async updateTask(id: string, updates: Partial<WorkOrderTask>): Promise<WorkOrderTask> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_tasks')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update task: ${error.message}`);
+        }
+
+        return data as WorkOrderTask;
+    },
+
+    /**
+     * Delete a task
+     */
+    async deleteTask(id: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_tasks')
+            .delete()
+            .eq('id', id);
+
+        if (error) {
+            throw new Error(`Failed to delete task: ${error.message}`);
+        }
+    },
+
+    /**
+     * Assign technicians to a task
+     */
+    async assignTask(taskId: string, technicianIds: string[]): Promise<void> {
+        const supabase = createClient();
+
+        // Remove existing assignments
+        await supabase.from('task_assignments').delete().eq('task_id', taskId);
+
+        if (technicianIds.length > 0) {
+            const assignments = technicianIds.map(techId => ({
+                task_id: taskId,
+                technician_id: techId
+            }));
+
+            const { error } = await supabase
+                .from('task_assignments')
+                .insert(assignments);
+
+            if (error) {
+                throw new Error(`Failed to assign task: ${error.message}`);
+            }
+        }
+    },
+
+    /**
+     * Get checklist items for a task
+     */
+    async getTaskChecklists(taskId: string): Promise<TaskChecklist[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('task_checklists')
+            .select('*, completed_by:completed_by_id(display_name, avatar_url)') // Join with user_profiles (assuming view/table relation works like this in Supabase if linked correctly to auth.users OR we need a manual fetch if it's strict on auth schema. Usually auth.users isn't directly joinable unless public wrapper exists. Let's try direct join first, if fails we assume standard user_profiles table usage which I should check. The types/database.ts says completed_by_id refs auth.users. But user_profiles is the public table. I should probably reference user_profiles in the query if completed_by_id actually stores the uuid that matches user_profiles.id.)
+            // Wait, completed_by_id (UUID) -> auth.users. user_profiles (UUID) -> auth.users. So IDs match.
+            // But I cannot join 'auth.users' in client query usually.
+            // I should select from task_checklists and join user_profiles on id = completed_by_id.
+            // Let's assume completed_by_id refs user_profiles logic effectively.
+            .eq('task_id', taskId)
+            .order('sort_order', { ascending: true });
+
+        // Note: The above Select might fail if foreign key is strictly to auth.users and RLS blocks, or if I try to join a table that Supabase doesn't expose automatically as a valid relation if I didn't set FK to user_profiles explicitly.
+        // My migration 011 said: `completed_by_id UUID REFERENCES auth.users(id)`.
+        // To join easily, I should have referenced public.user_profiles.
+        // I'll update the migration logic mentally: I'll try to fetch, if generic join fails, I'll fetch profiles separately.
+
+        if (error) {
+            console.error('Error fetching checklists:', error);
+            throw new Error(`Failed to fetch checklists: ${error.message}`);
+        }
+
+        // Manually fetch profiles if the join returns null/error or just safe way:
+        // Actually, let's just do a simple select * and then fetch profiles like enrichment.
+        // But for now let's return data.Enrichment is safer.
+
+        const checklists = (data || []) as TaskChecklist[];
+        // Enrich
+        const userIds = checklists.filter(c => c.completed_by_id).map(c => c.completed_by_id!);
+        if (userIds.length > 0) {
+            const { data: profiles } = await supabase
+                .from('user_profiles')
+                .select('id, display_name, avatar_url')
+                .in('id', userIds);
+
+            const profileMap = (profiles || []).reduce((acc: any, p: any) => ({ ...acc, [p.id]: p }), {});
+            checklists.forEach((c: any) => {
+                if (c.completed_by_id && profileMap[c.completed_by_id]) {
+                    c.completed_by = profileMap[c.completed_by_id];
+                }
+            });
+        }
+
+        return checklists;
+    },
+
+    /**
+     * Create checklist item
+     */
+    async createChecklistItem(item: Partial<TaskChecklist>): Promise<TaskChecklist> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('task_checklists')
+            .insert([{
+                task_id: item.task_id,
+                content: item.content,
+                sort_order: item.sort_order || 0
+            }])
+            .select()
+            .single();
+
+        if (error) throw new Error(`Failed to create checklist item: ${error.message}`);
+        return data as TaskChecklist;
+    },
+
+    /**
+     * Toggle checklist item completion
+     */
+    async toggleChecklistItem(itemId: string, isCompleted: boolean, userId: string): Promise<TaskChecklist> {
+        const supabase = createClient();
+        const updates = {
+            is_completed: isCompleted,
+            completed_by_id: isCompleted ? userId : null,
+            completed_at: isCompleted ? new Date().toISOString() : null
+        };
+
+        const { data, error } = await supabase
+            .from('task_checklists')
+            .update(updates)
+            .eq('id', itemId)
+            .select()
+            .single();
+
+        if (error) throw new Error(`Failed to update checklist item: ${error.message}`);
+        return data as TaskChecklist;
+    },
+
+    /**
+     * Delete checklist item
+     */
+    async deleteChecklistItem(id: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase.from('task_checklists').delete().eq('id', id);
+        if (error) throw new Error(`Failed to delete checklist item: ${error.message}`);
+    },
+
+    // =============================================
+    // CHECKLIST TEMPLATES
+    // =============================================
+
+    async getChecklistTemplates(): Promise<ChecklistTemplate[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('checklist_templates')
+            .select('*, items:checklist_template_items(*)')
+            .order('name');
+
+        if (error) throw new Error(`Failed to fetch templates: ${error.message}`);
+        return data as ChecklistTemplate[];
+    },
+
+    async createChecklistTemplate(template: { name: string; description?: string }): Promise<ChecklistTemplate> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('checklist_templates')
+            .insert([template])
+            .select()
+            .single();
+
+        if (error) throw new Error(`Failed to create template: ${error.message}`);
+        return data as ChecklistTemplate;
+    },
+
+    async deleteChecklistTemplate(id: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase.from('checklist_templates').delete().eq('id', id);
+        if (error) throw new Error(`Failed to delete template: ${error.message}`);
+    },
+
+    async createChecklistTemplateItem(item: { template_id: string; content: string; sort_order?: number }): Promise<ChecklistTemplateItem> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('checklist_template_items')
+            .insert([item])
+            .select()
+            .single();
+        if (error) throw new Error(`Failed to add template item: ${error.message}`);
+        return data as ChecklistTemplateItem;
+    },
+
+    async deleteChecklistTemplateItem(id: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase.from('checklist_template_items').delete().eq('id', id);
+        if (error) throw new Error(`Failed to delete template item: ${error.message}`);
+    },
+
+    /**
+     * Apply a valid template to a task (copy items)
+     */
+    async applyTemplateToTask(taskId: string, templateId: string): Promise<void> {
+        const supabase = createClient();
+
+        // 1. Fetch template items
+        const { data: items, error: fetchError } = await supabase
+            .from('checklist_template_items')
+            .select('*')
+            .eq('template_id', templateId)
+            .order('sort_order');
+
+        if (fetchError || !items) throw new Error(`Failed to fetch template items: ${fetchError?.message}`);
+
+        // 2. Create task checklists
+        if (items.length > 0) {
+            const newItems = items.map(item => ({
+                task_id: taskId,
+                content: item.content,
+                sort_order: item.sort_order,
+                is_completed: false
+            }));
+
+            const { error: insertError } = await supabase
+                .from('task_checklists')
+                .insert(newItems);
+
+            if (insertError) throw new Error(`Failed to apply template: ${insertError.message}`);
+        }
     },
 };
 

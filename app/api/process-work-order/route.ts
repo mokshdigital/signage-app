@@ -35,6 +35,12 @@ estimatedHours: number
 safety_notes: safety warnings
 additionalDetails: any other relevant info
 
+scope_of_work: detailed text description of the scope of work based on the documents.
+suggested_tasks: array of objects representing actionable steps. Each object must have:
+  - name: string (concise task name)
+  - description: string (detailed instructions)
+  - priority: 'Low', 'Medium', 'High', or 'Urgent'
+
 Return ONLY valid JSON, no markdown formatting or code blocks.`;
 
 export async function POST(request: NextRequest) {
@@ -199,6 +205,10 @@ export async function POST(request: NextRequest) {
         const materials = sanitizeStringArray(analysis.materials_required);
         if (materials) workOrderUpdate.materials_required = materials;
 
+        if (analysis.scope_of_work) {
+            workOrderUpdate.scope_of_work = String(analysis.scope_of_work);
+        }
+
         // Update work order in database
         const { error: updateError } = await supabase
             .from('work_orders')
@@ -206,11 +216,31 @@ export async function POST(request: NextRequest) {
             .eq('id', workOrderId);
 
         if (updateError) {
-            console.error('Failed to update work order:', updateError); // Log detailed error
+            console.error('Failed to update work order:', updateError);
             return NextResponse.json(
                 { error: 'Failed to update work order', details: updateError.message },
                 { status: 500 }
             );
+        }
+
+        // Create Suggested Tasks
+        if (Array.isArray(analysis.suggested_tasks) && analysis.suggested_tasks.length > 0) {
+            const tasksToInsert = analysis.suggested_tasks.map((task: any) => ({
+                work_order_id: workOrderId,
+                name: String(task.name).substring(0, 255),
+                description: task.description ? String(task.description) : null,
+                priority: ['Low', 'Medium', 'High', 'Urgent'].includes(task.priority) ? task.priority : 'Medium',
+                status: 'Pending'
+            }));
+
+            const { error: tasksError } = await supabase
+                .from('work_order_tasks')
+                .insert(tasksToInsert);
+
+            if (tasksError) {
+                console.error('Failed to insert suggested tasks:', tasksError);
+                // Don't fail the whole request, just log it
+            }
         }
 
         return NextResponse.json({

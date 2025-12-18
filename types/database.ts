@@ -142,6 +142,7 @@ export interface WorkOrder {
     equipment_required: string[] | null;
     materials_required: string[] | null;
     recommended_techs: number | null;
+    scope_of_work: string | null;
     // Optional: populated when files are joined in queries
     files?: WorkOrderFile[];
     // Optional: populated when client/PM are joined
@@ -153,4 +154,66 @@ export interface WorkOrder {
     assignments?: WorkOrderAssignment[];
     // Optional: populated when shipments are joined
     shipments?: WorkOrderShipment[];
+    // Optional: populated when tasks are joined
+    tasks?: WorkOrderTask[];
+}
+
+export interface ChecklistTemplate {
+    id: string;
+    name: string;
+    description: string | null;
+    created_at: string;
+    updated_at: string;
+    // Optional: items
+    items?: ChecklistTemplateItem[];
+}
+
+export interface ChecklistTemplateItem {
+    id: string;
+    template_id: string;
+    content: string;
+    sort_order: number;
+    created_at: string;
+}
+
+export type TaskStatus = 'Pending' | 'In Progress' | 'On Hold' | 'Blocked' | 'Done';
+export type TaskPriority = 'Low' | 'Medium' | 'High' | 'Emergency';
+
+export interface WorkOrderTask {
+    id: string;
+    work_order_id: string;
+    name: string;
+    description: string | null;
+    status: TaskStatus;
+    priority: TaskPriority;
+    due_date: string | null;
+    block_reason: string | null;
+    created_at: string;
+    updated_at: string;
+    // Optional: Arrays for UI
+    assignments?: TaskAssignment[];
+    checklists?: TaskChecklist[];
+    // Helper functionality
+    progress?: number; // Calculated field
+}
+
+export interface TaskAssignment {
+    id: string;
+    task_id: string;
+    technician_id: string;
+    // Optional
+    technician?: Technician;
+}
+
+export interface TaskChecklist {
+    id: string;
+    task_id: string;
+    content: string;
+    is_completed: boolean;
+    completed_by_id: string | null;
+    completed_at: string | null;
+    sort_order: number;
+    created_at: string;
+    // Optional
+    completed_by?: { display_name: string; avatar_url: string | null }; // Using a partial user profile structure
 }
