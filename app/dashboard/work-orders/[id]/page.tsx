@@ -376,6 +376,18 @@ export default function WorkOrderDetailPage() {
                                         {workOrder.job_type ? safeRender(workOrder.job_type.name) : '-'}
                                     </p>
                                 </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Client</p>
+                                    <p className="font-medium text-blue-600">
+                                        {workOrder.client ? safeRender(workOrder.client.name) : '-'}
+                                    </p>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500">Project Manager</p>
+                                    <p className="font-medium">
+                                        {workOrder.project_manager ? safeRender(workOrder.project_manager.name) : '-'}
+                                    </p>
+                                </div>
                                 <div className="col-span-2">
                                     <p className="text-sm text-gray-500">Site Address</p>
                                     <p className="font-medium">{safeRender(workOrder.site_address) || '-'}</p>

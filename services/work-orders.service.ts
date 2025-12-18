@@ -60,7 +60,9 @@ export const workOrdersService = {
                 *,
                 job_type:job_types(*),
                 assignments:work_order_assignments(*, technician:technicians(*)),
-                shipments:work_order_shipments(*)
+                shipments:work_order_shipments(*),
+                client:clients(*),
+                project_manager:project_managers(*)
             `)
             .eq('id', id)
             .single();
