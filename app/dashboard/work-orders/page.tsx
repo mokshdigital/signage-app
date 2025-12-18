@@ -15,7 +15,7 @@ import {
     WorkOrderAnalysisModal
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
-import { safeRender } from '@/lib/utils/helpers';
+import { safeRender, formatDate } from '@/lib/utils/helpers';
 
 export default function WorkOrdersPage() {
     // CRUD Hook
@@ -250,7 +250,7 @@ export default function WorkOrdersPage() {
             key: 'created_at',
             header: 'Uploaded Date',
             sortable: true,
-            render: (order) => <span className="text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</span>
+            render: (order) => <span className="text-sm text-gray-600">{formatDate(order.created_at)}</span>
         },
         {
             key: 'work_order_number',
@@ -263,6 +263,15 @@ export default function WorkOrdersPage() {
                 >
                     {order.work_order_number || <span className="text-gray-400 italic">No #</span>}
                 </Link>
+            )
+        },
+        {
+            key: 'job_type',
+            header: 'Job Type',
+            render: (order) => (
+                <span className="text-sm text-gray-700">
+                    {order.job_type?.name || '-'}
+                </span>
             )
         },
         {
@@ -305,36 +314,6 @@ export default function WorkOrdersPage() {
                     </span>
                 );
             }
-        },
-        {
-            key: 'actions',
-            header: '',
-            align: 'right',
-            render: (order) => (
-                <div className="flex justify-end gap-2">
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleViewFiles(order.id);
-                        }}
-                    >
-                        Files
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(order);
-                        }}
-                    >
-                        Delete
-                    </Button>
-                </div>
-            )
         }
     ];
 

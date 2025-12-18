@@ -38,7 +38,7 @@ export const workOrdersService = {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('work_orders')
-            .select('*, client:clients(*)')
+            .select('*, client:clients(*), job_type:job_types(*)')
             .order('created_at', { ascending: false });
 
         if (error) {
