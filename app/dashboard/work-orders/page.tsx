@@ -15,7 +15,8 @@ import {
     WorkOrderAnalysisModal
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
-import { safeRender, formatDate } from '@/lib/utils/helpers';
+import { safeRender } from '@/lib/utils/helpers';
+import { formatTableDate } from '@/lib/utils/formatters';
 
 export default function WorkOrdersPage() {
     // CRUD Hook
@@ -250,7 +251,7 @@ export default function WorkOrdersPage() {
             key: 'created_at',
             header: 'Uploaded Date',
             sortable: true,
-            render: (order) => <span className="text-sm text-gray-600">{formatDate(order.created_at)}</span>
+            render: (order) => <span className="text-sm text-gray-600">{formatTableDate(order.created_at)}</span>
         },
         {
             key: 'work_order_number',

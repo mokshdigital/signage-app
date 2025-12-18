@@ -200,21 +200,3 @@ export function safeRender(value: unknown): string {
     if (typeof value === 'number' || typeof value === 'boolean') return String(value);
     return JSON.stringify(value, null, 2);
 }
-
-/**
- * Format a date string or timestamp to DD-MMM-YYYY
- * @param date - Date string, timestamp, or Date object
- * @returns Formatted date string (e.g., 18-Dec-2025)
- */
-export function formatDate(date: string | number | Date | null | undefined): string {
-    if (!date) return '-';
-
-    const d = new Date(date);
-    if (isNaN(d.getTime())) return '-';
-
-    const day = d.getDate().toString().padStart(2, '0');
-    const month = d.toLocaleString('en-US', { month: 'short' });
-    const year = d.getFullYear();
-
-    return `${day}-${month}-${year}`;
-}
