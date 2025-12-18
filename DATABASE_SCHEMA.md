@@ -432,3 +432,47 @@ All frequently queried columns have indexes:
 - Technician records: Until employment ends
 - Equipment/Vehicle records: Until disposal
 - Analysis data: Same as work order
+
+---
+
+## Phase 12: Advanced Work Order Schema
+
+### New Tables
+
+#### 1. `job_types`
+Categorizes work orders.
+- `id` (UUID, PK)
+- `name` (TEXT, Unique)
+- `description` (TEXT)
+- `created_at` (TIMESTAMPTZ)
+
+#### 2. `work_order_assignments`
+Junction table for assigning multiple technicians to a work order.
+- `id` (UUID, PK)
+- `work_order_id` (UUID, FK -> work_orders)
+- `technician_id` (UUID, FK -> technicians)
+- `assigned_at` (TIMESTAMPTZ)
+- `notes` (TEXT)
+
+#### 3. `work_order_shipments`
+Tracks shipments associated with work orders.
+- `id` (UUID, PK)
+- `work_order_id` (UUID, FK -> work_orders)
+- `tracking_id` (TEXT)
+- `contents` (TEXT)
+- `status_location` (TEXT) - e.g., 'In Transit', 'Received'
+- `received_by_id` (UUID) - User ID of receiver
+- `received_by_type` (TEXT) - 'technician' or 'office_staff'
+- `received_at` (TIMESTAMPTZ)
+- `receipt_photos` (TEXT[]) - URLs to storage
+- `notes` (TEXT)
+
+### Updates to `work_orders` table
+- `work_order_number` (TEXT) - Readable ID
+- `job_type_id` (UUID, FK -> job_types)
+- `site_address` (TEXT)
+- `planned_date` (DATE)
+- `work_order_date` (DATE)
+
+### Storage
+- **Bucket**: `shipment-photos` (Public Read)

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
+import Link from 'next/link';
 import { WorkOrder, WorkOrderFile, Client, ProjectManager } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { clientsService } from '@/services/clients.service';
@@ -226,19 +227,40 @@ export default function WorkOrdersPage() {
     // Columns Definition
     const columns: Column<WorkOrder>[] = [
         {
-            key: 'id',
-            header: 'ID',
+            key: 'work_order_number',
+            header: 'WO #',
+            sortable: true,
             render: (order) => (
-                <span className="font-mono text-xs text-gray-500" title={order.id}>
-                    {order.id.substring(0, 8)}...
+                <Link
+                    href={`/dashboard/work-orders/${order.id}`}
+                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left block"
+                >
+                    {order.work_order_number || <span className="text-gray-400 italic">No # ({order.id.slice(0, 6)})</span>}
+                </Link>
+            )
+        },
+        {
+            key: 'site_address',
+            header: 'Site Address',
+            render: (order) => (
+                <span className="truncate max-w-[200px] block" title={order.site_address || ''}>
+                    {safeRender(order.site_address) || '-'}
                 </span>
             )
         },
         {
-            key: 'created_at',
-            header: 'Date',
+            key: 'work_order_date',
+            header: 'WO Date',
             sortable: true,
-            render: (order) => new Date(order.created_at).toLocaleDateString()
+            render: (order) => order.work_order_date
+                ? new Date(order.work_order_date).toLocaleDateString()
+                : <span className="text-gray-400 text-xs">-</span>
+        },
+        {
+            key: 'created_at',
+            header: 'Uploaded',
+            sortable: true,
+            render: (order) => <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString()}</span>
         },
         {
             key: 'client',

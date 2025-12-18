@@ -17,6 +17,11 @@ export interface Database {
                     analysis: Json | null
                     client_id: string | null
                     pm_id: string | null
+                    work_order_number: string | null
+                    job_type_id: string | null
+                    site_address: string | null
+                    planned_date: string | null
+                    work_order_date: string | null
                     created_at: string
                 }
                 Insert: {
@@ -26,6 +31,11 @@ export interface Database {
                     analysis?: Json | null
                     client_id?: string | null
                     pm_id?: string | null
+                    work_order_number?: string | null
+                    job_type_id?: string | null
+                    site_address?: string | null
+                    planned_date?: string | null
+                    work_order_date?: string | null
                     created_at?: string
                 }
                 Update: {
@@ -35,6 +45,11 @@ export interface Database {
                     analysis?: Json | null
                     client_id?: string | null
                     pm_id?: string | null
+                    work_order_number?: string | null
+                    job_type_id?: string | null
+                    site_address?: string | null
+                    planned_date?: string | null
+                    work_order_date?: string | null
                     created_at?: string
                 }
                 Relationships: [
@@ -48,6 +63,12 @@ export interface Database {
                         foreignKeyName: "work_orders_pm_id_fkey"
                         columns: ["pm_id"]
                         referencedRelation: "project_managers"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_orders_job_type_id_fkey"
+                        columns: ["job_type_id"]
+                        referencedRelation: "job_types"
                         referencedColumns: ["id"]
                     }
                 ]
@@ -388,6 +409,116 @@ export interface Database {
                         foreignKeyName: "project_managers_client_id_fkey"
                         columns: ["client_id"]
                         referencedRelation: "clients"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            job_types: {
+                Row: {
+                    id: string
+                    name: string
+                    description: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    description?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    description?: string | null
+                    created_at?: string
+                }
+                Relationships: []
+            }
+            work_order_assignments: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    technician_id: string
+                    assigned_at: string
+                    notes: string | null
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    technician_id: string
+                    assigned_at?: string
+                    notes?: string | null
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    technician_id?: string
+                    assigned_at?: string
+                    notes?: string | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_assignments_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_assignments_technician_id_fkey"
+                        columns: ["technician_id"]
+                        referencedRelation: "technicians"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            work_order_shipments: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    tracking_id: string | null
+                    contents: string | null
+                    status_location: string
+                    received_by_id: string | null
+                    received_by_type: string | null
+                    received_at: string | null
+                    receipt_photos: string[] | null
+                    notes: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    tracking_id?: string | null
+                    contents?: string | null
+                    status_location?: string
+                    received_by_id?: string | null
+                    received_by_type?: string | null
+                    received_at?: string | null
+                    receipt_photos?: string[] | null
+                    notes?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    tracking_id?: string | null
+                    contents?: string | null
+                    status_location?: string
+                    received_by_id?: string | null
+                    received_by_type?: string | null
+                    received_at?: string | null
+                    receipt_photos?: string[] | null
+                    notes?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_shipments_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
                         referencedColumns: ["id"]
                     }
                 ]

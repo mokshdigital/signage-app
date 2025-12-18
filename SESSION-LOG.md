@@ -347,4 +347,30 @@ When starting a new development session, add an entry following this format:
 - [ ] [Action needed]
 
 **Git Commit**: `[commit message]`
+
+## Session: Enhancing Work Order System (Sub-Phase A)
+**Date**: December 18, 2024
+**Objective**: Implement advanced work order foundation, logistics, and work order numbering.
+
+### Key Changes
+1.  **Database Migration**: Created `database_migrations/010_advanced_wo_foundation.sql` to add:
+    *   `work_order_number`, `site_address`, `planned_date`, `work_order_date` to `work_orders`.
+    *   `job_types` table.
+    *   `work_order_assignments` table (many-to-many technicians).
+    *   `work_order_shipments` table with receipt photos.
+2.  **Service Layer**:
+    *   Updated `work-orders.service.ts` to handle new CRUD operations for job types, assignments, and shipments.
+    *   Added `getReceiverOptions` for unified technician/staff dropdowns.
+3.  **UI Components**:
+    *   Created `components/work-orders/ShipmentManager.tsx` for tracking shipments and receipt uploads.
+    *   Created `components/dashboard/RecentShipmentsWidget.tsx` for the main dashboard.
+    *   Created `app/dashboard/work-orders/[id]/page.tsx` for the new advanced detail view.
+    *   Updated `app/dashboard/work-orders/page.tsx` to display new columns and link to the detail page.
+    *   Updated `app/dashboard/page.tsx` to include the `RecentShipmentsWidget`.
+4.  **AI Integration**:
+    *   Updated `app/api/process-work-order/route.ts` to extract `work_order_number`, `site_address`, and `work_order_date` from documents.
+
+### Notes
+*   **Action Required**: The user must run the `010_advanced_wo_foundation.sql` migration in Supabase SQL Editor.
+*   **Action Required**: The user must create a new storage bucket named `shipment-photos` in Supabase with public read access.
 ```

@@ -356,3 +356,40 @@
 4. Consider auto-linking based on AI-extracted client name (future)
 
 ---
+
+## Phase 12: Advanced Work Order System (Sub-Phase A)
+**Date**: December 18, 2024
+**Objective**: Foundation for advanced work order features including logistics, numbering, and detailed tracking.
+
+### Completed Tasks
+- ✅ **Database Schema Update**
+  - Added `work_order_number`, `site_address`, `planned_date`, `work_order_date` to `work_orders`
+  - Created `job_types` table
+  - Created `work_order_assignments` table for multiple technicians
+  - Created `work_order_shipments` table for tracking
+  - Created `shipment-photos` bucket
+- ✅ **Service Layer Enhancements**
+  - CRUD for Job Types
+  - Advanced Technician Assignment (multi-select)
+  - Shipment Management (CRUD + Photos)
+- ✅ **UI Development**
+  - `ShipmentManager` component with unified receiver dropdowns
+  - `RecentShipmentsWidget` for dashboard
+  - New `WorkOrderDetailPage` with editable details and shipment tracking
+  - Updated Work Orders list with new columns
+- ✅ **AI Integration**
+  - Updated Gemini prompt to extract Work Order Number, Site Address, and Date
+
+### Key Files Created/Modified
+- `database_migrations/010_advanced_wo_foundation.sql`
+- `services/work-orders.service.ts`
+- `components/work-orders/ShipmentManager.tsx`
+- `components/dashboard/RecentShipmentsWidget.tsx`
+- `app/dashboard/work-orders/[id]/page.tsx`
+- `app/api/process-work-order/route.ts`
+
+### Next Steps
+1. Execute `010_advanced_wo_foundation.sql` migration
+2. Create `shipment-photos` storage bucket
+3. Test new AI extraction with real documents
+4. Begin Sub-Phase B (Inventory/Stock integration)

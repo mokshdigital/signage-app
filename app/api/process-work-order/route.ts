@@ -15,8 +15,14 @@ const ANALYSIS_PROMPT = `You are analyzing work order documents for a signage in
 
 Analyze ALL provided files together and extract comprehensive information. Return JSON with:
 
+**IMPORTANT: Extract these fields for DIRECT DATABASE INSERTION:**
+work_order_number: the official work order number/ID from the document (e.g., "WO-2024-001", "12345", etc.) - look for labels like "WO#", "Work Order", "Order Number", "PO#"
+site_address: the full job site address where work will be performed (not the client's office address)
+work_order_date: the date on the work order document (format: YYYY-MM-DD)
+
+**Additional Analysis Fields:**
 jobType: type of signage work
-location: full address
+location: full address (same as site_address, for backward compatibility)
 orderedBy: client name
 contactInfo: phone/email
 resourceRequirements: {techSkills: [], equipment: [], vehicles: []}
@@ -155,13 +161,31 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // Extract key fields from AI analysis for direct database columns
+        const workOrderUpdate: Record<string, any> = {
+            processed: true,
+            analysis: analysis,
+        };
+
+        // Populate new fields from AI extraction if available
+        if (analysis.work_order_number) {
+            workOrderUpdate.work_order_number = String(analysis.work_order_number);
+        }
+        if (analysis.site_address) {
+            workOrderUpdate.site_address = String(analysis.site_address);
+        }
+        if (analysis.work_order_date) {
+            // Validate date format
+            const dateMatch = String(analysis.work_order_date).match(/^\d{4}-\d{2}-\d{2}/);
+            if (dateMatch) {
+                workOrderUpdate.work_order_date = dateMatch[0];
+            }
+        }
+
         // Update work order in database
         const { error: updateError } = await supabase
             .from('work_orders')
-            .update({
-                processed: true,
-                analysis: analysis,
-            })
+            .update(workOrderUpdate)
             .eq('id', workOrderId);
 
         if (updateError) {
