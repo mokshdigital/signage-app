@@ -15,14 +15,14 @@ const ANALYSIS_PROMPT = `You are analyzing work order documents for a signage in
 
 Analyze ALL provided files together and extract comprehensive information. Return JSON with:
 
-**IMPORTANT: Extract these fields for DIRECT DATABASE INSERTION:**
+**IMPORTANT: Extract these fields for DIRECT DATABASE INSERTION (if found in the document):**
 work_order_number: the official work order number/ID from the document (e.g., "WO-2024-001", "12345", etc.)
 site_address: the full job site address where work will be performed
 work_order_date: the date on the work order document (format: YYYY-MM-DD)
-skills_required: array of strings listing specific technician skills needed (e.g. "Electrical", "Welding", "High Reach")
-permits_required: array of strings listing required permits
-equipment_required: array of strings listing required equipment (e.g. "Scissor Lift", "Bucket Truck", "Ladder")
-materials_required: array of strings listing required materials/parts
+skills_required: array of strings listing specific technician skills needed (e.g. "Electrical", "Welding", "High Reach") - OPTIONAL
+permits_required: array of strings listing required permits - OPTIONAL
+equipment_required: array of strings listing required equipment (e.g. "Scissor Lift", "Bucket Truck", "Ladder") - OPTIONAL
+materials_required: array of strings listing required materials/parts - OPTIONAL
 
 **Additional Analysis Fields:**
 jobType: type of signage work
@@ -180,11 +180,24 @@ export async function POST(request: NextRequest) {
             }
         }
 
-        // Populate requirements arrays
-        if (Array.isArray(analysis.skills_required)) workOrderUpdate.skills_required = analysis.skills_required;
-        if (Array.isArray(analysis.permits_required)) workOrderUpdate.permits_required = analysis.permits_required;
-        if (Array.isArray(analysis.equipment_required)) workOrderUpdate.equipment_required = analysis.equipment_required;
-        if (Array.isArray(analysis.materials_required)) workOrderUpdate.materials_required = analysis.materials_required;
+        // Helper to sanitize array of strings
+        const sanitizeStringArray = (arr: any): string[] | undefined => {
+            if (!Array.isArray(arr)) return undefined;
+            return arr.map(item => String(item)).filter(item => item.trim() !== '');
+        };
+
+        // Populate requirements arrays with sanitization
+        const skills = sanitizeStringArray(analysis.skills_required);
+        if (skills) workOrderUpdate.skills_required = skills;
+
+        const permits = sanitizeStringArray(analysis.permits_required);
+        if (permits) workOrderUpdate.permits_required = permits;
+
+        const equipment = sanitizeStringArray(analysis.equipment_required);
+        if (equipment) workOrderUpdate.equipment_required = equipment;
+
+        const materials = sanitizeStringArray(analysis.materials_required);
+        if (materials) workOrderUpdate.materials_required = materials;
 
         // Update work order in database
         const { error: updateError } = await supabase
@@ -193,8 +206,9 @@ export async function POST(request: NextRequest) {
             .eq('id', workOrderId);
 
         if (updateError) {
+            console.error('Failed to update work order:', updateError); // Log detailed error
             return NextResponse.json(
-                { error: 'Failed to update work order' },
+                { error: 'Failed to update work order', details: updateError.message },
                 { status: 500 }
             );
         }
