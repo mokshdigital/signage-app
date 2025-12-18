@@ -61,6 +61,7 @@ export default function WorkOrderDetailPage() {
     const [technicians, setTechnicians] = useState<Technician[]>([]);
     const [selectedTechIds, setSelectedTechIds] = useState<string[]>([]);
     const [savingAssignments, setSavingAssignments] = useState(false);
+    const [isEditingAssignments, setIsEditingAssignments] = useState(false);
 
     // Files modal
     const [isFilesOpen, setIsFilesOpen] = useState(false);
@@ -181,6 +182,7 @@ export default function WorkOrderDetailPage() {
         try {
             await workOrdersService.assignTechnicians(workOrderId, selectedTechIds);
             toast.success('Technicians assigned');
+            setIsEditingAssignments(false);
             await fetchWorkOrder();
         } catch (err: any) {
             toast.error('Failed to assign technicians', { description: err.message });
@@ -520,10 +522,38 @@ export default function WorkOrderDetailPage() {
                 {/* Sidebar - 1 column */}
                 <div className="space-y-6">
                     {/* Technician Assignments */}
-                    <Card title="Assigned Technicians">
+                    <Card
+                        title="Assigned Technicians"
+                        headerActions={
+                            !isEditingAssignments && selectedTechIds.length > 0 ? (
+                                <Button size="sm" variant="ghost" onClick={() => setIsEditingAssignments(true)}>
+                                    Edit
+                                </Button>
+                            ) : null
+                        }
+                    >
                         <div className="space-y-3">
                             {technicians.length === 0 ? (
                                 <p className="text-sm text-gray-500">No technicians available</p>
+                            ) : !isEditingAssignments && selectedTechIds.length > 0 ? (
+                                <div className="space-y-2">
+                                    {technicians
+                                        .filter(t => selectedTechIds.includes(t.id))
+                                        .map(tech => (
+                                            <div key={tech.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-medium text-sm">
+                                                        {safeRender(tech.name)}
+                                                    </p>
+                                                    {tech.skills && tech.skills.length > 0 && (
+                                                        <p className="text-xs text-gray-500 truncate">
+                                                            {tech.skills.slice(0, 2).join(', ')}
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                </div>
                             ) : (
                                 <>
                                     <div className="max-h-[250px] overflow-y-auto space-y-2">
@@ -555,16 +585,37 @@ export default function WorkOrderDetailPage() {
                                             </label>
                                         ))}
                                     </div>
-                                    <Button
-                                        size="sm"
-                                        className="w-full"
-                                        onClick={handleSaveAssignments}
-                                        loading={savingAssignments}
-                                        disabled={JSON.stringify(selectedTechIds.sort()) ===
-                                            JSON.stringify((workOrder.assignments || []).map(a => a.technician_id).sort())}
-                                    >
-                                        Save Assignments
-                                    </Button>
+                                    <div className="flex gap-2">
+                                        {selectedTechIds.length > 0 && (
+                                            <Button
+                                                variant="secondary"
+                                                size="sm"
+                                                className="flex-1"
+                                                onClick={() => {
+                                                    // Reset selection to saved state
+                                                    if (workOrder?.assignments) {
+                                                        setSelectedTechIds(workOrder.assignments.map(a => a.technician_id));
+                                                    } else {
+                                                        setSelectedTechIds([]);
+                                                    }
+                                                    setIsEditingAssignments(false);
+                                                }}
+                                                disabled={savingAssignments}
+                                            >
+                                                Cancel
+                                            </Button>
+                                        )}
+                                        <Button
+                                            size="sm"
+                                            className="flex-1"
+                                            onClick={handleSaveAssignments}
+                                            loading={savingAssignments}
+                                            disabled={JSON.stringify(selectedTechIds.sort()) ===
+                                                JSON.stringify((workOrder?.assignments || []).map(a => a.technician_id).sort())}
+                                        >
+                                            Save
+                                        </Button>
+                                    </div>
                                 </>
                             )}
                         </div>
