@@ -709,7 +709,7 @@ export const workOrdersService = {
     /**
      * Create a new task
      */
-    async createTask(task: Partial<WorkOrderTask>): Promise<WorkOrderTask> {
+    async createTask(task: { work_order_id: string; name: string } & Partial<WorkOrderTask>): Promise<WorkOrderTask> {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('work_order_tasks')
@@ -797,29 +797,16 @@ export const workOrdersService = {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('task_checklists')
-            .select('*, completed_by:completed_by_id(display_name, avatar_url)') // Join with user_profiles (assuming view/table relation works like this in Supabase if linked correctly to auth.users OR we need a manual fetch if it's strict on auth schema. Usually auth.users isn't directly joinable unless public wrapper exists. Let's try direct join first, if fails we assume standard user_profiles table usage which I should check. The types/database.ts says completed_by_id refs auth.users. But user_profiles is the public table. I should probably reference user_profiles in the query if completed_by_id actually stores the uuid that matches user_profiles.id.)
-            // Wait, completed_by_id (UUID) -> auth.users. user_profiles (UUID) -> auth.users. So IDs match.
-            // But I cannot join 'auth.users' in client query usually.
-            // I should select from task_checklists and join user_profiles on id = completed_by_id.
-            // Let's assume completed_by_id refs user_profiles logic effectively.
+            .select('*')
             .eq('task_id', taskId)
             .order('sort_order', { ascending: true });
-
-        // Note: The above Select might fail if foreign key is strictly to auth.users and RLS blocks, or if I try to join a table that Supabase doesn't expose automatically as a valid relation if I didn't set FK to user_profiles explicitly.
-        // My migration 011 said: `completed_by_id UUID REFERENCES auth.users(id)`.
-        // To join easily, I should have referenced public.user_profiles.
-        // I'll update the migration logic mentally: I'll try to fetch, if generic join fails, I'll fetch profiles separately.
 
         if (error) {
             console.error('Error fetching checklists:', error);
             throw new Error(`Failed to fetch checklists: ${error.message}`);
         }
 
-        // Manually fetch profiles if the join returns null/error or just safe way:
-        // Actually, let's just do a simple select * and then fetch profiles like enrichment.
-        // But for now let's return data.Enrichment is safer.
-
-        const checklists = (data || []) as TaskChecklist[];
+        const checklists = (data || []) as unknown as TaskChecklist[];
         // Enrich
         const userIds = checklists.filter(c => c.completed_by_id).map(c => c.completed_by_id!);
         if (userIds.length > 0) {
@@ -842,7 +829,7 @@ export const workOrdersService = {
     /**
      * Create checklist item
      */
-    async createChecklistItem(item: Partial<TaskChecklist>): Promise<TaskChecklist> {
+    async createChecklistItem(item: { task_id: string; content: string } & Partial<TaskChecklist>): Promise<TaskChecklist> {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('task_checklists')
