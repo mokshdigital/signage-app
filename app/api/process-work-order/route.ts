@@ -3,6 +3,14 @@ import OpenAI from 'openai';
 import { createClient } from '@/lib/supabase/api';
 import { WorkOrder, WorkOrderFile } from '@/types/database';
 
+// Debug: Log environment variable presence (not values)
+console.log('[process-work-order] Environment check:', {
+    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+    hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
+    hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+});
+
 // Initialize OpenAI
 const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || '',
@@ -46,8 +54,20 @@ suggested_tasks: array of objects representing actionable steps. Each object mus
 Return ONLY valid JSON, no markdown formatting or code blocks.`;
 
 export async function POST(request: NextRequest) {
+    console.log('[process-work-order] POST request received');
+
     try {
+        // Check for OpenAI API key first
+        if (!process.env.OPENAI_API_KEY) {
+            console.error('[process-work-order] OPENAI_API_KEY is not set!');
+            return NextResponse.json(
+                { error: 'OPENAI_API_KEY environment variable is not configured' },
+                { status: 500 }
+            );
+        }
+
         const { workOrderId } = await request.json();
+        console.log('[process-work-order] Processing work order:', workOrderId);
 
         if (!workOrderId) {
             return NextResponse.json(
@@ -58,6 +78,8 @@ export async function POST(request: NextRequest) {
 
         // Fetch work order from database
         const supabase = createClient();
+        console.log('[process-work-order] Fetching work order from database...');
+
         const { data: workOrderData, error: fetchError } = await supabase
             .from('work_orders')
             .select('*')
@@ -65,14 +87,16 @@ export async function POST(request: NextRequest) {
             .single();
 
         if (fetchError || !workOrderData) {
+            console.error('[process-work-order] Failed to fetch work order:', fetchError);
             return NextResponse.json(
-                { error: 'Work order not found' },
+                { error: 'Work order not found', details: fetchError?.message },
                 { status: 404 }
             );
         }
 
         // Type assertion
         const workOrder = workOrderData as unknown as WorkOrder;
+        console.log('[process-work-order] Work order fetched, processed:', workOrder.processed);
 
         // Check if already processed
         if (workOrder.processed) {
@@ -83,16 +107,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Fetch all files for this work order
+        console.log('[process-work-order] Fetching files...');
         const { data: filesData, error: filesError } = await supabase
             .from('work_order_files')
             .select('*')
             .eq('work_order_id', workOrderId);
 
         const files = (filesData || []) as unknown as WorkOrderFile[];
+        console.log('[process-work-order] Files found:', files.length);
 
         if (filesError || !files || files.length === 0) {
+            console.error('[process-work-order] No files found:', filesError);
             return NextResponse.json(
-                { error: 'No files found for this work order' },
+                { error: 'No files found for this work order', details: filesError?.message },
                 { status: 404 }
             );
         }
@@ -102,6 +129,8 @@ export async function POST(request: NextRequest) {
         let textContent = '';
 
         for (const file of files) {
+            console.log('[process-work-order] Processing file:', file.file_name);
+
             // Extract file path from URL
             const urlParts = file.file_url.split('/');
             const filePath = urlParts[urlParts.length - 1];
@@ -112,13 +141,14 @@ export async function POST(request: NextRequest) {
                 .download(filePath);
 
             if (downloadError || !fileData) {
-                console.error(`Failed to download file: ${file.file_name}`, downloadError);
+                console.error(`[process-work-order] Failed to download file: ${file.file_name}`, downloadError);
                 continue; // Skip this file but continue with others
             }
 
             // Convert to buffer
             const arrayBuffer = await fileData.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
+            console.log('[process-work-order] File downloaded, size:', buffer.length);
 
             // Determine file type
             const fileName = file.file_name || '';
@@ -135,12 +165,10 @@ export async function POST(request: NextRequest) {
                         detail: 'high'
                     }
                 });
+                console.log('[process-work-order] Added image content');
             } else if (fileExtension === 'pdf') {
-                // For PDFs, we'll need to note that OpenAI doesn't directly support PDFs
-                // We'll add a note and try to process as text if possible
                 textContent += `\n[PDF File: ${fileName} - Please analyze the content from images if available]\n`;
-                // Convert PDF to image would require additional processing
-                // For now, we'll just note the PDF exists
+                console.log('[process-work-order] PDF noted (not directly supported)');
             }
         }
 
@@ -152,7 +180,19 @@ export async function POST(request: NextRequest) {
         }
 
         // Process with OpenAI GPT-4 Vision
-        const analysisText = await analyzeWithOpenAI(imageContents, textContent);
+        console.log('[process-work-order] Calling OpenAI with', imageContents.length, 'images...');
+        let analysisText: string;
+
+        try {
+            analysisText = await analyzeWithOpenAI(imageContents, textContent);
+            console.log('[process-work-order] OpenAI response received, length:', analysisText.length);
+        } catch (openaiError: any) {
+            console.error('[process-work-order] OpenAI API error:', openaiError);
+            return NextResponse.json(
+                { error: 'OpenAI API error', details: openaiError.message },
+                { status: 500 }
+            );
+        }
 
         // Parse the JSON response
         let analysis;
@@ -163,8 +203,9 @@ export async function POST(request: NextRequest) {
                 .replace(/```\n?/g, '')
                 .trim();
             analysis = JSON.parse(cleanedText);
+            console.log('[process-work-order] Analysis parsed successfully');
         } catch (parseError) {
-            console.error('Failed to parse AI response as JSON:', analysisText);
+            console.error('[process-work-order] Failed to parse AI response as JSON:', analysisText);
             return NextResponse.json(
                 { error: 'Failed to parse AI response', rawResponse: analysisText },
                 { status: 500 }
@@ -185,7 +226,6 @@ export async function POST(request: NextRequest) {
             workOrderUpdate.site_address = String(analysis.site_address);
         }
         if (analysis.work_order_date) {
-            // Validate date format
             const dateMatch = String(analysis.work_order_date).match(/^\d{4}-\d{2}-\d{2}/);
             if (dateMatch) {
                 workOrderUpdate.work_order_date = dateMatch[0];
@@ -216,21 +256,24 @@ export async function POST(request: NextRequest) {
         }
 
         // Update work order in database
+        console.log('[process-work-order] Updating work order in database...');
         const { error: updateError } = await supabase
             .from('work_orders')
             .update(workOrderUpdate)
             .eq('id', workOrderId);
 
         if (updateError) {
-            console.error('Failed to update work order:', updateError);
+            console.error('[process-work-order] Failed to update work order:', updateError);
             return NextResponse.json(
                 { error: 'Failed to update work order', details: updateError.message },
                 { status: 500 }
             );
         }
+        console.log('[process-work-order] Work order updated successfully');
 
         // Create Suggested Tasks
         if (Array.isArray(analysis.suggested_tasks) && analysis.suggested_tasks.length > 0) {
+            console.log('[process-work-order] Creating', analysis.suggested_tasks.length, 'tasks...');
             const tasksToInsert = analysis.suggested_tasks.map((task: any) => ({
                 work_order_id: workOrderId,
                 name: String(task.name).substring(0, 255),
@@ -244,19 +287,22 @@ export async function POST(request: NextRequest) {
                 .insert(tasksToInsert);
 
             if (tasksError) {
-                console.error('Failed to insert suggested tasks:', tasksError);
+                console.error('[process-work-order] Failed to insert tasks:', tasksError);
                 // Don't fail the whole request, just log it
+            } else {
+                console.log('[process-work-order] Tasks created successfully');
             }
         }
 
+        console.log('[process-work-order] Processing complete!');
         return NextResponse.json({
             success: true,
             analysis: analysis,
         });
     } catch (error: any) {
-        console.error('Error processing work order:', error);
+        console.error('[process-work-order] Unhandled error:', error);
         return NextResponse.json(
-            { error: error.message || 'Internal server error' },
+            { error: error.message || 'Internal server error', stack: error.stack },
             { status: 500 }
         );
     }
