@@ -20,6 +20,22 @@ You can start editing the page by modifying `app/page.tsx`. The page auto-update
 
 This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
+## Key Features
+
+- **Dashboard**: Centralized hub for managing signage operations.
+- **Settings & RBAC**: Comprehensive Role-Based Access Control and System Settings.
+  - Manage Roles and Permissions.
+  - Manage Users and assignments.
+  - **Job Types**: Customize available job categories.
+- **User Profile**:
+  - Rich profile dropdown with Avatar and Role display.
+  - Profile Settings page.
+- **Work Orders**:
+  - AI-Powered Analysis (Gemini 1.5 Pro).
+  - Advanced Search and Filtering.
+- **Resource Management**:
+  - Technicians, Equipment, and Vehicle tracking.
+
 ## Learn More
 
 To learn more about Next.js, take a look at the following resources:

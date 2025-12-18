@@ -56,11 +56,15 @@ signage-app/
 │   ├── dashboard/                # Dashboard pages (protected)
 │   │   ├── layout.tsx            # Dashboard layout with sidebar
 │   │   ├── page.tsx              # Dashboard home
-│   │   ├── admin/                # Admin pages (requires permissions)
+│   │   ├── settings/             # Settings & Admin (requires permissions)
+│   │   │   ├── job-types/        # Job Type management
+│   │   │   │   └── page.tsx
 │   │   │   ├── roles/            # Role management
 │   │   │   │   └── page.tsx
 │   │   │   └── users/            # User management
 │   │   │       └── page.tsx
+│   │   ├── profile/              # User Profile
+│   │   │   └── page.tsx
 │   │   ├── technicians/          # Technician management
 │   │   │   └── page.tsx
 │   │   ├── equipment/            # Equipment management

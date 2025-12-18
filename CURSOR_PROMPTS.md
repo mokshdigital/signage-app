@@ -274,6 +274,34 @@ export interface Technician {
 </div>
 ```
 
+### Tabbed Settings Layout
+```tsx
+// Create a layout with tabs for navigation
+// app/dashboard/settings/layout.tsx
+const tabs = [
+    { name: 'Roles', href: '/dashboard/settings/roles', permission: 'roles:manage' },
+    { name: 'Users', href: '/dashboard/settings/users', permission: 'users:manage' },
+];
+
+return (
+    <div>
+        <h1>Settings</h1>
+        <nav className="flex space-x-4 border-b">
+            {tabs.map(tab => (
+                 <Link 
+                    key={tab.name} 
+                    href={tab.href}
+                    className={pathname === tab.href ? 'border-blue-500' : 'border-transparent'}
+                 >
+                    {tab.name}
+                 </Link>
+            ))}
+        </nav>
+        {children}
+    </div>
+);
+```
+
 ---
 
 ## API Patterns

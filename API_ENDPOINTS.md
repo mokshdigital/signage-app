@@ -13,6 +13,8 @@ This document describes all API routes in the application, their purposes, reque
 
 ## Endpoints
 
+> **Note**: This application primarily uses the Supabase Client (via `@supabase/ssr` and client-side libraries) to interact directly with the database using Row Level Security (RLS). The endpoints listed below are for server-side operations that require privileged access or external integrations (like Gemini AI) that cannot be safely executed on the client.
+
 ### 1. Process Work Order
 Analyzes an uploaded work order using Google Gemini AI and extracts structured data.
 

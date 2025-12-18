@@ -293,6 +293,46 @@ External client contacts (Project Managers). Distinct from internal `office_staf
 
 ---
 
+### 10. `roles`
+Defines available user roles in the system.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
+| `name` | TEXT | UNIQUE, NOT NULL | Machine-readable name (e.g., 'super_admin') |
+| `display_name` | TEXT | NOT NULL | Human-readable name (e.g., 'Super Admin') |
+| `description` | TEXT | | Role description |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
+
+---
+
+### 11. `permissions`
+Defines granular access capabilities.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
+| `name` | TEXT | UNIQUE, NOT NULL | Permission key (e.g., 'users:read') |
+| `description` | TEXT | | Description of the capability |
+| `module` | TEXT | | Feature module (e.g., 'users', 'work_orders') |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
+
+---
+
+### 12. `role_permissions`
+Junction table linking roles to permissions.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `role_id` | UUID | FK -> roles(id), ON DELETE CASCADE | Role ID |
+| `permission_id` | UUID | FK -> permissions(id), ON DELETE CASCADE | Permission ID |
+| **PK** | | (role_id, permission_id) | Composite Primary Key |
+
+---
+
 ## Relationships
 
 ### Current Relationships
