@@ -39,7 +39,7 @@ scope_of_work: detailed text description of the scope of work based on the docum
 suggested_tasks: array of objects representing actionable steps. Each object must have:
   - name: string (concise task name)
   - description: string (detailed instructions)
-  - priority: 'Low', 'Medium', 'High', or 'Urgent'
+  - priority: 'Low', 'Medium', 'High', or 'Emergency'
 
 Return ONLY valid JSON, no markdown formatting or code blocks.`;
 
@@ -229,7 +229,7 @@ export async function POST(request: NextRequest) {
                 work_order_id: workOrderId,
                 name: String(task.name).substring(0, 255),
                 description: task.description ? String(task.description) : null,
-                priority: ['Low', 'Medium', 'High', 'Urgent'].includes(task.priority) ? task.priority : 'Medium',
+                priority: ['Low', 'Medium', 'High', 'Emergency'].includes(task.priority) ? task.priority : 'Medium',
                 status: 'Pending'
             }));
 

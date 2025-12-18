@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { WorkOrderTask, TaskChecklist, WorkOrderAssignment } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
-import { Button, Card, Badge, Modal, Input, TextArea } from '@/components/ui'; // Check if TextArea/Input exist in ui/index
+import { Button, Card, Badge, Modal, Input, Textarea } from '@/components/ui'; // Check if TextArea/Input exist in ui/index
 import { toast } from '@/components/providers';
 import {
     CheckSquare, Plus, User, AlertCircle, Clock,
@@ -176,13 +176,13 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
         Low: 'bg-gray-100 text-gray-800',
         Medium: 'bg-blue-100 text-blue-800',
         High: 'bg-orange-100 text-orange-800',
-        Urgent: 'bg-red-100 text-red-800'
+        Emergency: 'bg-red-100 text-red-800'
     };
 
     const statusColors: any = {
         Pending: 'bg-gray-100 text-gray-800',
         'In Progress': 'bg-blue-100 text-blue-800',
-        Completed: 'bg-green-100 text-green-800',
+        Done: 'bg-green-100 text-green-800',
         Blocked: 'bg-red-100 text-red-800'
     };
 
@@ -196,7 +196,7 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
 
                 <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-start">
-                        <h4 className={`text-base font-medium ${task.status === 'Completed' ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
+                        <h4 className={`text-base font-medium ${task.status === 'Done' ? 'text-gray-500 line-through' : 'text-gray-900'}`}>
                             {task.name}
                         </h4>
                         <div className="flex items-center gap-2">
@@ -252,7 +252,7 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
                     {/* Controls */}
                     <div className="flex justify-between items-center text-sm">
                         <div className="flex gap-2">
-                            {['Pending', 'In Progress', 'Completed', 'Blocked'].map(s => (
+                            {['Pending', 'In Progress', 'Done', 'Blocked'].map(s => (
                                 <button
                                     key={s}
                                     onClick={() => handleStatusChange(s)}
@@ -422,7 +422,7 @@ function CreateTaskModal({ isOpen, onClose, workOrderId, onCreated }: { isOpen: 
         <Modal isOpen={isOpen} onClose={onClose} title="Create New Task">
             <div className="space-y-4">
                 <Input label="Task Name" value={data.name} onChange={e => setData({ ...data, name: e.target.value })} placeholder="e.g. Install Channel Letters" />
-                <TextArea label="Description" value={data.description} onChange={e => setData({ ...data, description: e.target.value })} />
+                <Textarea label="Description" value={data.description} onChange={e => setData({ ...data, description: e.target.value })} />
                 <div className="grid grid-cols-2 gap-4">
                     <div>
                         <label className="block text-sm font-medium mb-1">Priority</label>
@@ -430,7 +430,7 @@ function CreateTaskModal({ isOpen, onClose, workOrderId, onCreated }: { isOpen: 
                             <option>Low</option>
                             <option>Medium</option>
                             <option>High</option>
-                            <option>Urgent</option>
+                            <option>Emergency</option>
                         </select>
                     </div>
                     <Input label="Due Date" type="date" value={data.due_date} onChange={e => setData({ ...data, due_date: e.target.value })} />
