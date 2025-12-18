@@ -136,6 +136,11 @@ export interface WorkOrder {
     site_address: string | null;
     planned_date: string | null;  // DATE stored as ISO string
     work_order_date: string | null;  // DATE stored as ISO string
+    // Sub-Phase B: Requirements
+    skills_required: string[] | null;
+    permits_required: string[] | null;
+    equipment_required: string[] | null;
+    materials_required: string[] | null;
     // Optional: populated when files are joined in queries
     files?: WorkOrderFile[];
     // Optional: populated when client/PM are joined

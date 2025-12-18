@@ -374,3 +374,24 @@ When starting a new development session, add an entry following this format:
 *   **Action Required**: The user must run the `010_advanced_wo_foundation.sql` migration in Supabase SQL Editor.
 *   **Action Required**: The user must create a new storage bucket named `shipment-photos` in Supabase with public read access.
 ```
+
+## Session: Implementing Work Order Requirements UI
+**Date**: December 18, 2024
+**Objective**: Implement UI for managing work order requirements (skills, permits, equipment, materials).
+
+### Key Changes
+1.  **UI Components**:
+    *   Created `components/ui/TagInput.tsx` for managing array-based text inputs (tags).
+    *   Updated `components/ui/index.ts` to export `TagInput`.
+2.  **Work Order Detail Page**:
+    *   Updated `app/dashboard/work-orders/[id]/page.tsx` to include a new "Work Constraints & Requirements" section.
+    *   Integrated `TagInput` to allow editing of `skills_required`, `permits_required`, `equipment_required`, and `materials_required`.
+    *   Implemented view mode using `Badge` and list displays for these fields.
+    *   Refactored the page structure to fix layout and TypeScript errors.
+3.  **Database & Types**:
+    *   Verified `database_migrations/011_wo_requirements.sql` (created in previous step).
+    *   Verified `DATABASE_SCHEMA.md` updates.
+
+### Notes
+*   **Action Required**: Ensure `lucide-react` is installed (done automatically via `npm install`).
+

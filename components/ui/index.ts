@@ -12,3 +12,4 @@ export * from './EmptyState';
 export * from './Avatar';
 export * from './Textarea';
 export * from './Icons';
+export { default as TagInput } from './TagInput';

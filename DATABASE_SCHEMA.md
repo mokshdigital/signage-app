@@ -473,6 +473,10 @@ Tracks shipments associated with work orders.
 - `site_address` (TEXT)
 - `planned_date` (DATE)
 - `work_order_date` (DATE)
+- `skills_required` (TEXT[])
+- `permits_required` (TEXT[])
+- `equipment_required` (TEXT[])
+- `materials_required` (TEXT[])
 
 ### Storage
 - **Bucket**: `shipment-photos` (Public Read)

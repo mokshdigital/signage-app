@@ -18,7 +18,8 @@ import {
     Badge,
     Input,
     LoadingSpinner,
-    Alert
+    Alert,
+    TagInput
 } from '@/components/ui';
 import {
     WorkOrderFilesModal,
@@ -45,7 +46,11 @@ export default function WorkOrderDetailPage() {
         site_address: '',
         planned_date: '',
         work_order_date: '',
-        job_type_id: ''
+        job_type_id: '',
+        skills_required: [] as string[],
+        permits_required: [] as string[],
+        equipment_required: [] as string[],
+        materials_required: [] as string[]
     });
     const [saving, setSaving] = useState(false);
 
@@ -89,7 +94,11 @@ export default function WorkOrderDetailPage() {
                 site_address: data.site_address || '',
                 planned_date: data.planned_date || '',
                 work_order_date: data.work_order_date || '',
-                job_type_id: data.job_type_id || ''
+                job_type_id: data.job_type_id || '',
+                skills_required: data.skills_required || [],
+                permits_required: data.permits_required || [],
+                equipment_required: data.equipment_required || [],
+                materials_required: data.materials_required || []
             });
 
             // Initialize selected technicians
@@ -151,7 +160,11 @@ export default function WorkOrderDetailPage() {
                 site_address: editData.site_address || null,
                 planned_date: editData.planned_date || null,
                 work_order_date: editData.work_order_date || null,
-                job_type_id: editData.job_type_id || null
+                job_type_id: editData.job_type_id || null,
+                skills_required: editData.skills_required,
+                permits_required: editData.permits_required,
+                equipment_required: editData.equipment_required,
+                materials_required: editData.materials_required
             });
             toast.success('Work order updated');
             setIsEditing(false);
@@ -373,6 +386,125 @@ export default function WorkOrderDetailPage() {
                         )}
                     </Card>
 
+                    {/* Requirements Section */}
+                    <Card
+                        title="Work Constraints & Requirements"
+                        headerActions={
+                            !isEditing ? (
+                                <Button size="sm" variant="ghost" onClick={() => setIsEditing(true)}>
+                                    Edit
+                                </Button>
+                            ) : null
+                        }
+                    >
+                        {isEditing ? (
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Skills Required
+                                    </label>
+                                    <TagInput
+                                        value={editData.skills_required}
+                                        onChange={(tags) => setEditData(prev => ({ ...prev, skills_required: tags }))}
+                                        placeholder="Add skill..."
+                                        suggestions={['Electrical', 'Welding', 'High Reach', 'Programming', 'Vinyl Application']}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Permits Required
+                                    </label>
+                                    <TagInput
+                                        value={editData.permits_required}
+                                        onChange={(tags) => setEditData(prev => ({ ...prev, permits_required: tags }))}
+                                        placeholder="Add permit..."
+                                        suggestions={['City Permit', 'Electrical Permit', 'Building Permit', 'Lane Closure']}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Equipment Required
+                                    </label>
+                                    <TagInput
+                                        value={editData.equipment_required}
+                                        onChange={(tags) => setEditData(prev => ({ ...prev, equipment_required: tags }))}
+                                        placeholder="Add equipment..."
+                                        suggestions={['Scissor Lift', 'Bucket Truck', 'Ladder', 'Boom Lift', 'Crane']}
+                                    />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Materials Required
+                                    </label>
+                                    <TagInput
+                                        value={editData.materials_required}
+                                        onChange={(tags) => setEditData(prev => ({ ...prev, materials_required: tags }))}
+                                        placeholder="Add material..."
+                                    />
+                                </div>
+                                <div className="flex justify-end gap-3 pt-2">
+                                    <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={saving}>
+                                        Cancel
+                                    </Button>
+                                    <Button onClick={handleSaveDetails} loading={saving}>
+                                        Save Changes
+                                    </Button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="space-y-6">
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-2">Skills Required</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {workOrder.skills_required && workOrder.skills_required.length > 0 ? (
+                                            workOrder.skills_required.map((skill, i) => (
+                                                <Badge key={i} variant="default">{skill}</Badge>
+                                            ))
+                                        ) : (
+                                            <span className="text-gray-400 text-sm italic">None specified</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-2">Permits Required</p>
+                                    <ul className="list-disc list-inside text-sm text-gray-800">
+                                        {workOrder.permits_required && workOrder.permits_required.length > 0 ? (
+                                            workOrder.permits_required.map((permit, i) => (
+                                                <li key={i}>{permit}</li>
+                                            ))
+                                        ) : (
+                                            <span className="text-gray-400 text-sm italic">None specified</span>
+                                        )}
+                                    </ul>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-2">Equipment Required</p>
+                                    <div className="flex flex-wrap gap-2">
+                                        {workOrder.equipment_required && workOrder.equipment_required.length > 0 ? (
+                                            workOrder.equipment_required.map((eq, i) => (
+                                                <Badge key={i} variant="info">{eq}</Badge>
+                                            ))
+                                        ) : (
+                                            <span className="text-gray-400 text-sm italic">None specified</span>
+                                        )}
+                                    </div>
+                                </div>
+                                <div>
+                                    <p className="text-sm text-gray-500 mb-2">Materials Required</p>
+                                    <ul className="list-disc list-inside text-sm text-gray-800">
+                                        {workOrder.materials_required && workOrder.materials_required.length > 0 ? (
+                                            workOrder.materials_required.map((mat, i) => (
+                                                <li key={i}>{mat}</li>
+                                            ))
+                                        ) : (
+                                            <span className="text-gray-400 text-sm italic">None specified</span>
+                                        )}
+                                    </ul>
+                                </div>
+                            </div>
+                        )}
+                    </Card>
+
                     {/* Shipments Section */}
                     <Card noPadding>
                         <div className="p-4">
@@ -485,7 +617,7 @@ export default function WorkOrderDetailPage() {
             <WorkOrderAnalysisModal
                 isOpen={isAnalysisOpen}
                 onClose={() => setIsAnalysisOpen(false)}
-                analysis={workOrder.analysis}
+                analysis={workOrder?.analysis}
             />
         </div>
     );

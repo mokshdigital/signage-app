@@ -16,26 +16,24 @@ const ANALYSIS_PROMPT = `You are analyzing work order documents for a signage in
 Analyze ALL provided files together and extract comprehensive information. Return JSON with:
 
 **IMPORTANT: Extract these fields for DIRECT DATABASE INSERTION:**
-work_order_number: the official work order number/ID from the document (e.g., "WO-2024-001", "12345", etc.) - look for labels like "WO#", "Work Order", "Order Number", "PO#"
-site_address: the full job site address where work will be performed (not the client's office address)
+work_order_number: the official work order number/ID from the document (e.g., "WO-2024-001", "12345", etc.)
+site_address: the full job site address where work will be performed
 work_order_date: the date on the work order document (format: YYYY-MM-DD)
+skills_required: array of strings listing specific technician skills needed (e.g. "Electrical", "Welding", "High Reach")
+permits_required: array of strings listing required permits
+equipment_required: array of strings listing required equipment (e.g. "Scissor Lift", "Bucket Truck", "Ladder")
+materials_required: array of strings listing required materials/parts
 
 **Additional Analysis Fields:**
 jobType: type of signage work
-location: full address (same as site_address, for backward compatibility)
+location: full address (same as site_address)
 orderedBy: client name
 contactInfo: phone/email
-resourceRequirements: {techSkills: [], equipment: [], vehicles: []}
-permitsRequired: []
-numberOfTechs: number and their roles
+summary: brief summary of work
+recommended_technician_skills: legacy field (same as skills_required)
 estimatedHours: number
-estimatedDays: number
-clientQuestions: []
-technicianQuestions: []
-technicalRequirements: description
-accessRequirements: description
-riskFactors: []
-additionalDetails: any other relevant info from all documents
+safety_notes: safety warnings
+additionalDetails: any other relevant info
 
 Return ONLY valid JSON, no markdown formatting or code blocks.`;
 
@@ -65,7 +63,7 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Type assertion - Supabase returns unknown, so we assert the type
+        // Type assertion
         const workOrder = workOrderData as unknown as WorkOrder;
 
         // Check if already processed
@@ -181,6 +179,12 @@ export async function POST(request: NextRequest) {
                 workOrderUpdate.work_order_date = dateMatch[0];
             }
         }
+
+        // Populate requirements arrays
+        if (Array.isArray(analysis.skills_required)) workOrderUpdate.skills_required = analysis.skills_required;
+        if (Array.isArray(analysis.permits_required)) workOrderUpdate.permits_required = analysis.permits_required;
+        if (Array.isArray(analysis.equipment_required)) workOrderUpdate.equipment_required = analysis.equipment_required;
+        if (Array.isArray(analysis.materials_required)) workOrderUpdate.materials_required = analysis.materials_required;
 
         // Update work order in database
         const { error: updateError } = await supabase
