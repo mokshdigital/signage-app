@@ -377,11 +377,15 @@
   - `RecentShipmentsWidget` for dashboard
   - New `WorkOrderDetailPage` with editable details and shipment tracking
   - Updated Work Orders list with new columns
+  - Added "Client" and "Project Manager" visibility
+  - Improved "Assign Technicians" UI with search and toggle mode
 - ✅ **AI Integration**
   - Updated Gemini prompt to extract Work Order Number, Site Address, and Date
+  - Sanitized AI inputs to prevent 500 errors
 
 ### Key Files Created/Modified
 - `database_migrations/010_advanced_wo_foundation.sql`
+- `database_migrations/012_add_recommended_techs.sql`
 - `services/work-orders.service.ts`
 - `components/work-orders/ShipmentManager.tsx`
 - `components/dashboard/RecentShipmentsWidget.tsx`

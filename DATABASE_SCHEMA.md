@@ -477,6 +477,7 @@ Tracks shipments associated with work orders.
 - `permits_required` (TEXT[])
 - `equipment_required` (TEXT[])
 - `materials_required` (TEXT[])
+- `recommended_techs` (INTEGER)
 
 ### Storage
 - **Bucket**: `shipment-photos` (Public Read)

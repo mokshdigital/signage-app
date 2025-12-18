@@ -395,3 +395,24 @@ When starting a new development session, add an entry following this format:
 ### Notes
 *   **Action Required**: Ensure `lucide-react` is installed (done automatically via `npm install`).
 
+## December 18, 2024 (Session 3)
+**Objective**: Finalize Work Order Assignments and Detail View enhancements
+
+### Key Changes
+1.  **Technician Assignments UI**:
+    *   Implemented "View vs Edit" toggle for cleaner UI.
+    *   Added **search functionality** to easily filter technicians by name/skills in edit mode.
+2.  **Work Order Requirements**:
+    *   Added `recommended_techs` (integer) field to `work_orders` table.
+    *   Updated edit form to include input for recommended tech count.
+    *   Updated view mode to display this recommendation.
+3.  **Client & PM Visibility**:
+    *   Updated `workOrdersService` to fetch nested `client` and `project_manager` data.
+    *   Added display fields for Client and Project Manager in the Work Order Details card.
+4.  **Error Handling**:
+    *   Fixed AI processing 500 error by adding missing requirement columns to DB and sanitizing API inputs.
+
+### Database Updates
+*   Added `recommended_techs` column to `work_orders`.
+*   Verified requirement columns (`skills_required`, etc.) exist.
+
