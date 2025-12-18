@@ -78,6 +78,11 @@ Manages company vehicle fleet.
 | `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
 | `name` | TEXT | NOT NULL | Vehicle name/identifier |
 | `license_plate` | TEXT | UNIQUE | License plate number |
+| `make` | TEXT | | Vehicle make/manufacturer |
+| `driver` | TEXT | | Assigned driver name |
+| `registration` | TEXT | | Registration number |
+| `gross_weight` | TEXT | | Gross Vehicle Weight (GVW) |
+| `vin` | TEXT | | Vehicle Identification Number |
 | `type` | TEXT | | Vehicle type (truck, van, etc.) |
 | `status` | TEXT | CHECK (status IN ('available', 'in-use', 'maintenance')) | Current status |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | Record creation timestamp |
@@ -177,7 +182,7 @@ Stores multiple files associated with each work order (work orders, plans, speci
 #### Supported File Types
 - **PDFs**: Work orders, specifications, plans
 - **Images**: JPG, JPEG, PNG, GIF, WEBP (site photos, diagrams)
-- **Maximum Files**: 10 files per work order
+- **Maximum Files**: Unlimited (UI restricted)
 
 
 ---
@@ -217,12 +222,86 @@ Stores extended user profile information collected during onboarding.
 
 ---
 
+### 7. `office_staff`
+Directory of office staff members.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
+| `name` | TEXT | NOT NULL | Staff member name |
+| `email` | TEXT | | Email address |
+| `phone` | TEXT | | Contact number |
+| `title` | TEXT | | Job title |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: Allow all authenticated users to read/manage (permissive for now).
+
+
+---
+
+### 8. `clients`
+Corporate client entities that work orders can be assigned to.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
+| `name` | TEXT | NOT NULL | Company name |
+| `address` | TEXT | | Registered office address |
+| `notes` | TEXT | | General notes about the client |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
+
+#### Indexes
+- `idx_clients_name` on `name`
+- `idx_clients_created_at` on `created_at`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: Allow all authenticated users to read/manage (permissive for now).
+
+---
+
+### 9. `project_managers`
+External client contacts (Project Managers). Distinct from internal `office_staff`.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
+| `client_id` | UUID | FK to clients(id), ON DELETE CASCADE | Associated client |
+| `name` | TEXT | NOT NULL | Contact name |
+| `email` | TEXT | | Email address |
+| `phone` | TEXT | | Phone number |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
+
+#### Indexes
+- `idx_project_managers_client_id` on `client_id`
+- `idx_project_managers_name` on `name`
+- `idx_project_managers_email` on `email`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: Allow all authenticated users to read/manage (permissive for now).
+
+#### Notes
+- When a `client` is deleted, all associated `project_managers` are automatically deleted (CASCADE).
+- These are **external** contacts, not to be confused with internal `office_staff`.
+
+
+---
+
 ## Relationships
 
 ### Current Relationships
 - `work_orders.uploaded_by` → `auth.users.id`
+- `work_orders.client_id` → `clients.id` (SET NULL on delete)
+- `work_orders.pm_id` → `project_managers.id` (SET NULL on delete)
 - `work_order_files.work_order_id` → `work_orders.id` (CASCADE DELETE)
 - `user_profiles.id` → `auth.users.id` (CASCADE DELETE)
+- `project_managers.client_id` → `clients.id` (CASCADE DELETE)
 
 
 ### Planned Relationships (Future)

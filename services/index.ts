@@ -6,4 +6,6 @@ export { techniciansService } from './technicians.service';
 export { equipmentService } from './equipment.service';
 export { vehiclesService } from './vehicles.service';
 export { workOrdersService } from './work-orders.service';
+export { clientsService } from './clients.service';
 export { createCrudService } from './crud.service';
+

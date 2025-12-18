@@ -28,6 +28,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
         { name: 'People', href: '/dashboard/people', icon: '👥', permission: 'technicians:read' }, // Using technicians permission for now as baseline
         { name: 'Equipment', href: '/dashboard/equipment', icon: '🔧', permission: 'equipment:read' },
         { name: 'Vehicles', href: '/dashboard/vehicles', icon: '🚗', permission: 'vehicles:read' },
+        { name: 'Clients', href: '/dashboard/clients', icon: '🏢', permission: 'work_orders:read' }, // Using work_orders permission as baseline
         { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋', permission: 'work_orders:read' },
     ];
 

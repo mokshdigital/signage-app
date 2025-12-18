@@ -215,6 +215,120 @@ The AI extracts structured information from work orders:
 
 ---
 
+### Session 4 - December 12, 2024 (4:43 AM - 5:28 AM PST)
+
+**Objective**: Implement Admin Roles and Users Pages
+
+**Changes Made**:
+1.  **RBAC Management UI**
+    -   Created Roles page (`/dashboard/admin/roles`) for managing role definitions and permissions.
+    -   Created Users page (`/dashboard/admin/users`) for assigning roles to users.
+    -   Implemented `usePermissions` hook improvements for cleaner access control.
+
+2.  **Bug Fixes**
+    -   Fixed role creation errors related to file path encoding.
+    -   Resolved issues with role creation failing silently.
+
+**Git Commit**: `feat: Add admin interface for roles and users`
+
+---
+
+### Session 5 - December 16, 2024 (2:43 PM - 3:10 PM PST)
+
+**Objective**: Fix Sign-In Redirect Loop
+
+**Changes Made**:
+1.  **Authentication Fixes**
+    -   Resolved `ERR_CONNECTION_REFUSED` error after Google sign-in.
+    -   Fixed local environment variables affecting redirect URLs.
+    -   Ensured proper redirection to dashboard after successful login.
+
+**Git Commit**: `fix: Resolve sign-in redirect loop and environment issues`
+
+---
+
+### Session 6 - December 16, 2024 (3:38 PM - 8:02 PM PST)
+
+**Objective**: Fix Build Errors and User Visibility
+
+**Changes Made**:
+1.  **Build Fixes**
+    -   Resolved Vercel build error caused by missing `office_staff` Supabase type definitions.
+    -   Updated `types/supabase.ts` to reflect the latest database schema.
+
+2.  **User Visibility Policies**
+    -   Fixed issue where Super Admins could not see newly created users.
+    -   Created migration `008_fix_user_visibility.sql` adding `users:read` and `users:manage` policies for `user_profiles`.
+
+3.  **Database Updates**
+    -   Added `office_staff` table for directory management (`007_create_office_staff.sql`).
+    -   Updated `vehicles` table with new columns: `make`, `driver`, `registration`, `gross_weight`, `vin` (`005_update_vehicles_schema.sql`).
+    -   Seeded vehicle data (`006_seed_vehicles.sql`).
+    -   Refactored `RBAC` policies for better manageability (`004_rbac_manage_policies.sql`).
+    -   **Refactored Work Orders**: Moved to multi-file system with `work_order_files` table (`create_work_order_files.sql`).
+
+**Git Commit**: `fix: Fix build errors, user visibility policies, and update vehicle schema`
+
+---
+
+### Session 7 - December 18, 2024 (8:30 AM - 9:15 AM PST)
+
+**Objective**: Implement Phase 11 - Clients & Project Managers Module
+
+**Changes Made**:
+1.  **Database Schema** (`database_migrations/009_clients_and_pms.sql`)
+    -   Created `clients` table for corporate entities (name, address, notes)
+    -   Created `project_managers` table for client contacts (name, email, phone)
+    -   Added `client_id` and `pm_id` columns to `work_orders` table
+    -   Enabled RLS with permissive policies for new tables
+    -   Created appropriate indexes for performance
+
+2.  **TypeScript Types** (`types/database.ts`)
+    -   Added `Client` interface with optional PM count and PM list
+    -   Added `ProjectManager` interface with optional client reference
+    -   Updated `WorkOrder` interface to include client assignment fields
+
+3.  **Service Layer** (`services/clients.service.ts`)
+    -   Full CRUD for clients
+    -   Full CRUD for project managers
+    -   Client search functionality
+    -   PM search across all clients
+    -   Work order assignment/unassignment
+
+4.  **Forms** (`components/forms/`)
+    -   Created `ClientForm.tsx` for adding/editing clients
+    -   Created `ProjectManagerForm.tsx` for adding/editing client contacts
+
+5.  **Clients Directory** (`app/dashboard/clients/page.tsx`)
+    -   DataTable view of all clients
+    -   Search functionality
+    -   Add/Edit/Delete actions
+
+6.  **Client Detail View** (`app/dashboard/clients/[id]/page.tsx`)
+    -   Two-tab layout: Contacts and Work History
+    -   Inline PM management (add/edit/delete)
+    -   Work order history filtered by client
+
+7.  **Work Orders Update** (`app/dashboard/work-orders/page.tsx`)
+    -   Added "Link to Client" action for unassigned orders
+    -   Added "Unlink" action for assigned orders
+    -   Client assignment modal with cascading PM dropdown
+
+8.  **Navigation** (`components/layout/Sidebar.tsx`)
+    -   Added "Clients" item with 🏢 icon
+
+9.  **Documentation**
+    -   Updated `DATABASE_SCHEMA.md` with new tables and relationships
+
+**Pending Actions**:
+- [ ] Run `009_clients_and_pms.sql` migration in Supabase Dashboard
+- [ ] Regenerate Supabase types to fix TypeScript lint errors
+- [ ] Test client creation and PM assignment
+
+**Git Commit**: `feat: Add Clients & Project Managers module (Phase 11)`
+
+---
+
 ## How to Add New Sessions
 
 When starting a new development session, add an entry following this format:

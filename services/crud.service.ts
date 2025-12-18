@@ -8,7 +8,9 @@ export type TableName =
     | 'work_orders'
     | 'work_order_files'
     | 'user_profiles'
-    | 'office_staff';
+    | 'office_staff'
+    | 'clients'
+    | 'project_managers';
 
 /**
  * Factory function to create a typed CRUD service for any Supabase table

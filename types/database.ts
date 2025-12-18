@@ -48,12 +48,43 @@ export interface WorkOrderFile {
     created_at: string;
 }
 
+// Client entity - corporate companies
+export interface Client {
+    id: string;
+    name: string;
+    address: string | null;
+    notes: string | null;
+    created_at: string;
+    // Optional: populated when project_managers are joined
+    project_managers?: ProjectManager[];
+    // Optional: count of project managers
+    pm_count?: number;
+}
+
+// Project Manager - external client contact (NOT internal office_staff)
+export interface ProjectManager {
+    id: string;
+    client_id: string;
+    name: string;
+    email: string | null;
+    phone: string | null;
+    created_at: string;
+    // Optional: populated when client is joined
+    client?: Client;
+}
+
 export interface WorkOrder {
     id: string;
     uploaded_by: string | null;
     processed: boolean;
     analysis: any;
     created_at: string;
+    // Client assignment (Phase 11)
+    client_id: string | null;
+    pm_id: string | null;
     // Optional: populated when files are joined in queries
     files?: WorkOrderFile[];
+    // Optional: populated when client/PM are joined
+    client?: Client;
+    project_manager?: ProjectManager;
 }

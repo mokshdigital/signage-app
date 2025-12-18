@@ -5,9 +5,10 @@ A comprehensive dashboard application for managing a signage installation busine
 
 ## What This App Does
 - **Technician Management**: Track technicians, their skills, contact information, and availability
+- **Office Staff Directory**: Manage office staff members and their roles
 - **Equipment Management**: Monitor equipment inventory, status (available/in-use/maintenance), and types
-- **Vehicle Fleet Management**: Track company vehicles, license plates, and maintenance status
-- **AI-Powered Work Order Processing**: Upload work orders (PDF/images), automatically extract job details using Google's Gemini AI, and view structured analysis
+- **Vehicle Fleet Management**: Track company vehicles, license plates, VIN, GVW, driver assignments, and maintenance status
+- **AI-Powered Work Order Processing**: Upload multiple work order files (PDF/images), automatically extract job details using Google's Gemini AI, and view structured analysis
 - **Resource Planning**: Match work orders with required technicians, equipment, and vehicles
 
 ## Tech Stack

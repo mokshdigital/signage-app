@@ -1,10 +1,11 @@
 'use client';
 
-import { useState, useCallback } from 'react';
-import { WorkOrder, WorkOrderFile } from '@/types/database';
+import { useState, useCallback, useEffect } from 'react';
+import { WorkOrder, WorkOrderFile, Client, ProjectManager } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
+import { clientsService } from '@/services/clients.service';
 import { useCrud, useModal, useConfirmDialog } from '@/hooks';
-import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay } from '@/components/ui';
+import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay, Modal, LoadingSpinner } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
 import {
     WorkOrderUploadForm,
@@ -12,6 +13,7 @@ import {
     WorkOrderAnalysisModal
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
+import { safeRender } from '@/lib/utils/helpers';
 
 export default function WorkOrdersPage() {
     // CRUD Hook
@@ -39,6 +41,14 @@ export default function WorkOrdersPage() {
         data: selectedWorkOrderId
     } = useModal<string>(); // We store just the ID to fetch files
 
+    // Client Assignment Modal State
+    const {
+        isOpen: isAssignOpen,
+        open: openAssignModal,
+        close: closeAssignModal,
+        data: assigningWorkOrder
+    } = useModal<WorkOrder>();
+
     const [workOrderFiles, setWorkOrderFiles] = useState<WorkOrderFile[]>([]);
     const [loadingFiles, setLoadingFiles] = useState(false);
 
@@ -49,6 +59,59 @@ export default function WorkOrdersPage() {
     const [isUploading, setIsUploading] = useState(false);
     const [isProcessing, setIsProcessing] = useState(false);
     const [uploadError, setUploadError] = useState<string | null>(null);
+
+    // Client Assignment States
+    const [clients, setClients] = useState<Client[]>([]);
+    const [projectManagers, setProjectManagers] = useState<ProjectManager[]>([]);
+    const [selectedClientId, setSelectedClientId] = useState<string>('');
+    const [selectedPMId, setSelectedPMId] = useState<string>('');
+    const [loadingClients, setLoadingClients] = useState(false);
+    const [loadingPMs, setLoadingPMs] = useState(false);
+    const [assigning, setAssigning] = useState(false);
+
+    // Fetch clients when assign modal opens
+    useEffect(() => {
+        if (isAssignOpen) {
+            fetchClients();
+            setSelectedClientId('');
+            setSelectedPMId('');
+            setProjectManagers([]);
+        }
+    }, [isAssignOpen]);
+
+    // Fetch PMs when client is selected
+    useEffect(() => {
+        if (selectedClientId) {
+            fetchProjectManagers(selectedClientId);
+        } else {
+            setProjectManagers([]);
+            setSelectedPMId('');
+        }
+    }, [selectedClientId]);
+
+    const fetchClients = async () => {
+        setLoadingClients(true);
+        try {
+            const data = await clientsService.getAll();
+            setClients(data);
+        } catch (error: any) {
+            toast.error('Failed to load clients');
+        } finally {
+            setLoadingClients(false);
+        }
+    };
+
+    const fetchProjectManagers = async (clientId: string) => {
+        setLoadingPMs(true);
+        try {
+            const data = await clientsService.getProjectManagers(clientId);
+            setProjectManagers(data);
+        } catch (error: any) {
+            toast.error('Failed to load contacts');
+        } finally {
+            setLoadingPMs(false);
+        }
+    };
 
     // Fetch files when opening files modal
     const handleViewFiles = useCallback(async (workOrderId: string) => {
@@ -119,6 +182,47 @@ export default function WorkOrdersPage() {
         }
     };
 
+    // Handle client assignment
+    const handleAssignClient = async () => {
+        if (!assigningWorkOrder || !selectedClientId) return;
+
+        setAssigning(true);
+        try {
+            await clientsService.assignWorkOrder(
+                assigningWorkOrder.id,
+                selectedClientId,
+                selectedPMId || null
+            );
+            toast.success('Work order assigned to client');
+            closeAssignModal();
+            await refresh();
+        } catch (error: any) {
+            toast.error('Failed to assign work order', { description: error.message });
+        } finally {
+            setAssigning(false);
+        }
+    };
+
+    // Handle unassigning a work order
+    const handleUnassign = async (order: WorkOrder) => {
+        const isConfirmed = await confirm({
+            title: 'Unassign Client',
+            message: 'Are you sure you want to remove the client assignment from this work order?',
+            variant: 'warning',
+            confirmLabel: 'Unassign',
+        });
+
+        if (isConfirmed) {
+            try {
+                await clientsService.unassignWorkOrder(order.id);
+                toast.success('Client unassigned from work order');
+                await refresh();
+            } catch (error: any) {
+                toast.error('Failed to unassign work order', { description: error.message });
+            }
+        }
+    };
+
     // Columns Definition
     const columns: Column<WorkOrder>[] = [
         {
@@ -135,6 +239,22 @@ export default function WorkOrdersPage() {
             header: 'Date',
             sortable: true,
             render: (order) => new Date(order.created_at).toLocaleDateString()
+        },
+        {
+            key: 'client',
+            header: 'Client',
+            render: (order) => {
+                if (order.client_id) {
+                    return (
+                        <Badge variant="info" size="sm">
+                            Assigned
+                        </Badge>
+                    );
+                }
+                return (
+                    <span className="text-gray-400 text-sm">Unassigned</span>
+                );
+            }
         },
         {
             key: 'processed',
@@ -155,7 +275,7 @@ export default function WorkOrdersPage() {
             header: 'Actions',
             align: 'right',
             render: (order) => (
-                <div className="flex justify-end gap-2">
+                <div className="flex justify-end gap-2 flex-wrap">
                     <Button
                         size="sm"
                         variant="ghost"
@@ -177,6 +297,31 @@ export default function WorkOrdersPage() {
                     >
                         Analysis
                     </Button>
+                    {!order.client_id ? (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openAssignModal(order);
+                            }}
+                        >
+                            Link Client
+                        </Button>
+                    ) : (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleUnassign(order);
+                            }}
+                        >
+                            Unlink
+                        </Button>
+                    )}
                     <Button
                         size="sm"
                         variant="ghost"
@@ -234,6 +379,96 @@ export default function WorkOrdersPage() {
                 onClose={closeAnalysis}
                 analysis={analysisData}
             />
+
+            {/* Client Assignment Modal */}
+            <Modal
+                isOpen={isAssignOpen}
+                onClose={closeAssignModal}
+                title="Link Work Order to Client"
+                size="md"
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                        Select a client and optionally assign a contact (Project Manager) to this work order.
+                    </p>
+
+                    {/* Client Select */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Client *
+                        </label>
+                        {loadingClients ? (
+                            <div className="flex items-center gap-2 py-2">
+                                <LoadingSpinner />
+                                <span className="text-sm text-gray-500">Loading clients...</span>
+                            </div>
+                        ) : (
+                            <select
+                                value={selectedClientId}
+                                onChange={(e) => setSelectedClientId(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                            >
+                                <option value="">Select a client...</option>
+                                {clients.map(client => (
+                                    <option key={client.id} value={client.id}>
+                                        {safeRender(client.name)}
+                                    </option>
+                                ))}
+                            </select>
+                        )}
+                    </div>
+
+                    {/* PM Select - only shows when client is selected */}
+                    {selectedClientId && (
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Client Contact (Optional)
+                            </label>
+                            {loadingPMs ? (
+                                <div className="flex items-center gap-2 py-2">
+                                    <LoadingSpinner />
+                                    <span className="text-sm text-gray-500">Loading contacts...</span>
+                                </div>
+                            ) : projectManagers.length === 0 ? (
+                                <p className="text-sm text-gray-500 py-2">
+                                    No contacts found for this client.
+                                </p>
+                            ) : (
+                                <select
+                                    value={selectedPMId}
+                                    onChange={(e) => setSelectedPMId(e.target.value)}
+                                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                                >
+                                    <option value="">No specific contact</option>
+                                    {projectManagers.map(pm => (
+                                        <option key={pm.id} value={pm.id}>
+                                            {safeRender(pm.name)} {pm.email ? `(${pm.email})` : ''}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        <Button
+                            variant="secondary"
+                            onClick={closeAssignModal}
+                            disabled={assigning}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleAssignClient}
+                            loading={assigning}
+                            disabled={!selectedClientId}
+                        >
+                            Link to Client
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
 
             <ConfirmDialog
                 {...dialogProps}

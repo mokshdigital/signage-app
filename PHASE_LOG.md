@@ -265,25 +265,94 @@
 
 ---
 
-## Metrics
+## Phase 9: Multi-file Work Orders & Upload Refactor
+**Date**: December 10-12, 2024
 
-### Code Statistics
-- **Total Pages**: 6 (Dashboard + 5 entity pages)
-- **API Routes**: 1 (process-work-order)
-- **Database Tables**: 4 (technicians, equipment, vehicles, work_orders)
-- **Storage Buckets**: 1 (work-orders)
-- **TypeScript Interfaces**: 4
+### Completed Tasks
+- ✅ **Refactored Upload System**
+  - Moved from single-file column in `work_orders` to dedicated `work_order_files` table
+  - Supported multiple file uploads per work order
+  - Preserved metadata (filename, size, mimetype)
 
-### Development Time
-- Phase 1-2: ~30 minutes (Setup & Database)
-- Phase 3-4: ~45 minutes (Layout & CRUD)
-- Phase 5-6: ~60 minutes (AI Integration & View)
-- Phase 7: ~45 minutes (Bug Fixes)
-- **Total**: ~3 hours
+### Key Files Created/Modified
+- `database_migrations/create_work_order_files.sql` - Migration for new table
+- `app/dashboard/work-orders/page.tsx` - Updated upload UI for multi-file support
 
-### Technologies Integrated
-- Next.js 15 with App Router
-- Supabase (Database + Storage)
-- Google Gemini 2.5 Pro AI
-- TypeScript
-- Tailwind CSS
+---
+
+## Phase 10: RBAC Refinement & User Visibility
+**Date**: December 12-16, 2024
+
+### Completed Tasks
+- ✅ **Admin UI Implementation**
+  - Created Roles management page
+  - Created User role assignment page
+- ✅ **User Visibility Fixes**
+  - Fixed RLS policies to allow Admins to see all user profiles
+  - Added `office_staff` table for directory management
+- ✅ **Vehicle Fleet Expansion**
+  - Added detailed vehicle tracking columns (VIN, registration, driver)
+  - Seeded extensive vehicle fleet data
+
+### Database Updates
+- `004_rbac_manage_policies.sql` - Refined RBAC management policies
+- `005_update_vehicles_schema.sql` - New vehicle columns
+- `006_seed_vehicles.sql` - Vehicle data seed
+- `007_create_office_staff.sql` - New staff table
+- `008_fix_user_visibility.sql` - User visibility fixes
+
+### Current Status
+- **RBAC**: robust and manageable via UI
+- **Fleet**: detailed and populated
+- **User Management**: fully functional for key admin tasks
+
+---
+
+## Phase 11: Clients & Project Managers Module
+**Date**: December 18, 2024
+
+### Completed Tasks
+- ✅ **Database Schema**
+  - Created `clients` table for corporate entities
+  - Created `project_managers` table for client contacts
+  - Added `client_id` and `pm_id` to `work_orders` table
+  - RLS policies enabled with permissive access
+
+- ✅ **Service Layer**
+  - Full CRUD for clients
+  - Full CRUD for project managers
+  - Search functionality for both entities
+  - Work order assignment/unassignment
+
+- ✅ **UI Components**
+  - `ClientForm` and `ProjectManagerForm` components
+  - Client directory with search
+  - Client detail view with tabbed interface
+  - Work order client assignment modal
+
+- ✅ **Work Order Integration**
+  - "Link to Client" action on unassigned orders
+  - Cascading dropdown (Client → PM)
+  - "Unlink" action to remove assignment
+
+### Key Files Created
+- `database_migrations/009_clients_and_pms.sql` - Database migration
+- `services/clients.service.ts` - Client and PM service layer
+- `components/forms/ClientForm.tsx` - Client form
+- `components/forms/ProjectManagerForm.tsx` - PM form
+- `app/dashboard/clients/page.tsx` - Clients directory
+- `app/dashboard/clients/[id]/page.tsx` - Client detail view
+
+### Design Decisions
+1. **Project Managers vs Office Staff**: PMs are labeled as "Client Contacts" in the UI to clearly distinguish from internal `office_staff`
+2. **Safe Rendering**: All display fields use `safeRender()` helper to prevent React object errors
+3. **No AI Modification**: Gemini processing logic remains unchanged for this phase
+4. **Manual Assignment**: Work order → Client linkage is manual (no auto-detection)
+
+### Next Steps
+1. Run migration in Supabase Dashboard
+2. Regenerate Supabase types
+3. Add entity-specific permissions for clients
+4. Consider auto-linking based on AI-extracted client name
+
+---
