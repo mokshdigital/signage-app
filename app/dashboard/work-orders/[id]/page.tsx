@@ -50,7 +50,8 @@ export default function WorkOrderDetailPage() {
         skills_required: [] as string[],
         permits_required: [] as string[],
         equipment_required: [] as string[],
-        materials_required: [] as string[]
+        materials_required: [] as string[],
+        recommended_techs: null as number | null
     });
     const [saving, setSaving] = useState(false);
 
@@ -100,7 +101,8 @@ export default function WorkOrderDetailPage() {
                 skills_required: data.skills_required || [],
                 permits_required: data.permits_required || [],
                 equipment_required: data.equipment_required || [],
-                materials_required: data.materials_required || []
+                materials_required: data.materials_required || [],
+                recommended_techs: data.recommended_techs || null
             });
 
             // Initialize selected technicians
@@ -166,7 +168,8 @@ export default function WorkOrderDetailPage() {
                 skills_required: editData.skills_required,
                 permits_required: editData.permits_required,
                 equipment_required: editData.equipment_required,
-                materials_required: editData.materials_required
+                materials_required: editData.materials_required,
+                recommended_techs: editData.recommended_techs
             });
             toast.success('Work order updated');
             setIsEditing(false);
@@ -445,6 +448,22 @@ export default function WorkOrderDetailPage() {
                                         placeholder="Add material..."
                                     />
                                 </div>
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                                        Recommended No of Technicians
+                                    </label>
+                                    <Input
+                                        type="number"
+                                        min="1"
+                                        value={editData.recommended_techs || ''}
+                                        onChange={(e) => setEditData(prev => ({
+                                            ...prev,
+                                            recommended_techs: e.target.value ? parseInt(e.target.value) : null
+                                        }))}
+                                        placeholder="e.g. 2"
+                                        className="w-32"
+                                    />
+                                </div>
                                 <div className="flex justify-end gap-3 pt-2">
                                     <Button variant="secondary" onClick={() => setIsEditing(false)} disabled={saving}>
                                         Cancel
@@ -504,6 +523,12 @@ export default function WorkOrderDetailPage() {
                                         )}
                                     </ul>
                                 </div>
+                                {workOrder.recommended_techs && (
+                                    <div>
+                                        <p className="text-sm text-gray-500 mb-2">Recommended Techs</p>
+                                        <p className="font-medium text-gray-900">{workOrder.recommended_techs} technicians</p>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </Card>

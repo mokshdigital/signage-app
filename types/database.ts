@@ -141,6 +141,7 @@ export interface WorkOrder {
     permits_required: string[] | null;
     equipment_required: string[] | null;
     materials_required: string[] | null;
+    recommended_techs: number | null;
     // Optional: populated when files are joined in queries
     files?: WorkOrderFile[];
     // Optional: populated when client/PM are joined
