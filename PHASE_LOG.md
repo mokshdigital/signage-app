@@ -350,9 +350,9 @@
 4. **Manual Assignment**: Work order → Client linkage is manual (no auto-detection)
 
 ### Next Steps
-1. Run migration in Supabase Dashboard
-2. Regenerate Supabase types
-3. Add entity-specific permissions for clients
-4. Consider auto-linking based on AI-extracted client name
+1. ~~Run migration in Supabase Dashboard~~ ✅ Complete
+2. ~~Update Supabase types~~ ✅ Complete
+3. Add entity-specific permissions for clients (future)
+4. Consider auto-linking based on AI-extracted client name (future)
 
 ---
