@@ -269,7 +269,7 @@ async function analyzeTextWithGemini(text: string): Promise<string> {
 
 // Analyze PDF with Gemini (native PDF support)
 async function analyzePdfWithGemini(pdfBuffer: Buffer): Promise<string> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
     const pdfPart = {
         inlineData: {
@@ -288,7 +288,7 @@ async function analyzeImageWithGemini(
     imageBuffer: Buffer,
     mimeType: string
 ): Promise<string> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
     const imagePart = {
         inlineData: {
@@ -304,7 +304,7 @@ async function analyzeImageWithGemini(
 
 // Analyze multiple files with Gemini (PDFs and images together)
 async function analyzeMultipleFilesWithGemini(fileParts: any[]): Promise<string> {
-    const model = genAI.getGenerativeModel({ model: 'gemini-2.5-pro' });
+    const model = genAI.getGenerativeModel({ model: 'gemini-1.5-pro' });
 
     // Send prompt + all file parts to Gemini
     const result = await model.generateContent([ANALYSIS_PROMPT, ...fileParts]);

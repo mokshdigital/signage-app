@@ -6,8 +6,8 @@ import { Database } from '@/types/supabase'
 // For user-authenticated API routes, use the server.ts client instead
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
 export function createClient() {
-    return createSupabaseClient<Database>(supabaseUrl, supabaseAnonKey)
+    return createSupabaseClient<Database>(supabaseUrl, supabaseServiceKey)
 }
