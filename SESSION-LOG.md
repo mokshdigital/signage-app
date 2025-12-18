@@ -444,3 +444,21 @@ When starting a new development session, add an entry following this format:
 
 ### Git Commit
 `feat: Add Work Order search/filter and reorder columns`
+
+## December 18, 2024 (Session 5)
+**Objective**: Unify Admin Tools under "Settings" and add Job Types management.
+
+### Key Changes
+1.  **Navigation Restructure**:
+    *   Renamed "Admin" section to **"Settings"** in the sidebar.
+    *   Moved `Roles` and `Users` pages under `/dashboard/settings/`.
+    *   Implemented a tabbed layout for improved navigation.
+2.  **Job Types Management**:
+    *   Added a new **"Job Types"** tab under Settings.
+    *   Implemented full CRUD (Create, Edit, Delete) for job types.
+    *   Added `updateJobType` to the service layer.
+3.  **Code Maintenance**:
+    *   Cleaned up folder structure by moving `app/dashboard/admin` to `app/dashboard/settings`.
+
+### Git Commit
+`feat: Refactor Admin to Settings tab and add Job Types management`

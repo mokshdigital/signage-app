@@ -414,3 +414,17 @@
   - "Assign Client" quick action in table
   - "Job Type" visibility
   - Improved date formatting (DD-MMM-YYYY)
+
+---
+
+## Phase 13: Settings & Configuration
+**Date**: December 18, 2024
+
+### Completed Tasks
+- ✅ **Unified Settings Module**
+  - Consolidated RBAC (Roles & Users) into a single "Settings" area
+  - Replaced multiple Sidebar admin items with a single "Settings" entry
+- ✅ **Job Types Management**
+  - Implemented UI for managing system Job Types
+  - Connected to `job_types` table in Supabase
+

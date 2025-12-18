@@ -3,25 +3,31 @@
 import { useState, useEffect, useCallback, createContext, useContext, ReactNode } from 'react';
 import { getCurrentUserPermissions } from '@/services/rbac.service';
 import { createClient } from '@/lib/supabase/client';
-import type { Role, PermissionContext } from '@/types/rbac';
+import type { Role, PermissionContext, UserWithRole } from '@/types/rbac';
 
 // Default context value
-const defaultContext: PermissionContext = {
+const defaultContext: PermissionContext & { profile: UserWithRole | null } = {
     permissions: [],
     role: null,
+    profile: null,
     isLoading: true,
     hasPermission: () => false,
     hasAnyPermission: () => false,
     hasAllPermissions: () => false,
 };
 
+interface ExtendedPermissionContext extends PermissionContext {
+    profile: UserWithRole | null;
+}
+
 // Create the context
-const PermissionsContext = createContext<PermissionContext>(defaultContext);
+const PermissionsContext = createContext<ExtendedPermissionContext>(defaultContext);
 
 // Provider component
 export function PermissionsProvider({ children }: { children: ReactNode }) {
     const [permissions, setPermissions] = useState<string[]>([]);
     const [role, setRole] = useState<Role | null>(null);
+    const [profile, setProfile] = useState<UserWithRole | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Fetch permissions on mount
@@ -38,17 +44,31 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
                 }
 
                 // Get user profile with role
-                const { data: profile } = await supabase
+                const { data: userProfile } = await supabase
                     .from('user_profiles')
                     .select(`
+                        id,
+                        display_name,
+                        avatar_url,
+                        phone,
+                        alternate_email,
+                        onboarding_completed,
+                        created_at,
+                        updated_at,
                         role_id,
                         role:roles(*)
                     `)
                     .eq('id', user.id)
                     .single();
 
-                if (profile?.role) {
-                    setRole(profile.role as unknown as Role);
+                if (userProfile) {
+                    // Fix type casting for UserWithRole since Supabase returns slightly different structure
+                    const fullProfile = userProfile as unknown as UserWithRole;
+                    setProfile(fullProfile);
+
+                    if (fullProfile.role) {
+                        setRole(fullProfile.role);
+                    }
                 }
 
                 // Get permissions
@@ -79,9 +99,10 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
         return permsToCheck.every(p => hasPermission(p));
     }, [hasPermission]);
 
-    const contextValue: PermissionContext = {
+    const contextValue: ExtendedPermissionContext = {
         permissions,
         role,
+        profile,
         isLoading,
         hasPermission,
         hasAnyPermission,
@@ -96,7 +117,7 @@ export function PermissionsProvider({ children }: { children: ReactNode }) {
 }
 
 // Hook to use permissions
-export function usePermissions(): PermissionContext {
+export function usePermissions(): ExtendedPermissionContext {
     const context = useContext(PermissionsContext);
     if (!context) {
         throw new Error('usePermissions must be used within a PermissionsProvider');

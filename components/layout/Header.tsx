@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { User } from '@supabase/supabase-js';
 import { Button, LogoutIcon } from '@/components/ui';
+import { UserProfile } from './UserProfile';
 
 interface HeaderProps {
     user: User | null;
@@ -49,24 +50,7 @@ export function Header({ user, onSignOut, onToggleSidebar }: HeaderProps) {
 
                 {/* User Info & Logout */}
                 <div className="flex items-center gap-4">
-                    {user && (
-                        <div className="hidden sm:flex flex-col items-end mr-2">
-                            <span className="text-sm font-medium text-gray-900">
-                                {user.user_metadata?.first_name || 'User'}
-                            </span>
-                            <span className="text-xs text-gray-500">
-                                {user.email}
-                            </span>
-                        </div>
-                    )}
-                    <Button
-                        onClick={onSignOut}
-                        variant="danger"
-                        size="sm"
-                        leftIcon={<LogoutIcon />}
-                    >
-                        Logout
-                    </Button>
+                    <UserProfile onSignOut={onSignOut} />
                 </div>
             </div>
         </header>
