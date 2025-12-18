@@ -15,6 +15,8 @@ export interface Database {
                     uploaded_by: string | null
                     processed: boolean
                     analysis: Json | null
+                    client_id: string | null
+                    pm_id: string | null
                     created_at: string
                 }
                 Insert: {
@@ -22,6 +24,8 @@ export interface Database {
                     uploaded_by?: string | null
                     processed?: boolean
                     analysis?: Json | null
+                    client_id?: string | null
+                    pm_id?: string | null
                     created_at?: string
                 }
                 Update: {
@@ -29,9 +33,24 @@ export interface Database {
                     uploaded_by?: string | null
                     processed?: boolean
                     analysis?: Json | null
+                    client_id?: string | null
+                    pm_id?: string | null
                     created_at?: string
                 }
-                Relationships: []
+                Relationships: [
+                    {
+                        foreignKeyName: "work_orders_client_id_fkey"
+                        columns: ["client_id"]
+                        referencedRelation: "clients"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_orders_pm_id_fkey"
+                        columns: ["pm_id"]
+                        referencedRelation: "project_managers"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
             work_order_files: {
                 Row: {
@@ -311,6 +330,64 @@ export interface Database {
                         foreignKeyName: "role_permissions_permission_id_fkey"
                         columns: ["permission_id"]
                         referencedRelation: "permissions"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            clients: {
+                Row: {
+                    id: string
+                    name: string
+                    address: string | null
+                    notes: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    address?: string | null
+                    notes?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    address?: string | null
+                    notes?: string | null
+                    created_at?: string
+                }
+                Relationships: []
+            }
+            project_managers: {
+                Row: {
+                    id: string
+                    client_id: string
+                    name: string
+                    email: string | null
+                    phone: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    client_id: string
+                    name: string
+                    email?: string | null
+                    phone?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    client_id?: string
+                    name?: string
+                    email?: string | null
+                    phone?: string | null
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "project_managers_client_id_fkey"
+                        columns: ["client_id"]
+                        referencedRelation: "clients"
                         referencedColumns: ["id"]
                     }
                 ]
