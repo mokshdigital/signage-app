@@ -416,3 +416,31 @@ When starting a new development session, add an entry following this format:
 *   Added `recommended_techs` column to `work_orders`.
 *   Verified requirement columns (`skills_required`, etc.) exist.
 
+
+## December 18, 2024 (Session 4)
+**Objective**: Refactor Work Orders UI with Search, Filters, and improved layout.
+
+### Key Changes
+1.  **UI Refactoring**:
+    *   Replaced the large "Upload Work Order" box with a clean **"+ Work Order" button** and modal.
+    *   Simplified the table view to be the primary focus of the page.
+2.  **Table Enhancements**:
+    *   **Column Updates**:
+        *   Added "Job Type" column.
+        *   Updated dates to use `DD-MMM-YYYY` format (e.g., 18-Dec-2025).
+        *   Displayed "Uploaded By" with actual user names (via new `getUserProfiles` service).
+        *   Moved "Uploaded Date" to the far right.
+        *   Removed "Actions" column for a cleaner look.
+3.  **Search & Filtering**:
+    *   Added a comprehensive **Filter Toolbar**:
+        *   **Search**: Filters by WO#, Address, Client, Uploader.
+        *   **Status**: specific Analyzed vs Pending checks.
+        *   **Job Type**: dynamic dropdown.
+        *   **Client**: dynamic dropdown.
+        *   **Date**: specific upload date picker.
+4.  **Technical**:
+    *   Added `formatTableDate` utility.
+    *   Optimized data fetching to load filter options (Clients, Job Types) on mount.
+
+### Git Commit
+`feat: Add Work Order search/filter and reorder columns`

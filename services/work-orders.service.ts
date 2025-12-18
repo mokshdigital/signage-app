@@ -301,6 +301,25 @@ export const workOrdersService = {
     },
 
     /**
+     * Update a job type
+     */
+    async updateJobType(id: string, updates: { name?: string; description?: string }): Promise<JobType> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('job_types')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update job type: ${error.message}`);
+        }
+
+        return data as JobType;
+    },
+
+    /**
      * Create a new job type
      */
     async createJobType(jobType: { name: string; description?: string }): Promise<JobType> {

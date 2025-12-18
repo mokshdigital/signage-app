@@ -25,22 +25,19 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
 
     const mainNavItems: NavItem[] = [
         { name: 'Dashboard', href: '/dashboard', icon: '📊', permission: 'dashboard:read' },
-        { name: 'People', href: '/dashboard/people', icon: '👥', permission: 'technicians:read' }, // Using technicians permission for now as baseline
+        { name: 'People', href: '/dashboard/people', icon: '👥', permission: 'technicians:read' },
         { name: 'Equipment', href: '/dashboard/equipment', icon: '🔧', permission: 'equipment:read' },
         { name: 'Vehicles', href: '/dashboard/vehicles', icon: '🚗', permission: 'vehicles:read' },
-        { name: 'Clients', href: '/dashboard/clients', icon: '🏢', permission: 'work_orders:read' }, // Using work_orders permission as baseline
+        { name: 'Clients', href: '/dashboard/clients', icon: '🏢', permission: 'work_orders:read' },
         { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋', permission: 'work_orders:read' },
+        {
+            name: 'Settings',
+            href: '/dashboard/settings',
+            icon: '⚙️',
+            permission: ['roles:manage', 'users:manage', 'settings:manage']
+        },
     ];
 
-    const adminNavItems: NavItem[] = [
-        { name: 'Roles', href: '/dashboard/admin/roles', icon: '🔐', permission: 'roles:manage' },
-        { name: 'Users', href: '/dashboard/admin/users', icon: '👥', permission: 'users:manage' },
-    ];
-
-    // Check if user has access to any admin items
-    const hasAdminAccess = hasAnyPermission(['roles:manage', 'users:manage']);
-
-    // Filter items based on permissions
     const filterItems = (items: NavItem[]) => {
         if (isLoading) return items; // Show all while loading, middleware will protect
         return items.filter(item => {
@@ -53,7 +50,6 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
     };
 
     const visibleMainItems = filterItems(mainNavItems);
-    const visibleAdminItems = filterItems(adminNavItems);
 
     const renderNavItem = (item: NavItem) => {
         const isActive = pathname === item.href ||
@@ -98,20 +94,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
                     <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
                         {/* Main Navigation */}
                         {visibleMainItems.map(renderNavItem)}
-
-                        {/* Admin Section */}
-                        {hasAdminAccess && visibleAdminItems.length > 0 && (
-                            <>
-                                <div className={`pt-4 mt-4 border-t border-gray-200 ${isCollapsed ? 'hidden' : ''}`}>
-                                    <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                                        Administration
-                                    </p>
-                                </div>
-                                {isCollapsed && <div className="pt-2 mt-2 border-t border-gray-200" />}
-                                {visibleAdminItems.map(renderNavItem)}
-                            </>
-                        )}
                     </nav>
+
+                    {/* Collapse Toggle (Desktop only) */}
 
                     {/* Collapse Toggle (Desktop only) */}
                     <div className="hidden lg:flex p-4 border-t border-gray-200 justify-end">

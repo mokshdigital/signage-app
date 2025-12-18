@@ -226,7 +226,11 @@ All entity pages support:
   - Staffing needs and timeline estimates
   - Permits, technical requirements, access needs
   - Risk factors and questions
-- View analysis in formatted modal
+- AI extracts structured information (Job type, Client, Resources, etc.)
+- **Advanced Management**:
+  - Filter by Status, Job Type, Client, and Date
+  - Text search across multiple fields
+  - Customizable table view with "Job Type" and "Uploaded By" details
 
 ### 4. Status Management
 - Color-coded status badges

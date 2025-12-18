@@ -397,3 +397,20 @@
 2. Create `shipment-photos` storage bucket
 3. Test new AI extraction with real documents
 4. Begin Sub-Phase B (Inventory/Stock integration)
+
+---
+
+## Phase 12-B: Work Order UI Workflows
+**Date**: December 18, 2024
+
+### Completed Tasks
+- ✅ **UI Overhaul**
+  - Moved upload interface to modal
+  - Implemented clean data table layout
+- ✅ **Search & Filter System**
+  - Implemented multi-criteria filtering (Status, Job Type, Client, Date)
+  - Implemented text search
+- ✅ **UX Improvements**
+  - "Assign Client" quick action in table
+  - "Job Type" visibility
+  - Improved date formatting (DD-MMM-YYYY)
