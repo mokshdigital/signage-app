@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import { createClient } from '@/lib/supabase/client';
 import { WorkOrder, WorkOrderFile, Client, ProjectManager } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { clientsService } from '@/services/clients.service';
@@ -70,6 +71,22 @@ export default function WorkOrdersPage() {
     const [loadingPMs, setLoadingPMs] = useState(false);
     const [assigning, setAssigning] = useState(false);
 
+    // Upload Modal State
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+    // Map of user IDs to profiles for "Uploaded By" column
+    const [uploaders, setUploaders] = useState<Record<string, { name: string }>>({});
+
+    // Fetch uploaders when work orders change
+    useEffect(() => {
+        if (workOrders.length > 0) {
+            const userIds = Array.from(new Set(workOrders.map(o => o.uploaded_by).filter(Boolean))) as string[];
+            if (userIds.length > 0) {
+                workOrdersService.getUserProfiles(userIds).then(setUploaders);
+            }
+        }
+    }, [workOrders]);
+
     // Fetch clients when assign modal opens
     useEffect(() => {
         if (isAssignOpen) {
@@ -134,8 +151,10 @@ export default function WorkOrdersPage() {
         setUploadError(null);
         try {
             // 1. Create work order
-            // TODO: Get real user ID from auth context
-            const order = await workOrdersService.create({ uploaded_by: null });
+            // 1. Create work order
+            const supabase = createClient();
+            const { data: { user } } = await supabase.auth.getUser();
+            const order = await workOrdersService.create({ uploaded_by: user?.id || null });
 
             // 2. Upload files
             const allFiles = [mainFile, ...associatedFiles];
@@ -154,6 +173,7 @@ export default function WorkOrdersPage() {
                 toast.success('Work order uploaded and analyzed');
             }
 
+            setIsUploadModalOpen(false); // Close modal on success
             // Refresh list
             await refresh();
         } catch (error: any) {
@@ -227,15 +247,21 @@ export default function WorkOrdersPage() {
     // Columns Definition
     const columns: Column<WorkOrder>[] = [
         {
+            key: 'created_at',
+            header: 'Uploaded Date',
+            sortable: true,
+            render: (order) => <span className="text-sm text-gray-600">{new Date(order.created_at).toLocaleDateString()}</span>
+        },
+        {
             key: 'work_order_number',
             header: 'WO #',
             sortable: true,
             render: (order) => (
                 <Link
                     href={`/dashboard/work-orders/${order.id}`}
-                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline text-left block"
+                    className="font-medium text-blue-600 hover:text-blue-800 hover:underline block"
                 >
-                    {order.work_order_number || <span className="text-gray-400 italic">No # ({order.id.slice(0, 6)})</span>}
+                    {order.work_order_number || <span className="text-gray-400 italic">No #</span>}
                 </Link>
             )
         },
@@ -243,61 +269,49 @@ export default function WorkOrdersPage() {
             key: 'site_address',
             header: 'Site Address',
             render: (order) => (
-                <span className="truncate max-w-[200px] block" title={order.site_address || ''}>
+                <span className="truncate max-w-[200px] block text-sm" title={order.site_address || ''}>
                     {safeRender(order.site_address) || '-'}
                 </span>
             )
         },
         {
-            key: 'work_order_date',
-            header: 'WO Date',
-            sortable: true,
-            render: (order) => order.work_order_date
-                ? new Date(order.work_order_date).toLocaleDateString()
-                : <span className="text-gray-400 text-xs">-</span>
-        },
-        {
-            key: 'created_at',
-            header: 'Uploaded',
-            sortable: true,
-            render: (order) => <span className="text-xs text-gray-500">{new Date(order.created_at).toLocaleDateString()}</span>
-        },
-        {
             key: 'client',
-            header: 'Client',
+            header: 'Client Name',
             render: (order) => {
-                if (order.client_id) {
-                    return (
-                        <Badge variant="info" size="sm">
-                            Assigned
-                        </Badge>
-                    );
+                if (order.client) {
+                    return <span className="font-medium text-gray-900">{order.client.name}</span>;
                 }
                 return (
-                    <span className="text-gray-400 text-sm">Unassigned</span>
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            openAssignModal(order);
+                        }}
+                        className="text-blue-600 hover:text-blue-800 hover:underline text-sm font-medium"
+                    >
+                        Assign Client
+                    </button>
                 );
             }
         },
         {
-            key: 'processed',
-            header: 'AI Status',
-            sortable: true,
-            render: (order) => (
-                <Badge
-                    variant={order.processed ? 'success' : 'warning'}
-                    size="sm"
-                    dot
-                >
-                    {order.processed ? 'Analyzed' : 'Pending'}
-                </Badge>
-            )
+            key: 'uploaded_by',
+            header: 'Uploaded By',
+            render: (order) => {
+                const uploaderName = order.uploaded_by ? uploaders[order.uploaded_by]?.name : null;
+                return (
+                    <span className="text-sm text-gray-600">
+                        {uploaderName || (order.uploaded_by ? 'User' : '-')}
+                    </span>
+                );
+            }
         },
         {
             key: 'actions',
-            header: 'Actions',
+            header: '',
             align: 'right',
             render: (order) => (
-                <div className="flex justify-end gap-2 flex-wrap">
+                <div className="flex justify-end gap-2">
                     <Button
                         size="sm"
                         variant="ghost"
@@ -308,42 +322,6 @@ export default function WorkOrdersPage() {
                     >
                         Files
                     </Button>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        disabled={!order.processed}
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            openAnalysis(order.analysis);
-                        }}
-                    >
-                        Analysis
-                    </Button>
-                    {!order.client_id ? (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                openAssignModal(order);
-                            }}
-                        >
-                            Link Client
-                        </Button>
-                    ) : (
-                        <Button
-                            size="sm"
-                            variant="ghost"
-                            className="text-orange-600 hover:text-orange-700 hover:bg-orange-50"
-                            onClick={(e) => {
-                                e.stopPropagation();
-                                handleUnassign(order);
-                            }}
-                        >
-                            Unlink
-                        </Button>
-                    )}
                     <Button
                         size="sm"
                         variant="ghost"
@@ -362,7 +340,10 @@ export default function WorkOrdersPage() {
 
     return (
         <div className="space-y-6">
-            <h1 className="text-2xl font-bold text-gray-900">Work Orders</h1>
+            <div className="flex justify-between items-center">
+                <h1 className="text-2xl font-bold text-gray-900">Work Orders</h1>
+                <Button onClick={() => setIsUploadModalOpen(true)}>+ Work Order</Button>
+            </div>
 
             {(crudError || uploadError) && (
                 <Alert variant="error" title="Error" dismissible onDismiss={() => setUploadError(null)}>
@@ -370,14 +351,8 @@ export default function WorkOrdersPage() {
                 </Alert>
             )}
 
-            {/* Upload Form */}
-            <WorkOrderUploadForm
-                onSubmit={handleUpload}
-                isLoading={isUploading}
-            />
-
             {/* Main List */}
-            <Card noPadding title={`Recent Orders (${workOrders.length})`}>
+            <Card noPadding>
                 <DataTable
                     data={workOrders}
                     columns={columns}
@@ -389,6 +364,18 @@ export default function WorkOrdersPage() {
             </Card>
 
             {/* Modals */}
+            <Modal
+                isOpen={isUploadModalOpen}
+                onClose={() => setIsUploadModalOpen(false)}
+                title="Upload Work Order"
+                size="xl"
+            >
+                <WorkOrderUploadForm
+                    onSubmit={handleUpload}
+                    isLoading={isUploading}
+                />
+            </Modal>
+
             <WorkOrderFilesModal
                 isOpen={isFilesOpen}
                 onClose={closeFilesModal}

@@ -38,7 +38,7 @@ export const workOrdersService = {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('work_orders')
-            .select('*')
+            .select('*, client:clients(*)')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -620,6 +620,28 @@ export const workOrdersService = {
         });
 
         return options;
+    },
+    /**
+     * Get profiles for a list of user IDs
+     */
+    async getUserProfiles(userIds: string[]): Promise<Record<string, { name: string }>> {
+        if (!userIds.length) return {};
+
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select('id, display_name')
+            .in('id', userIds);
+
+        if (error) {
+            console.error('Error fetching user profiles:', error);
+            return {};
+        }
+
+        return (data || []).reduce((acc, profile) => ({
+            ...acc,
+            [profile.id]: { name: profile.display_name }
+        }), {});
     },
 };
 
