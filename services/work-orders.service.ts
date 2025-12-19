@@ -12,7 +12,8 @@ import {
     TaskAssignment,
     TaskChecklist,
     ChecklistTemplate,
-    ChecklistTemplateItem
+    ChecklistTemplateItem,
+    ShippingComment
 } from '@/types/database';
 
 /**
@@ -1019,6 +1020,102 @@ export const workOrdersService = {
         }
 
         return data as WorkOrder;
+    },
+
+    // =============================================
+    // SHIPPING COMMENTS
+    // =============================================
+
+    /**
+     * Get all shipping comments for a work order (newest first)
+     */
+    async getShippingComments(workOrderId: string): Promise<ShippingComment[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_shipping_comments')
+            .select(`
+                *,
+                user:user_profiles(id, display_name, avatar_url)
+            `)
+            .eq('work_order_id', workOrderId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            throw new Error(`Failed to fetch shipping comments: ${error.message}`);
+        }
+
+        return (data || []) as ShippingComment[];
+    },
+
+    /**
+     * Add a shipping comment
+     */
+    async addShippingComment(workOrderId: string, content: string): Promise<ShippingComment> {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            throw new Error('You must be logged in to add a comment');
+        }
+
+        const { data, error } = await supabase
+            .from('work_order_shipping_comments')
+            .insert([{
+                work_order_id: workOrderId,
+                user_id: user.id,
+                content: content.trim()
+            }])
+            .select(`
+                *,
+                user:user_profiles(id, display_name, avatar_url)
+            `)
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to add shipping comment: ${error.message}`);
+        }
+
+        return data as ShippingComment;
+    },
+
+    /**
+     * Update a shipping comment (own comments only - enforced by RLS)
+     */
+    async updateShippingComment(commentId: string, content: string): Promise<ShippingComment> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_shipping_comments')
+            .update({
+                content: content.trim(),
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', commentId)
+            .select(`
+                *,
+                user:user_profiles(id, display_name, avatar_url)
+            `)
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update shipping comment: ${error.message}`);
+        }
+
+        return data as ShippingComment;
+    },
+
+    /**
+     * Delete a shipping comment (own comments only - enforced by RLS)
+     */
+    async deleteShippingComment(commentId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_shipping_comments')
+            .delete()
+            .eq('id', commentId);
+
+        if (error) {
+            throw new Error(`Failed to delete shipping comment: ${error.message}`);
+        }
     },
 };
 

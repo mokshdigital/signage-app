@@ -209,6 +209,34 @@ Stores multiple files associated with each work order (work orders, plans, speci
 
 ---
 
+### 5.5 `work_order_shipping_comments`
+Stores threaded comments for tracking shipping conversations with clients.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
+| `work_order_id` | UUID | NOT NULL, REFERENCES work_orders(id) ON DELETE CASCADE | Associated work order |
+| `user_id` | UUID | NOT NULL, REFERENCES user_profiles(id) ON DELETE CASCADE | User who created the comment |
+| `content` | TEXT | NOT NULL | Comment content |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Comment creation timestamp |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+
+#### Indexes
+- `idx_shipping_comments_work_order_id` on `work_order_id`
+- `idx_shipping_comments_user_id` on `user_id`
+- `idx_shipping_comments_created_at` on `created_at DESC`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**:
+  - `Allow all reads`: SELECT for authenticated users
+  - `Allow authenticated inserts`: INSERT for authenticated users
+  - `Allow users to update own`: UPDATE only for comment owner (user_id = auth.uid())
+  - `Allow users to delete own`: DELETE only for comment owner (user_id = auth.uid())
+
+---
+
 ### 6. `user_profiles`
 Stores extended user profile information collected during onboarding.
 

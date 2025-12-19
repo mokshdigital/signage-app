@@ -733,6 +733,46 @@ export interface Database {
                         referencedColumns: ["id"]
                     }
                 ]
+            },
+            work_order_shipping_comments: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    user_id: string
+                    content: string
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    user_id: string
+                    content: string
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    user_id?: string
+                    content?: string
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_shipping_comments_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_shipping_comments_user_id_fkey"
+                        columns: ["user_id"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
         }
         Views: {

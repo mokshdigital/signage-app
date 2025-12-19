@@ -29,7 +29,8 @@ import {
     WorkOrderAnalysisModal,
     ShipmentManager,
     WorkOrderTasks,
-    FileViewerModal
+    FileViewerModal,
+    ShippingComments
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
@@ -639,6 +640,22 @@ export default function WorkOrderDetailPage() {
                         workOrderId={workOrderId}
                         availableTechnicians={workOrder.assignments || []}
                     />
+
+                    {/* Shipments Section */}
+                    <Card title="Shipments & Tracking">
+                        {/* Shipping Comments */}
+                        <ShippingComments workOrderId={workOrderId} />
+
+                        {/* Divider */}
+                        <div className="border-t border-gray-200 my-4" />
+
+                        {/* Shipment Tracking */}
+                        <ShipmentManager
+                            workOrderId={workOrderId}
+                            shipments={workOrder.shipments || []}
+                            onShipmentsChange={fetchWorkOrder}
+                        />
+                    </Card>
                 </div>
 
                 {/* Sidebar - 1 column */}
@@ -807,21 +824,6 @@ export default function WorkOrderDetailPage() {
                             </div>
                         </Card>
                     )}
-
-                    {/* Shipments Section */}
-                    <Card title="Shipments">
-                        {workOrder.shipment_status && (
-                            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
-                                <p className="text-xs text-blue-600 font-medium mb-1">Initial Notes</p>
-                                <p className="text-sm text-gray-700">{safeRender(workOrder.shipment_status)}</p>
-                            </div>
-                        )}
-                        <ShipmentManager
-                            workOrderId={workOrderId}
-                            shipments={workOrder.shipments || []}
-                            onShipmentsChange={fetchWorkOrder}
-                        />
-                    </Card>
                 </div>
             </div>
 

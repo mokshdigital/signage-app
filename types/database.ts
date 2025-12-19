@@ -131,6 +131,22 @@ export interface WorkOrderOwner {
     avatar_url: string | null;
 }
 
+// Shipping comment for tracking client conversations
+export interface ShippingComment {
+    id: string;
+    work_order_id: string;
+    user_id: string;
+    content: string;
+    created_at: string;
+    updated_at: string;
+    // Optional: populated when user is joined
+    user?: {
+        id: string;
+        display_name: string;
+        avatar_url: string | null;
+    };
+}
+
 export interface WorkOrder {
     id: string;
     uploaded_by: string | null;
@@ -173,6 +189,8 @@ export interface WorkOrder {
     tasks?: WorkOrderTask[];
     // Optional: populated when owner is joined
     owner?: WorkOrderOwner;
+    // Optional: populated when shipping comments are joined
+    shipping_comments?: ShippingComment[];
 }
 
 export interface ChecklistTemplate {

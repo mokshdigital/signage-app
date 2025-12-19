@@ -160,10 +160,10 @@ export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUp
                     )}
                 </div>
 
-                {/* Initial Shipment Status */}
+                {/* Initial Shipping Comment */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Initial Shipment Status (Optional)
+                        Initial Shipping Comment (Optional)
                     </label>
                     <Textarea
                         value={shipmentStatus}
@@ -173,7 +173,7 @@ export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUp
                         className="w-full"
                     />
                     <p className="mt-1 text-sm text-gray-500">
-                        This will be displayed in the Shipment section of the work order.
+                        This will be added as the first comment in the Shipping Comments section.
                     </p>
                 </div>
 

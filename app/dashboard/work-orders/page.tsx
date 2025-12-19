@@ -233,13 +233,12 @@ export default function WorkOrdersPage() {
         setIsUploading(true);
         setUploadError(null);
         try {
-            // 1. Create work order with owner and shipment status
+            // 1. Create work order with owner
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
             const order = await workOrdersService.create({
                 uploaded_by: user?.id || null,
                 owner_id: user?.id || null,
-                shipment_status: shipmentStatus || null,
                 job_status: 'Open'
             });
 
@@ -247,7 +246,12 @@ export default function WorkOrdersPage() {
             const allFiles = [mainFile, ...associatedFiles];
             await workOrdersService.uploadFiles(order.id, allFiles);
 
-            // 3. Trigger AI Processing
+            // 3. Create initial shipping comment if provided
+            if (shipmentStatus?.trim()) {
+                await workOrdersService.addShippingComment(order.id, shipmentStatus.trim());
+            }
+
+            // 4. Trigger AI Processing
             setIsProcessing(true);
             const processResult = await workOrdersService.processWithAI(order.id);
 
