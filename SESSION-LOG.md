@@ -502,3 +502,20 @@ When starting a new development session, add an entry following this format:
 
 ### Git Commit
 `feat: Implement User Profile dropdown and Profile Settings page`
+
+## December 19, 2024 (Session 1)
+**Objective**: Fix AI Work Order Prompt logic for better task extraction and field parsing.
+
+### Key Changes
+1.  **AI Prompt Update** (`app/api/process-work-order/route.ts`):
+    *   Refined the prompt to ignore generic headers ("Installation", "Services") and extract specific actionable tasks.
+    *   Added explicit extraction for `planned_date` and mapped it to the `work_orders` table update.
+    *   Strengthened JSON formatting instructions to reduce parsing errors.
+    *   Added a debug log to capture a sample of the raw AI response for troubleshooting.
+
+2.  **Logic Enhancements**:
+    *   Ensured `planned_date` is properly parsed and saved to the database.
+    *   Directly mapped extracted `suggested_tasks` to the `work_order_tasks` table for immediate usability in the dashboard.
+
+### Git Commit
+`fix(work-orders): refine AI prompt logic for task extraction and date parsing`
