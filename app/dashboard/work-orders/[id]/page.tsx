@@ -25,7 +25,8 @@ import {
     WorkOrderFilesModal,
     WorkOrderAnalysisModal,
     ShipmentManager,
-    WorkOrderTasks
+    WorkOrderTasks,
+    FileViewerModal
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
@@ -73,6 +74,9 @@ export default function WorkOrderDetailPage() {
 
     // Analysis modal
     const [isAnalysisOpen, setIsAnalysisOpen] = useState(false);
+
+    // File viewer modal
+    const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
 
     // Fetch work order on mount
     useEffect(() => {
@@ -257,11 +261,9 @@ export default function WorkOrderDetailPage() {
                     <Button variant="secondary" onClick={handleViewFiles}>
                         View Files
                     </Button>
-                    {workOrder.processed && (
-                        <Button variant="secondary" onClick={() => setIsAnalysisOpen(true)}>
-                            View Analysis
-                        </Button>
-                    )}
+                    <Button variant="primary" onClick={() => { handleViewFiles(); setIsFileViewerOpen(true); }}>
+                        View WO
+                    </Button>
                 </div>
             </div>
 
@@ -725,6 +727,12 @@ export default function WorkOrderDetailPage() {
                 isOpen={isAnalysisOpen}
                 onClose={() => setIsAnalysisOpen(false)}
                 analysis={workOrder?.analysis}
+            />
+
+            <FileViewerModal
+                isOpen={isFileViewerOpen}
+                onClose={() => setIsFileViewerOpen(false)}
+                files={files}
             />
         </div>
     );

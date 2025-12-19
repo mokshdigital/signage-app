@@ -70,10 +70,11 @@ CREATE TABLE IF NOT EXISTS task_checklists (
 );
 
 -- Add recommended indexes
-CREATE INDEX idx_checklist_template_items_template_id ON checklist_template_items(template_id);
-CREATE INDEX idx_work_order_tasks_work_order_id ON work_order_tasks(work_order_id);
-CREATE INDEX idx_task_assignments_task_id ON task_assignments(task_id);
-CREATE INDEX idx_task_checklists_task_id ON task_checklists(task_id);
+-- Add recommended indexes
+CREATE INDEX IF NOT EXISTS idx_checklist_template_items_template_id ON checklist_template_items(template_id);
+CREATE INDEX IF NOT EXISTS idx_work_order_tasks_work_order_id ON work_order_tasks(work_order_id);
+CREATE INDEX IF NOT EXISTS idx_task_assignments_task_id ON task_assignments(task_id);
+CREATE INDEX IF NOT EXISTS idx_task_checklists_task_id ON task_checklists(task_id);
 
 -- Enable RLS
 ALTER TABLE checklist_templates ENABLE ROW LEVEL SECURITY;
@@ -83,10 +84,20 @@ ALTER TABLE task_assignments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE task_checklists ENABLE ROW LEVEL SECURITY;
 
 -- Create Permissive Policies (for now, as per standard dev practice in this project)
+-- Create Permissive Policies (for now, as per standard dev practice in this project)
+DROP POLICY IF EXISTS "Allow all access to checklist_templates" ON checklist_templates;
 CREATE POLICY "Allow all access to checklist_templates" ON checklist_templates FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all access to checklist_template_items" ON checklist_template_items;
 CREATE POLICY "Allow all access to checklist_template_items" ON checklist_template_items FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all access to work_order_tasks" ON work_order_tasks;
 CREATE POLICY "Allow all access to work_order_tasks" ON work_order_tasks FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all access to task_assignments" ON task_assignments;
 CREATE POLICY "Allow all access to task_assignments" ON task_assignments FOR ALL TO authenticated USING (true) WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Allow all access to task_checklists" ON task_checklists;
 CREATE POLICY "Allow all access to task_checklists" ON task_checklists FOR ALL TO authenticated USING (true) WITH CHECK (true);
 
 -- Update work_orders table to include 'scope_of_work' if it doesn't exist

@@ -20,22 +20,26 @@ CREATE INDEX IF NOT EXISTS idx_job_types_name ON job_types(name);
 -- Enable RLS
 ALTER TABLE job_types ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all reads on job_types" ON job_types;
 CREATE POLICY "Allow all reads on job_types"
     ON job_types FOR SELECT
     TO anon, authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow all inserts on job_types" ON job_types;
 CREATE POLICY "Allow all inserts on job_types"
     ON job_types FOR INSERT
     TO anon, authenticated
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow all updates on job_types" ON job_types;
 CREATE POLICY "Allow all updates on job_types"
     ON job_types FOR UPDATE
     TO anon, authenticated
     USING (true)
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow all deletes on job_types" ON job_types;
 CREATE POLICY "Allow all deletes on job_types"
     ON job_types FOR DELETE
     TO anon, authenticated
@@ -99,22 +103,26 @@ CREATE INDEX IF NOT EXISTS idx_wo_assignments_technician_id ON work_order_assign
 -- Enable RLS
 ALTER TABLE work_order_assignments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all reads on work_order_assignments" ON work_order_assignments;
 CREATE POLICY "Allow all reads on work_order_assignments"
     ON work_order_assignments FOR SELECT
     TO anon, authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow all inserts on work_order_assignments" ON work_order_assignments;
 CREATE POLICY "Allow all inserts on work_order_assignments"
     ON work_order_assignments FOR INSERT
     TO anon, authenticated
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow all updates on work_order_assignments" ON work_order_assignments;
 CREATE POLICY "Allow all updates on work_order_assignments"
     ON work_order_assignments FOR UPDATE
     TO anon, authenticated
     USING (true)
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow all deletes on work_order_assignments" ON work_order_assignments;
 CREATE POLICY "Allow all deletes on work_order_assignments"
     ON work_order_assignments FOR DELETE
     TO anon, authenticated
@@ -149,22 +157,26 @@ CREATE INDEX IF NOT EXISTS idx_wo_shipments_received_at ON work_order_shipments(
 -- Enable RLS
 ALTER TABLE work_order_shipments ENABLE ROW LEVEL SECURITY;
 
+DROP POLICY IF EXISTS "Allow all reads on work_order_shipments" ON work_order_shipments;
 CREATE POLICY "Allow all reads on work_order_shipments"
     ON work_order_shipments FOR SELECT
     TO anon, authenticated
     USING (true);
 
+DROP POLICY IF EXISTS "Allow all inserts on work_order_shipments" ON work_order_shipments;
 CREATE POLICY "Allow all inserts on work_order_shipments"
     ON work_order_shipments FOR INSERT
     TO anon, authenticated
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow all updates on work_order_shipments" ON work_order_shipments;
 CREATE POLICY "Allow all updates on work_order_shipments"
     ON work_order_shipments FOR UPDATE
     TO anon, authenticated
     USING (true)
     WITH CHECK (true);
 
+DROP POLICY IF EXISTS "Allow all deletes on work_order_shipments" ON work_order_shipments;
 CREATE POLICY "Allow all deletes on work_order_shipments"
     ON work_order_shipments FOR DELETE
     TO anon, authenticated
