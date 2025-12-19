@@ -637,4 +637,25 @@ Added three new fields to the work order module for better tracking and workflow
 - `components/work-orders/WorkOrderUploadForm.tsx`
 - `app/dashboard/work-orders/page.tsx`
 - `app/dashboard/work-orders/[id]/page.tsx`
+- `app/dashboard/work-orders/[id]/page.tsx`
 - `DATABASE_SCHEMA.md`
+
+#### 7. Shipping Comments Feature (11:45 AM - 12:05 PM PST)
+Transformed `shipment_status` from a simple text field to a threaded comment system.
+
+*   **Database Migration (`014_shipping_comments.sql`)**:
+    *   Created `work_order_shipping_comments` table with `work_order_id`, `user_id`, `content`.
+    *   Enabled RLS: Users can only edit/delete their own comments.
+    *   Added indexes for performance.
+*   **Service Layer**: Added `getShippingComments`, `addShippingComment`, `updateShippingComment`, `deleteShippingComment`.
+*   **UI Components**:
+    *   Created `ShippingComments` component:
+        *   Displays comments (newest first) with user avatars and timestamps.
+        *   Supports inline editing and deleting (for own comments).
+    *   Integrated into `WorkOrderDetailPage`:
+        *   Moved "Shipments" section back to the main left column.
+        *   Combined "Shipping Comments" and "Shipment Tracker" into a single "Shipments & Tracking" card.
+    *   Updated `WorkOrderUploadForm`:
+        *   Renamed "Initial Shipment Status" to "Initial Shipping Comment".
+        *   Creates the first comment automatically upon upload.
+
