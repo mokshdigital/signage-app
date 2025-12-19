@@ -500,3 +500,69 @@
 - `components/work-orders/WorkOrderTasks.tsx` - Task UI enhancements
 - `services/work-orders.service.ts` - Added `updateChecklistItem`
 - `database_migrations/*.sql` - Made idempotent
+
+---
+
+## Phase 15: Shipping Comments & Upload Flow Refactor
+**Date**: December 19, 2024
+**Objective**: Implement threaded shipping comments system and refactor work order upload into a two-step review workflow.
+
+### Completed Tasks
+
+#### A. Shipping Comments System
+- ✅ **Database Migration (`014_shipping_comments.sql`)**
+  - Created `work_order_shipping_comments` table
+  - Columns: id, work_order_id, user_id, content, created_at, updated_at
+  - RLS enabled: Users can only edit/delete their own comments
+  - Indexes for performance on work_order_id, user_id, created_at
+
+- ✅ **Service Layer Updates**
+  - Added `getShippingComments()` - Fetch all comments for a WO
+  - Added `addShippingComment()` - Create new comment with user attribution
+  - Added `updateShippingComment()` - Edit own comments
+  - Added `deleteShippingComment()` - Remove own comments
+
+- ✅ **UI Components**
+  - Created `ShippingComments.tsx` component
+  - Displays comments newest-first with user avatars
+  - Inline editing and deletion for own comments
+  - Integrated into Work Order Detail page "Shipments & Tracking" section
+
+#### B. Work Order Upload Flow Refactor
+- ✅ **Two-Step Upload Process**
+  1. **Upload Modal**: User selects files only
+  2. **AI Processing**: Create WO in DB, upload files, run AI analysis
+  3. **Review Modal**: User verifies/enriches extracted data
+
+- ✅ **New WorkOrderReviewModal Component**
+  - Pre-fills Site Address from AI extraction
+  - AI recommendations for Client and Job Type matching
+  - Dropdowns for: WO Owner, Job Type, Client, Project Manager
+  - Initial Shipping Comment entry (moved from upload form)
+  - Updates work order record on save
+
+- ✅ **WorkOrderUploadForm Simplification**
+  - Removed "Initial Shipping Comment" field
+  - Simplified submit handler (files only)
+  - Button renamed to "Upload & Analyze"
+
+- ✅ **WorkOrdersPage State Management**
+  - Added `isReviewOpen` and `currentWorkOrder` state
+  - Seamless transition: Upload Modal → Review Modal
+  - Work order persists in DB even if review is cancelled
+
+### Key Files Modified
+- `database_migrations/014_shipping_comments.sql` - New migration
+- `components/work-orders/ShippingComments.tsx` - New component
+- `components/work-orders/WorkOrderReviewModal.tsx` - New component
+- `components/work-orders/WorkOrderUploadForm.tsx` - Simplified
+- `app/dashboard/work-orders/page.tsx` - Two-step flow
+- `app/dashboard/work-orders/[id]/page.tsx` - Shipping comments integration
+- `services/work-orders.service.ts` - Shipping comment CRUD
+- `types/database.ts` - ShippingComment interface
+
+### Current Status
+- **Shipping Comments**: Fully functional with RLS-protected edit/delete
+- **Upload Flow**: Two-step process with mandatory review
+- **AI Integration**: Automatically extracts and suggests Client/Job Type matches
+

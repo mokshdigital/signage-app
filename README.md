@@ -32,11 +32,17 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   - Profile Settings page.
 - **Work Orders**:
   - AI-Powered Analysis (Gemini 3 Flash Preview).
+  - **Two-Step Upload Flow**: Upload files → AI analyzes → Review & enrich data.
+  - AI recommendations for Client and Job Type matching.
   - Native PDF and image processing.
   - In-app File Viewer (PDF/images).
   - Advanced Search and Filtering.
   - Task Management with checklists and templates.
   - Technician assignment with status indicators.
+  - **Shipping Comments**: Threaded conversation system for tracking shipments.
+- **Client Management**:
+  - Client directory with project manager contacts.
+  - Link work orders to clients.
 - **Resource Management**:
   - Technicians, Equipment, and Vehicle tracking.
 

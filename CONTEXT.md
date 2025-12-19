@@ -104,8 +104,11 @@ signage-app/
 │   │   ├── WorkOrderUploadForm.tsx
 │   │   ├── WorkOrderFilesModal.tsx
 │   │   ├── WorkOrderAnalysisModal.tsx
+│   │   ├── WorkOrderReviewModal.tsx  # Post-upload review/enrichment modal
 │   │   ├── FileViewerModal.tsx    # In-app PDF/image viewer
 │   │   ├── WorkOrderTasks.tsx     # Task management with checklists
+│   │   ├── ShippingComments.tsx   # Threaded shipping comment system
+│   │   ├── ShipmentManager.tsx    # Shipment tracking UI
 │   │   └── index.ts
 │   ├── layout/                   # Layout components
 │   │   ├── Header.tsx
