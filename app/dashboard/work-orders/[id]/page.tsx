@@ -639,17 +639,6 @@ export default function WorkOrderDetailPage() {
                         workOrderId={workOrderId}
                         availableTechnicians={workOrder.assignments || []}
                     />
-
-                    {/* Shipments Section */}
-                    <Card noPadding>
-                        <div className="p-4">
-                            <ShipmentManager
-                                workOrderId={workOrderId}
-                                shipments={workOrder.shipments || []}
-                                onShipmentsChange={fetchWorkOrder}
-                            />
-                        </div>
-                    </Card>
                 </div>
 
                 {/* Sidebar - 1 column */}
@@ -668,17 +657,9 @@ export default function WorkOrderDetailPage() {
                                     {workOrder.owner?.display_name?.charAt(0).toUpperCase() || '?'}
                                 </div>
                             )}
-                            <div>
-                                <p className="font-medium text-gray-900">
-                                    {safeRender(workOrder.owner?.display_name) || 'Not assigned'}
-                                </p>
-                                {workOrder.shipment_status && (
-                                    <p className="text-xs text-gray-500">
-                                        Shipment: {safeRender(workOrder.shipment_status.substring(0, 50))}
-                                        {workOrder.shipment_status.length > 50 ? '...' : ''}
-                                    </p>
-                                )}
-                            </div>
+                            <p className="font-medium text-gray-900">
+                                {safeRender(workOrder.owner?.display_name) || 'Not assigned'}
+                            </p>
                         </div>
                     </Card>
 
@@ -826,6 +807,21 @@ export default function WorkOrderDetailPage() {
                             </div>
                         </Card>
                     )}
+
+                    {/* Shipments Section */}
+                    <Card title="Shipments">
+                        {workOrder.shipment_status && (
+                            <div className="mb-4 p-3 bg-blue-50 rounded-lg">
+                                <p className="text-xs text-blue-600 font-medium mb-1">Initial Notes</p>
+                                <p className="text-sm text-gray-700">{safeRender(workOrder.shipment_status)}</p>
+                            </div>
+                        )}
+                        <ShipmentManager
+                            workOrderId={workOrderId}
+                            shipments={workOrder.shipments || []}
+                            onShipmentsChange={fetchWorkOrder}
+                        />
+                    </Card>
                 </div>
             </div>
 
