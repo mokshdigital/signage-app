@@ -93,7 +93,7 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
     const [editTaskData, setEditTaskData] = useState({
         name: task.name,
         description: task.description || '',
-        priority: task.priority,
+        priority: task.priority as string,
         due_date: task.due_date ? task.due_date.split('T')[0] : ''
     });
 
