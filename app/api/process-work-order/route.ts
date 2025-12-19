@@ -198,16 +198,24 @@ export async function POST(request: NextRequest) {
         let analysis;
         try {
             // Remove markdown code blocks if present
-            const cleanedText = analysisText
+            let cleanedText = analysisText
                 .replace(/```json\n?/g, '')
                 .replace(/```\n?/g, '')
                 .trim();
+
+            // Try to find JSON object in the response if it's wrapped in text
+            const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+                cleanedText = jsonMatch[0];
+            }
+
             analysis = JSON.parse(cleanedText);
             console.log('[process-work-order] Analysis parsed successfully');
         } catch (parseError) {
             console.error('[process-work-order] Failed to parse AI response as JSON:', analysisText);
+            // Return the raw response for debugging
             return NextResponse.json(
-                { error: 'Failed to parse AI response', rawResponse: analysisText },
+                { error: 'Failed to parse AI response', rawResponse: analysisText.substring(0, 1000) },
                 { status: 500 }
             );
         }
