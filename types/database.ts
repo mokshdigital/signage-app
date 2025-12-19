@@ -252,3 +252,41 @@ export interface TaskChecklist {
     // Optional
     completed_by?: { display_name: string; avatar_url: string | null }; // Using a partial user profile structure
 }
+
+// Task Comment - threaded comments on individual tasks
+export interface TaskComment {
+    id: string;
+    task_id: string;
+    user_id: string;
+    content: string;
+    attachments: string[];
+    created_at: string;
+    updated_at: string;
+    // Joined data
+    user?: {
+        id: string;
+        display_name: string;
+        avatar_url: string | null;
+    };
+    mentions?: TaskCommentMention[];
+}
+
+// Task Comment Mention - junction table for @mentions
+export interface TaskCommentMention {
+    id: string;
+    comment_id: string;
+    mentioned_user_id: string | null;
+    mentioned_technician_id: string | null;
+    created_at: string;
+    // Joined data
+    user?: { id: string; display_name: string };
+    technician?: { id: string; name: string };
+}
+
+// Mentionable User - combined type for @mention dropdown
+export interface MentionableUser {
+    id: string;
+    name: string;
+    type: 'user' | 'technician';
+    avatar_url?: string | null;
+}

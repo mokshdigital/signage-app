@@ -3,14 +3,15 @@
 import { useState, useEffect } from 'react';
 import { WorkOrderTask, TaskChecklist, WorkOrderAssignment } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
-import { Button, Card, Badge, Modal, Input, Textarea } from '@/components/ui'; // Check if TextArea/Input exist in ui/index
+import { Button, Card, Badge, Modal, Input, Textarea } from '@/components/ui';
 import { toast } from '@/components/providers';
 import {
     CheckSquare, Plus, User, AlertCircle, Clock,
-    Calendar, ChevronDown, ChevronRight, X, UserPlus, Pencil, Trash2
+    Calendar, ChevronDown, ChevronRight, X, UserPlus, Pencil, Trash2, MessageSquare
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
+import { TaskCommentsPanel } from './TaskCommentsPanel';
 
 // Helper to get initials
 const getInitials = (name?: string) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
@@ -19,6 +20,9 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { wor
     const [tasks, setTasks] = useState<WorkOrderTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
+
+    // Task comments panel state
+    const [commentsTask, setCommentsTask] = useState<WorkOrderTask | null>(null);
 
     const fetchTasks = async () => {
         try {
@@ -70,10 +74,21 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { wor
                             task={task}
                             onUpdate={fetchTasks}
                             availableTechnicians={availableTechnicians}
+                            onOpenComments={() => setCommentsTask(task)}
                         />
                     ))
                 )}
             </div>
+
+            {/* Task Comments Panel */}
+            {commentsTask && (
+                <TaskCommentsPanel
+                    isOpen={!!commentsTask}
+                    onClose={() => setCommentsTask(null)}
+                    task={commentsTask}
+                    workOrderId={workOrderId}
+                />
+            )}
 
             <CreateTaskModal
                 isOpen={isCreateOpen}
@@ -85,17 +100,23 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { wor
     );
 }
 
-function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTask, onUpdate: () => void, availableTechnicians: WorkOrderAssignment[] }) {
+function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { task: WorkOrderTask, onUpdate: () => void, availableTechnicians: WorkOrderAssignment[], onOpenComments: () => void }) {
     const [expanded, setExpanded] = useState(false);
     const [checklists, setChecklists] = useState<TaskChecklist[]>([]);
     const [loadingChecklists, setLoadingChecklists] = useState(false);
     const [isEditingTask, setIsEditingTask] = useState(false);
+    const [commentCount, setCommentCount] = useState(0);
     const [editTaskData, setEditTaskData] = useState({
         name: task.name,
         description: task.description || '',
         priority: task.priority as string,
         due_date: task.due_date ? task.due_date.split('T')[0] : ''
     });
+
+    // Fetch comment count on mount
+    useEffect(() => {
+        workOrdersService.getTaskCommentCount(task.id).then(setCommentCount);
+    }, [task.id]);
 
     // Fetch checklists when expanded
     useEffect(() => {
@@ -265,6 +286,21 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
                             </div>
                             <span>{progress}%</span>
                         </div>
+
+                        {/* Comments Button */}
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                onOpenComments();
+                            }}
+                            className="flex items-center gap-1 px-2 py-0.5 rounded-full hover:bg-gray-200 transition-colors"
+                            title="View comments"
+                        >
+                            <MessageSquare className="w-3.5 h-3.5" />
+                            {commentCount > 0 && (
+                                <span className="text-xs font-medium">{commentCount}</span>
+                            )}
+                        </button>
                     </div>
                 </div>
             </div>
@@ -398,8 +434,8 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
                                                 <button
                                                     key={t.id}
                                                     className={`w-full text-left px-2 py-1.5 text-xs rounded truncate flex items-center justify-between ${isAssigned
-                                                            ? 'bg-green-50 text-green-700 font-medium'
-                                                            : 'hover:bg-gray-100'
+                                                        ? 'bg-green-50 text-green-700 font-medium'
+                                                        : 'hover:bg-gray-100'
                                                         }`}
                                                     onClick={() => {
                                                         if (!isAssigned) {

@@ -13,7 +13,9 @@ import {
     TaskChecklist,
     ChecklistTemplate,
     ChecklistTemplateItem,
-    ShippingComment
+    ShippingComment,
+    TaskComment,
+    MentionableUser
 } from '@/types/database';
 
 /**
@@ -1117,5 +1119,307 @@ export const workOrdersService = {
             throw new Error(`Failed to delete shipping comment: ${error.message}`);
         }
     },
-};
 
+    // =============================================
+    // TASK COMMENTS
+    // =============================================
+
+    /**
+     * Get all comments for a task (newest first)
+     */
+    async getTaskComments(taskId: string): Promise<TaskComment[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_task_comments')
+            .select(`
+                *,
+                user:user_profiles(id, display_name, avatar_url),
+                mentions:task_comment_mentions(
+                    id,
+                    mentioned_user_id,
+                    mentioned_technician_id,
+                    user:user_profiles(id, display_name),
+                    technician:technicians(id, name)
+                )
+            `)
+            .eq('task_id', taskId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            throw new Error(`Failed to fetch task comments: ${error.message}`);
+        }
+
+        return (data || []) as TaskComment[];
+    },
+
+    /**
+     * Get comment count for a task (for badge display)
+     */
+    async getTaskCommentCount(taskId: string): Promise<number> {
+        const supabase = createClient();
+        const { count, error } = await supabase
+            .from('work_order_task_comments')
+            .select('*', { count: 'exact', head: true })
+            .eq('task_id', taskId);
+
+        if (error) {
+            console.error('Error fetching comment count:', error);
+            return 0;
+        }
+
+        return count || 0;
+    },
+
+    /**
+     * Add a task comment with optional attachments and mentions
+     */
+    async addTaskComment(
+        taskId: string,
+        content: string,
+        attachments: string[] = [],
+        mentionedUserIds: string[] = [],
+        mentionedTechnicianIds: string[] = []
+    ): Promise<TaskComment> {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) {
+            throw new Error('You must be logged in to add a comment');
+        }
+
+        // Validate attachment limit
+        if (attachments.length > 5) {
+            throw new Error('Maximum 5 attachments allowed per comment');
+        }
+
+        // Create the comment
+        const { data: comment, error } = await supabase
+            .from('work_order_task_comments')
+            .insert([{
+                task_id: taskId,
+                user_id: user.id,
+                content: content.trim(),
+                attachments
+            }])
+            .select(`
+                *,
+                user:user_profiles(id, display_name, avatar_url)
+            `)
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to add task comment: ${error.message}`);
+        }
+
+        // Insert mentions
+        const mentions = [
+            ...mentionedUserIds.map(id => ({
+                comment_id: comment.id,
+                mentioned_user_id: id,
+                mentioned_technician_id: null
+            })),
+            ...mentionedTechnicianIds.map(id => ({
+                comment_id: comment.id,
+                mentioned_user_id: null,
+                mentioned_technician_id: id
+            }))
+        ];
+
+        if (mentions.length > 0) {
+            const { error: mentionError } = await supabase
+                .from('task_comment_mentions')
+                .insert(mentions);
+
+            if (mentionError) {
+                console.error('Failed to save mentions:', mentionError);
+                // Don't fail the whole operation for mention errors
+            }
+        }
+
+        return comment as TaskComment;
+    },
+
+    /**
+     * Update a task comment (own comments only - enforced by RLS)
+     */
+    async updateTaskComment(
+        commentId: string,
+        content: string,
+        attachments: string[] = [],
+        mentionedUserIds: string[] = [],
+        mentionedTechnicianIds: string[] = []
+    ): Promise<TaskComment> {
+        const supabase = createClient();
+
+        // Validate attachment limit
+        if (attachments.length > 5) {
+            throw new Error('Maximum 5 attachments allowed per comment');
+        }
+
+        // Update the comment
+        const { data, error } = await supabase
+            .from('work_order_task_comments')
+            .update({
+                content: content.trim(),
+                attachments,
+                updated_at: new Date().toISOString()
+            })
+            .eq('id', commentId)
+            .select(`
+                *,
+                user:user_profiles(id, display_name, avatar_url)
+            `)
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update task comment: ${error.message}`);
+        }
+
+        // Re-sync mentions: delete old, insert new
+        await supabase
+            .from('task_comment_mentions')
+            .delete()
+            .eq('comment_id', commentId);
+
+        const mentions = [
+            ...mentionedUserIds.map(id => ({
+                comment_id: commentId,
+                mentioned_user_id: id,
+                mentioned_technician_id: null
+            })),
+            ...mentionedTechnicianIds.map(id => ({
+                comment_id: commentId,
+                mentioned_user_id: null,
+                mentioned_technician_id: id
+            }))
+        ];
+
+        if (mentions.length > 0) {
+            await supabase
+                .from('task_comment_mentions')
+                .insert(mentions);
+        }
+
+        return data as TaskComment;
+    },
+
+    /**
+     * Delete a task comment (own comments only - enforced by RLS)
+     */
+    async deleteTaskComment(commentId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_task_comments')
+            .delete()
+            .eq('id', commentId);
+
+        if (error) {
+            throw new Error(`Failed to delete task comment: ${error.message}`);
+        }
+    },
+
+    /**
+     * Get mentionable users for a work order
+     * Returns: office_staff + assigned technicians + WO owner
+     */
+    async getMentionableUsers(workOrderId: string): Promise<MentionableUser[]> {
+        const supabase = createClient();
+        const mentionableUsers: MentionableUser[] = [];
+
+        // 1. Get all office staff
+        const { data: officeStaff } = await supabase
+            .from('office_staff')
+            .select('id, name')
+            .order('name');
+
+        (officeStaff || []).forEach((staff: { id: string; name: string }) => {
+            mentionableUsers.push({
+                id: staff.id,
+                name: staff.name,
+                type: 'user',
+                avatar_url: null
+            });
+        });
+
+        // 2. Get WO owner
+        const { data: workOrder } = await supabase
+            .from('work_orders')
+            .select('owner_id, owner:user_profiles!work_orders_owner_id_fkey(id, display_name, avatar_url)')
+            .eq('id', workOrderId)
+            .single();
+
+        if (workOrder?.owner) {
+            const owner = workOrder.owner as { id: string; display_name: string; avatar_url: string | null };
+            // Avoid duplicates
+            if (!mentionableUsers.some(u => u.id === owner.id)) {
+                mentionableUsers.push({
+                    id: owner.id,
+                    name: owner.display_name,
+                    type: 'user',
+                    avatar_url: owner.avatar_url
+                });
+            }
+        }
+
+        // 3. Get assigned technicians
+        const { data: assignments } = await supabase
+            .from('work_order_assignments')
+            .select('technician:technicians(id, name)')
+            .eq('work_order_id', workOrderId);
+
+        (assignments || []).forEach((assignment: { technician: { id: string; name: string } | null }) => {
+            if (assignment.technician) {
+                mentionableUsers.push({
+                    id: assignment.technician.id,
+                    name: assignment.technician.name,
+                    type: 'technician',
+                    avatar_url: null
+                });
+            }
+        });
+
+        return mentionableUsers;
+    },
+
+    /**
+     * Upload comment attachment to storage
+     * Path: task-comments/{taskId}/{timestamp}_{filename}
+     */
+    async uploadCommentAttachment(taskId: string, file: File): Promise<string> {
+        const supabase = createClient();
+
+        // Validate file size (25MB max)
+        const maxSize = 25 * 1024 * 1024;
+        if (file.size > maxSize) {
+            throw new Error('File size exceeds 25MB limit');
+        }
+
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            throw new Error('File type not allowed. Only PDF and images are supported.');
+        }
+
+        // Generate unique file name
+        const fileExt = file.name.split('.').pop();
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(7);
+        const fileName = `task-comments/${taskId}/${timestamp}_${randomStr}.${fileExt}`;
+
+        // Upload to work-orders bucket (reusing existing bucket)
+        const { error: uploadError } = await supabase.storage
+            .from('work-orders')
+            .upload(fileName, file);
+
+        if (uploadError) {
+            throw new Error(`Failed to upload attachment: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from('work-orders')
+            .getPublicUrl(fileName);
+
+        return urlData.publicUrl;
+    },
+};

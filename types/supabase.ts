@@ -773,6 +773,92 @@ export interface Database {
                         referencedColumns: ["id"]
                     }
                 ]
+            },
+            work_order_task_comments: {
+                Row: {
+                    id: string
+                    task_id: string
+                    user_id: string
+                    content: string
+                    attachments: string[]
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: string
+                    task_id: string
+                    user_id: string
+                    content: string
+                    attachments?: string[]
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: string
+                    task_id?: string
+                    user_id?: string
+                    content?: string
+                    attachments?: string[]
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_task_comments_task_id_fkey"
+                        columns: ["task_id"]
+                        referencedRelation: "work_order_tasks"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_task_comments_user_id_fkey"
+                        columns: ["user_id"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            task_comment_mentions: {
+                Row: {
+                    id: string
+                    comment_id: string
+                    mentioned_user_id: string | null
+                    mentioned_technician_id: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    comment_id: string
+                    mentioned_user_id?: string | null
+                    mentioned_technician_id?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    comment_id?: string
+                    mentioned_user_id?: string | null
+                    mentioned_technician_id?: string | null
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "task_comment_mentions_comment_id_fkey"
+                        columns: ["comment_id"]
+                        referencedRelation: "work_order_task_comments"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "task_comment_mentions_mentioned_user_id_fkey"
+                        columns: ["mentioned_user_id"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "task_comment_mentions_mentioned_technician_id_fkey"
+                        columns: ["mentioned_technician_id"]
+                        referencedRelation: "technicians"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
         }
         Views: {
