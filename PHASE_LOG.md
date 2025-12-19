@@ -463,3 +463,40 @@
 - **Tasks**: Fully functional with status, priority, and progress tracking
 - **Templates**: Can be created and applied to tasks
 - **AI**: Automatically suggests tasks from documents
+
+---
+
+## Phase 14: AI Migration & UI Enhancements
+**Date**: December 19, 2024
+**Objective**: Migrate AI provider, add file viewer, and enhance task management UI.
+
+### Completed Tasks
+- ✅ **AI Provider Migration**
+  - Switched from OpenAI to Google Gemini (`gemini-3-flash-preview`)
+  - Implemented native PDF and image support via `inlineData`
+  - Set `responseMimeType: 'application/json'` for reliable JSON output
+  - Added safety block to prevent hallucinations when no valid files are present
+
+- ✅ **Database Migration Fixes**
+  - Made migration files idempotent with `DROP POLICY IF EXISTS` and `CREATE INDEX IF NOT EXISTS`
+  - Affected files: `010_advanced_wo_foundation.sql`, `011_tasks_and_checklists.sql`
+
+- ✅ **File Viewer Modal**
+  - Created `FileViewerModal.tsx` component for in-app PDF/image viewing
+  - Supports `<img>` for images, `<iframe>` for PDFs
+  - Added file navigation (arrows), download, and open-in-new-tab buttons
+  - Replaced "View Analysis" button with "View WO" on work order detail page
+
+- ✅ **Task UI Enhancements**
+  - Task descriptions show 3 lines when collapsed (was 1), full text when expanded
+  - Added inline edit for checklist items with prominent Edit/Delete icons
+  - Added "Edit Task" button and modal with Name, Description, Priority, Due Date
+  - Tech assignment dropdown opens above (prevents cutoff)
+  - Already-assigned techs highlighted with green background and checkmark
+
+### Key Files Modified
+- `app/api/process-work-order/route.ts` - Gemini integration
+- `components/work-orders/FileViewerModal.tsx` - New file viewer
+- `components/work-orders/WorkOrderTasks.tsx` - Task UI enhancements
+- `services/work-orders.service.ts` - Added `updateChecklistItem`
+- `database_migrations/*.sql` - Made idempotent

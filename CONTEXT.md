@@ -27,10 +27,10 @@ A comprehensive dashboard application for managing a signage installation busine
   - Row Level Security (RLS)
 
 ### AI/ML
-- **Google Gemini 2.5 Pro** - AI model for work order analysis
-  - PDF text extraction and analysis
-  - Image analysis (OCR and understanding)
-  - Structured data extraction
+- **Google Gemini 3 Flash Preview** - AI model for work order analysis
+  - Native PDF and image support via `inlineData`
+  - Structured JSON output with `responseMimeType: 'application/json'`
+  - Extracts tasks, requirements, dates, and scope of work
 
 ### Key Dependencies
 - `@supabase/supabase-js` - Supabase client
@@ -104,6 +104,8 @@ signage-app/
 │   │   ├── WorkOrderUploadForm.tsx
 │   │   ├── WorkOrderFilesModal.tsx
 │   │   ├── WorkOrderAnalysisModal.tsx
+│   │   ├── FileViewerModal.tsx    # In-app PDF/image viewer
+│   │   ├── WorkOrderTasks.tsx     # Task management with checklists
 │   │   └── index.ts
 │   ├── layout/                   # Layout components
 │   │   ├── Header.tsx

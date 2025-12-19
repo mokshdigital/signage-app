@@ -31,8 +31,12 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   - Rich profile dropdown with Avatar and Role display.
   - Profile Settings page.
 - **Work Orders**:
-  - AI-Powered Analysis (Gemini 1.5 Pro).
+  - AI-Powered Analysis (Gemini 3 Flash Preview).
+  - Native PDF and image processing.
+  - In-app File Viewer (PDF/images).
   - Advanced Search and Filtering.
+  - Task Management with checklists and templates.
+  - Technician assignment with status indicators.
 - **Resource Management**:
   - Technicians, Equipment, and Vehicle tracking.
 
