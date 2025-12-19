@@ -89,6 +89,13 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
     const [expanded, setExpanded] = useState(false);
     const [checklists, setChecklists] = useState<TaskChecklist[]>([]);
     const [loadingChecklists, setLoadingChecklists] = useState(false);
+    const [isEditingTask, setIsEditingTask] = useState(false);
+    const [editTaskData, setEditTaskData] = useState({
+        name: task.name,
+        description: task.description || '',
+        priority: task.priority,
+        due_date: task.due_date ? task.due_date.split('T')[0] : ''
+    });
 
     // Fetch checklists when expanded
     useEffect(() => {
@@ -165,6 +172,22 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
             onUpdate();
         } catch (err) {
             toast.error('Failed to add item');
+        }
+    };
+
+    const saveTaskEdit = async () => {
+        try {
+            await workOrdersService.updateTask(task.id, {
+                name: editTaskData.name,
+                description: editTaskData.description || null,
+                priority: editTaskData.priority as any,
+                due_date: editTaskData.due_date || null
+            });
+            toast.success('Task updated');
+            setIsEditingTask(false);
+            onUpdate();
+        } catch (err) {
+            toast.error('Failed to update task');
         }
     };
 
@@ -265,13 +288,18 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
                                 </button>
                             ))}
                         </div>
-                        <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => {
-                            if (confirm('Delete task?')) {
-                                workOrdersService.deleteTask(task.id).then(onUpdate);
-                            }
-                        }}>
-                            <span className="text-xs">Delete Task</span>
-                        </Button>
+                        <div className="flex gap-2">
+                            <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600" onClick={() => setIsEditingTask(true)}>
+                                <span className="text-xs">Edit Task</span>
+                            </Button>
+                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => {
+                                if (confirm('Delete task?')) {
+                                    workOrdersService.deleteTask(task.id).then(onUpdate);
+                                }
+                            }}>
+                                <span className="text-xs">Delete Task</span>
+                            </Button>
+                        </div>
                     </div>
 
                     {/* Block reason if Blocked */}
@@ -385,6 +413,47 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
 
                 </div>
             )}
+
+            {/* Edit Task Modal */}
+            <Modal isOpen={isEditingTask} onClose={() => setIsEditingTask(false)} title="Edit Task">
+                <div className="space-y-4">
+                    <Input
+                        label="Task Name"
+                        value={editTaskData.name}
+                        onChange={e => setEditTaskData({ ...editTaskData, name: e.target.value })}
+                    />
+                    <Textarea
+                        label="Description"
+                        value={editTaskData.description}
+                        onChange={e => setEditTaskData({ ...editTaskData, description: e.target.value })}
+                    />
+                    <div className="grid grid-cols-2 gap-4">
+                        <div>
+                            <label className="block text-sm font-medium mb-1">Priority</label>
+                            <select
+                                className="w-full border rounded p-2"
+                                value={editTaskData.priority}
+                                onChange={e => setEditTaskData({ ...editTaskData, priority: e.target.value })}
+                            >
+                                <option>Low</option>
+                                <option>Medium</option>
+                                <option>High</option>
+                                <option>Emergency</option>
+                            </select>
+                        </div>
+                        <Input
+                            label="Due Date"
+                            type="date"
+                            value={editTaskData.due_date}
+                            onChange={e => setEditTaskData({ ...editTaskData, due_date: e.target.value })}
+                        />
+                    </div>
+                    <div className="flex justify-end gap-2 pt-4">
+                        <Button variant="secondary" onClick={() => setIsEditingTask(false)}>Cancel</Button>
+                        <Button onClick={saveTaskEdit}>Save Changes</Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
