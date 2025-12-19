@@ -15,7 +15,9 @@ import {
     ChecklistTemplateItem,
     ShippingComment,
     TaskComment,
-    MentionableUser
+    MentionableUser,
+    WorkOrderCategory,
+    TaskTag
 } from '@/types/database';
 
 /**
@@ -1421,5 +1423,245 @@ export const workOrdersService = {
             .getPublicUrl(fileName);
 
         return urlData.publicUrl;
+    },
+
+    // =============================================
+    // WORK ORDER CATEGORIES (WO-scoped)
+    // =============================================
+
+    /**
+     * Get all categories for a work order
+     */
+    async getCategories(workOrderId: string): Promise<WorkOrderCategory[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_categories')
+            .select('*')
+            .eq('work_order_id', workOrderId)
+            .order('name');
+
+        if (error) {
+            console.error('Error fetching categories:', error);
+            return [];
+        }
+
+        return data || [];
+    },
+
+    /**
+     * Create a new category for a work order
+     * Returns existing if name already exists
+     */
+    async createCategory(workOrderId: string, name: string, color: string = '#3B82F6'): Promise<WorkOrderCategory> {
+        const supabase = createClient();
+
+        // Check if category already exists
+        const { data: existing } = await supabase
+            .from('work_order_categories')
+            .select('*')
+            .eq('work_order_id', workOrderId)
+            .ilike('name', name)
+            .single();
+
+        if (existing) {
+            return existing as WorkOrderCategory;
+        }
+
+        // Create new
+        const { data, error } = await supabase
+            .from('work_order_categories')
+            .insert([{ work_order_id: workOrderId, name: name.trim(), color }])
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to create category: ${error.message}`);
+        }
+
+        return data as WorkOrderCategory;
+    },
+
+    /**
+     * Update a category
+     */
+    async updateCategory(categoryId: string, updates: { name?: string; color?: string }): Promise<WorkOrderCategory> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_categories')
+            .update(updates)
+            .eq('id', categoryId)
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update category: ${error.message}`);
+        }
+
+        return data as WorkOrderCategory;
+    },
+
+    /**
+     * Delete a category
+     */
+    async deleteCategory(categoryId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_categories')
+            .delete()
+            .eq('id', categoryId);
+
+        if (error) {
+            throw new Error(`Failed to delete category: ${error.message}`);
+        }
+    },
+
+    // =============================================
+    // TASK TAGS (Global)
+    // =============================================
+
+    /**
+     * Get all global tags
+     */
+    async getAllTags(): Promise<TaskTag[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('task_tags')
+            .select('*')
+            .order('name');
+
+        if (error) {
+            console.error('Error fetching tags:', error);
+            return [];
+        }
+
+        return data || [];
+    },
+
+    /**
+     * Create a new global tag
+     * Returns existing if name already exists
+     */
+    async createTag(name: string, color: string = '#10B981'): Promise<TaskTag> {
+        const supabase = createClient();
+
+        // Check if tag already exists
+        const { data: existing } = await supabase
+            .from('task_tags')
+            .select('*')
+            .ilike('name', name)
+            .single();
+
+        if (existing) {
+            return existing as TaskTag;
+        }
+
+        // Create new
+        const { data, error } = await supabase
+            .from('task_tags')
+            .insert([{ name: name.trim(), color }])
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to create tag: ${error.message}`);
+        }
+
+        return data as TaskTag;
+    },
+
+    /**
+     * Update a global tag
+     */
+    async updateTag(tagId: string, updates: { name?: string; color?: string }): Promise<TaskTag> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('task_tags')
+            .update(updates)
+            .eq('id', tagId)
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update tag: ${error.message}`);
+        }
+
+        return data as TaskTag;
+    },
+
+    /**
+     * Delete a global tag
+     */
+    async deleteTag(tagId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('task_tags')
+            .delete()
+            .eq('id', tagId);
+
+        if (error) {
+            throw new Error(`Failed to delete tag: ${error.message}`);
+        }
+    },
+
+    /**
+     * Get tags for a task
+     */
+    async getTaskTags(taskId: string): Promise<TaskTag[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('task_tag_assignments')
+            .select('tag:task_tags(*)')
+            .eq('task_id', taskId);
+
+        if (error) {
+            console.error('Error fetching task tags:', error);
+            return [];
+        }
+
+        return (data || []).map((d: any) => d.tag).filter(Boolean) as TaskTag[];
+    },
+
+    /**
+     * Assign tags to a task (replaces existing)
+     */
+    async assignTagsToTask(taskId: string, tagIds: string[]): Promise<void> {
+        const supabase = createClient();
+
+        // Delete existing assignments
+        await supabase
+            .from('task_tag_assignments')
+            .delete()
+            .eq('task_id', taskId);
+
+        // Insert new assignments
+        if (tagIds.length > 0) {
+            const assignments = tagIds.map(tagId => ({
+                task_id: taskId,
+                tag_id: tagId
+            }));
+
+            const { error } = await supabase
+                .from('task_tag_assignments')
+                .insert(assignments);
+
+            if (error) {
+                throw new Error(`Failed to assign tags: ${error.message}`);
+            }
+        }
+    },
+
+    /**
+     * Set category for a task
+     */
+    async setTaskCategory(taskId: string, categoryId: string | null): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_tasks')
+            .update({ category_id: categoryId })
+            .eq('id', taskId);
+
+        if (error) {
+            throw new Error(`Failed to set task category: ${error.message}`);
+        }
     },
 };

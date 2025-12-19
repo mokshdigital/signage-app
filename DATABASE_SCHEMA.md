@@ -635,3 +635,58 @@ Attachments are stored in the existing `work-orders` bucket under path:
 - **Max file size**: 25MB
 - **Allowed types**: PDF, JPG, JPEG, PNG, GIF, WEBP
 
+---
+
+## Phase 17: Task Categories and Tags
+
+### New Tables
+
+#### 1. `work_order_categories`
+Categories scoped to individual work orders for task organization.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
+| `work_order_id` | UUID | NOT NULL, FK -> work_orders (ON DELETE CASCADE) | Parent work order |
+| `name` | TEXT | NOT NULL | Category name |
+| `color` | TEXT | DEFAULT '#3B82F6' | Hex color for display |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+
+**Unique constraint**: `(work_order_id, name)` prevents duplicate category names within a work order.
+
+##### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: Full CRUD for authenticated users
+
+#### 2. `task_tags`
+Global tags shared across all work orders and tasks.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
+| `name` | TEXT | NOT NULL, UNIQUE | Tag name (global, no duplicates) |
+| `color` | TEXT | DEFAULT '#10B981' | Hex color for display |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+
+##### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: Full CRUD for authenticated users
+
+#### 3. `task_tag_assignments`
+Junction table connecting tasks to tags (many-to-many).
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
+| `task_id` | UUID | NOT NULL, FK -> work_order_tasks (ON DELETE CASCADE) | Task being tagged |
+| `tag_id` | UUID | NOT NULL, FK -> task_tags (ON DELETE CASCADE) | Tag applied |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Assignment timestamp |
+
+**Unique constraint**: `(task_id, tag_id)` prevents duplicate tag assignments.
+
+##### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: SELECT, INSERT, DELETE for authenticated users
+
+### Updates to `work_order_tasks` table
+- Added `category_id` (UUID, FK -> work_order_categories, ON DELETE SET NULL)

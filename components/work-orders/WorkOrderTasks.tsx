@@ -1,17 +1,19 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { WorkOrderTask, TaskChecklist, WorkOrderAssignment } from '@/types/database';
+import { WorkOrderTask, TaskChecklist, WorkOrderAssignment, WorkOrderCategory, TaskTag } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { Button, Card, Badge, Modal, Input, Textarea } from '@/components/ui';
 import { toast } from '@/components/providers';
 import {
     CheckSquare, Plus, User, AlertCircle, Clock,
-    Calendar, ChevronDown, ChevronRight, X, UserPlus, Pencil, Trash2, MessageSquare
+    Calendar, ChevronDown, ChevronRight, X, UserPlus, Pencil, Trash2, MessageSquare, Tag, Folder
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
 import { TaskCommentsPanel } from './TaskCommentsPanel';
+import { CategorySelector } from './CategorySelector';
+import { TagSelector } from './TagSelector';
 
 // Helper to get initials
 const getInitials = (name?: string) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
@@ -106,6 +108,13 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
     const [loadingChecklists, setLoadingChecklists] = useState(false);
     const [isEditingTask, setIsEditingTask] = useState(false);
     const [commentCount, setCommentCount] = useState(0);
+
+    // Category and Tags state
+    const [category, setCategory] = useState<WorkOrderCategory | null>(null);
+    const [tags, setTags] = useState<TaskTag[]>([]);
+    const [editCategoryId, setEditCategoryId] = useState<string | null>(task.category_id);
+    const [editTagIds, setEditTagIds] = useState<string[]>([]);
+
     const [editTaskData, setEditTaskData] = useState({
         name: task.name,
         description: task.description || '',
@@ -113,10 +122,24 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
         due_date: task.due_date ? task.due_date.split('T')[0] : ''
     });
 
-    // Fetch comment count on mount
+    // Fetch comment count, category, and tags on mount
     useEffect(() => {
         workOrdersService.getTaskCommentCount(task.id).then(setCommentCount);
-    }, [task.id]);
+
+        // Fetch category if task has one
+        if (task.category_id) {
+            workOrdersService.getCategories(task.work_order_id).then(cats => {
+                const cat = cats.find(c => c.id === task.category_id);
+                if (cat) setCategory(cat);
+            });
+        }
+
+        // Fetch tags
+        workOrdersService.getTaskTags(task.id).then(taskTags => {
+            setTags(taskTags);
+            setEditTagIds(taskTags.map(t => t.id));
+        });
+    }, [task.id, task.category_id, task.work_order_id]);
 
     // Fetch checklists when expanded
     useEffect(() => {
@@ -198,12 +221,20 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
 
     const saveTaskEdit = async () => {
         try {
+            // Update task basic info and category
             await workOrdersService.updateTask(task.id, {
                 name: editTaskData.name,
                 description: editTaskData.description || null,
                 priority: editTaskData.priority as any,
                 due_date: editTaskData.due_date || null
             });
+
+            // Update category separately
+            await workOrdersService.setTaskCategory(task.id, editCategoryId);
+
+            // Update tags
+            await workOrdersService.assignTagsToTask(task.id, editTagIds);
+
             toast.success('Task updated');
             setIsEditingTask(false);
             onUpdate();
@@ -253,6 +284,30 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                         </div>
                     </div>
                     {task.description && <p className={`text-sm text-gray-500 mt-1 ${expanded ? '' : 'line-clamp-3'}`}>{task.description}</p>}
+
+                    {/* Category and Tags */}
+                    {(category || tags.length > 0) && (
+                        <div className="flex flex-wrap items-center gap-2 mt-2">
+                            {category && (
+                                <span
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-xs font-medium text-white"
+                                    style={{ backgroundColor: category.color }}
+                                >
+                                    <Folder className="w-3 h-3" />
+                                    {category.name}
+                                </span>
+                            )}
+                            {tags.map(tag => (
+                                <span
+                                    key={tag.id}
+                                    className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium text-white"
+                                    style={{ backgroundColor: tag.color }}
+                                >
+                                    {tag.name}
+                                </span>
+                            ))}
+                        </div>
+                    )}
 
                     <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
                         {task.due_date && (
@@ -491,6 +546,27 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                             onChange={e => setEditTaskData({ ...editTaskData, due_date: e.target.value })}
                         />
                     </div>
+
+                    {/* Category Selector */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Category</label>
+                        <CategorySelector
+                            workOrderId={task.work_order_id}
+                            value={editCategoryId}
+                            onChange={setEditCategoryId}
+                        />
+                    </div>
+
+                    {/* Tag Selector */}
+                    <div>
+                        <label className="block text-sm font-medium mb-1">Tags</label>
+                        <TagSelector
+                            taskId={task.id}
+                            value={editTagIds}
+                            onChange={setEditTagIds}
+                        />
+                    </div>
+
                     <div className="flex justify-end gap-2 pt-4">
                         <Button variant="secondary" onClick={() => setIsEditingTask(false)}>Cancel</Button>
                         <Button onClick={saveTaskEdit}>Save Changes</Button>

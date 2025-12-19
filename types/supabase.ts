@@ -624,6 +624,7 @@ export interface Database {
                     priority: string
                     due_date: string | null
                     block_reason: string | null
+                    category_id: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -636,6 +637,7 @@ export interface Database {
                     priority?: string
                     due_date?: string | null
                     block_reason?: string | null
+                    category_id?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -648,6 +650,7 @@ export interface Database {
                     priority?: string
                     due_date?: string | null
                     block_reason?: string | null
+                    category_id?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -656,6 +659,12 @@ export interface Database {
                         foreignKeyName: "work_order_tasks_work_order_id_fkey"
                         columns: ["work_order_id"]
                         referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_tasks_category_id_fkey"
+                        columns: ["category_id"]
+                        referencedRelation: "work_order_categories"
                         referencedColumns: ["id"]
                     }
                 ]
@@ -856,6 +865,92 @@ export interface Database {
                         foreignKeyName: "task_comment_mentions_mentioned_technician_id_fkey"
                         columns: ["mentioned_technician_id"]
                         referencedRelation: "technicians"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            work_order_categories: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    name: string
+                    color: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    name: string
+                    color?: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    name?: string
+                    color?: string
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_categories_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            },
+            task_tags: {
+                Row: {
+                    id: string
+                    name: string
+                    color: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    name: string
+                    color?: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    name?: string
+                    color?: string
+                    created_at?: string
+                }
+                Relationships: []
+            },
+            task_tag_assignments: {
+                Row: {
+                    id: string
+                    task_id: string
+                    tag_id: string
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    task_id: string
+                    tag_id: string
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    task_id?: string
+                    tag_id?: string
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "task_tag_assignments_task_id_fkey"
+                        columns: ["task_id"]
+                        referencedRelation: "work_order_tasks"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "task_tag_assignments_tag_id_fkey"
+                        columns: ["tag_id"]
+                        referencedRelation: "task_tags"
                         referencedColumns: ["id"]
                     }
                 ]

@@ -223,11 +223,15 @@ export interface WorkOrderTask {
     priority: TaskPriority;
     due_date: string | null;
     block_reason: string | null;
+    category_id: string | null;
     created_at: string;
     updated_at: string;
     // Optional: Arrays for UI
     assignments?: TaskAssignment[];
     checklists?: TaskChecklist[];
+    // Optional: Joined data
+    category?: WorkOrderCategory;
+    tags?: TaskTag[];
     // Helper functionality
     progress?: number; // Calculated field
 }
@@ -289,4 +293,31 @@ export interface MentionableUser {
     name: string;
     type: 'user' | 'technician';
     avatar_url?: string | null;
+}
+
+// Work Order Category - categories scoped to a work order
+export interface WorkOrderCategory {
+    id: string;
+    work_order_id: string;
+    name: string;
+    color: string;
+    created_at: string;
+}
+
+// Task Tag - global tags for tasks
+export interface TaskTag {
+    id: string;
+    name: string;
+    color: string;
+    created_at: string;
+}
+
+// Task Tag Assignment - junction table for task tags
+export interface TaskTagAssignment {
+    id: string;
+    task_id: string;
+    tag_id: string;
+    created_at: string;
+    // Joined data
+    tag?: TaskTag;
 }
