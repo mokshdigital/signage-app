@@ -519,3 +519,57 @@ When starting a new development session, add an entry following this format:
 
 ### Git Commit
 `fix(work-orders): refine AI prompt logic for task extraction and date parsing`
+
+## December 19, 2024 (Session 2)
+**Objective**: Fix AI processing, migrate to Gemini, enhance Tasks UI, add File Viewer.
+
+### Key Changes
+
+#### 1. Database Migrations
+*   Made migration files idempotent (safe to re-run) by adding `DROP POLICY IF EXISTS` and `CREATE INDEX IF NOT EXISTS`.
+*   Affected files: `010_advanced_wo_foundation.sql`, `011_tasks_and_checklists.sql`.
+
+#### 2. AI Provider Migration (OpenAI → Gemini 2.5 Pro)
+*   Rewrote `app/api/process-work-order/route.ts` to use `@google/generative-ai`.
+*   Configured model: `gemini-3-flash-preview` (changed from 2.5-pro due to overload).
+*   Implemented native PDF and image support via `inlineData`.
+*   Set `responseMimeType: 'application/json'` for reliable JSON output.
+*   Added safety block to prevent hallucinations when no valid files are present.
+
+#### 3. File Viewer Modal
+*   Created `FileViewerModal.tsx` component for in-app PDF/image viewing.
+*   Supports `<img>` for images, `<iframe>` for PDFs.
+*   Added file navigation (arrows), download, and open-in-new-tab buttons.
+*   Replaced "View Analysis" button with "View WO" on work order detail page.
+
+#### 4. Task Description Display
+*   Changed task description from `line-clamp-1` to `line-clamp-3` when collapsed.
+*   Full description shown when task is expanded.
+
+#### 5. Checklist Enhancements
+*   Added `updateChecklistItem` service method.
+*   Created `ChecklistItemRow` component with inline edit mode.
+*   Made Edit (pencil) and Delete (trash) icons always visible.
+*   Keyboard support: Enter to save, Escape to cancel edits.
+
+#### 6. Edit Task Feature
+*   Added "Edit Task" button next to "Delete Task".
+*   Created Edit Task modal with Name, Description, Priority, Due Date fields.
+*   Added `saveTaskEdit` function to update task via service.
+
+#### 7. Tech Assignment Dropdown Improvements
+*   Changed dropdown to open above (instead of below) to prevent cutoff.
+*   Highlighted already-assigned techs with green background and checkmark.
+*   Disabled re-selection of already-assigned techs.
+
+### Git Commits (chronological)
+1. `feat(work-orders): switch AI to Gemini 2.5 Pro with native PDF support`
+2. `fix: correct Gemini model name to gemini-2.5-pro`
+3. `fix: switch to gemini-3-flash-preview model`
+4. `feat(work-orders): add in-app file viewer modal with View WO button`
+5. `fix(tasks): show more of task description, full text when expanded`
+6. `feat(tasks): add inline edit for checklist items with prominent icons`
+7. `feat(tasks): add Edit Task button and modal`
+8. `fix: TypeScript type error for priority field in edit task`
+9. `fix: tech assign dropdown opens above to prevent cutoff`
+10. `feat: highlight already-assigned techs in dropdown with green and checkmark`
