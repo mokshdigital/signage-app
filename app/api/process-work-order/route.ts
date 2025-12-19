@@ -1,25 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import OpenAI from 'openai';
+import { GoogleGenerativeAI } from '@google/generative-ai';
 import { createClient } from '@/lib/supabase/api';
 import { WorkOrder, WorkOrderFile } from '@/types/database';
 
 // Debug: Log environment variable presence (not values)
 console.log('[process-work-order] Environment check:', {
-    hasOpenAIKey: !!process.env.OPENAI_API_KEY,
+    hasGeminiKey: !!process.env.GEMINI_API_KEY,
     hasSupabaseUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
     hasServiceKey: !!process.env.SUPABASE_SERVICE_ROLE_KEY,
-    hasAnonKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
 });
 
-// Initialize OpenAI
-const openai = new OpenAI({
-    apiKey: process.env.OPENAI_API_KEY || '',
-});
+// Initialize Gemini
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
 const ANALYSIS_PROMPT = `You are an expert AI assistant for a signage company. Your role is to analyze work order documents (PDFs, images) and extract specific operational data.
 
 **INSTRUCTIONS:**
-1. **Analyze ALL provided images/files** to build a complete understanding of the job.
+1. **Analyze ALL provided files** to build a complete understanding of the job.
 2. **Extract** the exact fields listed below.
 3. **Tasks Extraction**: Review the line items in the work order carefully. Identify the actual work to be done. 
    - **Ignore** generic headers like "Installation", "Services", "Labor".
@@ -33,17 +30,16 @@ const ANALYSIS_PROMPT = `You are an expert AI assistant for a signage company. Y
   "site_address": "String. The full address where work will be performed.",
   "work_order_date": "String. Format: YYYY-MM-DD. The date the work order was created/issued.",
   "planned_date": "String. Format: YYYY-MM-DD. The scheduled installation or due date, if found.",
-  "skills_required": ["String", "String", ...], // Array of skills needed (e.g. "Electrical", "Bucket Truck Operation", "Vinyl Application")
-  "permits_required": ["String", "String", ...], // Array of permits (e.g. "Electrical Permit", "Building Permit", "Lane Closure")
-  "equipment_required": ["String", "String", ...], // Array of equipment (e.g. "Scissor Lift", "Bucket Truck", "Ladder", "Crane")
-  "materials_required": ["String", "String", ...], // Array of materials (e.g. "LED Power Supply", "Vinyl", "Acrylic", "Fasteners")
+  "skills_required": ["String", "String", ...],
+  "permits_required": ["String", "String", ...],
+  "equipment_required": ["String", "String", ...],
+  "materials_required": ["String", "String", ...],
   "suggested_tasks": [
     {
       "name": "Concise task name (e.g. 'Install Main Sign Face')",
-      "description": "Detailed description from line items (e.g. 'Mount 4x8 cabinet to North wall using provided patterns')",
-      "priority": "Medium" // Options: 'Low', 'Medium', 'High', 'Emergency'. Default to Medium.
-    },
-    ...
+      "description": "Detailed description from line items",
+      "priority": "Medium"
+    }
   ],
   "jobType": "String. Brief categorization (e.g. 'Installation', 'Service', 'Survey', 'Removal')",
   "scope_of_work": "String. A comprehensive summary text block of the entire scope."
@@ -60,11 +56,11 @@ export async function POST(request: NextRequest) {
     console.log('[process-work-order] POST request received');
 
     try {
-        // Check for OpenAI API key first
-        if (!process.env.OPENAI_API_KEY) {
-            console.error('[process-work-order] OPENAI_API_KEY is not set!');
+        // Check for Gemini API key first
+        if (!process.env.GEMINI_API_KEY) {
+            console.error('[process-work-order] GEMINI_API_KEY is not set!');
             return NextResponse.json(
-                { error: 'OPENAI_API_KEY environment variable is not configured' },
+                { error: 'GEMINI_API_KEY environment variable is not configured' },
                 { status: 500 }
             );
         }
@@ -97,7 +93,6 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Type assertion
         const workOrder = workOrderData as unknown as WorkOrder;
         console.log('[process-work-order] Work order fetched, processed:', workOrder.processed);
 
@@ -119,9 +114,8 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Download and process all files - build content for OpenAI
-        const imageContents: { type: 'image_url'; image_url: { url: string; detail: 'high' } }[] = [];
-        let textContent = '';
+        // Build content parts for Gemini
+        const contentParts: { inlineData: { mimeType: string; data: string } }[] = [];
 
         for (const file of files) {
             console.log('[process-work-order] Processing file:', file.file_name);
@@ -137,59 +131,73 @@ export async function POST(request: NextRequest) {
 
             if (downloadError || !fileData) {
                 console.error(`[process-work-order] Failed to download file: ${file.file_name}`, downloadError);
-                continue; // Skip this file but continue with others
+                continue;
             }
 
-            // Convert to buffer
+            // Convert to buffer and base64
             const arrayBuffer = await fileData.arrayBuffer();
             const buffer = Buffer.from(arrayBuffer);
+            const base64Data = buffer.toString('base64');
             console.log('[process-work-order] File downloaded, size:', buffer.length);
 
-            // Determine file type
+            // Determine MIME type
             const fileName = file.file_name || '';
             const fileExtension = fileName.split('.').pop()?.toLowerCase();
+            let mimeType = file.mime_type || '';
 
-            if (['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(fileExtension || '')) {
-                // For images, add as base64 data URL
-                const base64 = buffer.toString('base64');
-                const mimeType = file.mime_type || `image/${fileExtension}`;
-                imageContents.push({
-                    type: 'image_url',
-                    image_url: {
-                        url: `data:${mimeType};base64,${base64}`,
-                        detail: 'high'
-                    }
-                });
-                console.log('[process-work-order] Added image content');
-            } else if (fileExtension === 'pdf') {
-                textContent += `\n[PDF File: ${fileName} - Please analyze the content from images if available. If no images, I cannot see this PDF content directly.]\n`;
-                console.log('[process-work-order] PDF noted');
+            if (!mimeType) {
+                if (['jpg', 'jpeg'].includes(fileExtension || '')) mimeType = 'image/jpeg';
+                else if (fileExtension === 'png') mimeType = 'image/png';
+                else if (fileExtension === 'gif') mimeType = 'image/gif';
+                else if (fileExtension === 'webp') mimeType = 'image/webp';
+                else if (fileExtension === 'pdf') mimeType = 'application/pdf';
+                else {
+                    console.warn(`[process-work-order] Unknown file type: ${fileExtension}, skipping.`);
+                    continue;
+                }
             }
+
+            contentParts.push({
+                inlineData: {
+                    mimeType: mimeType,
+                    data: base64Data,
+                },
+            });
+            console.log('[process-work-order] Added content part:', mimeType);
         }
 
-        if (imageContents.length === 0) {
-            // If we only have PDFs and no images, we warn the user
-            if (!textContent) {
-                return NextResponse.json(
-                    { error: 'No supported image files found. Please upload images of the work order (JPG/PNG).' },
-                    { status: 400 }
-                );
-            }
+        if (contentParts.length === 0) {
+            console.error('[process-work-order] No valid files found to analyze.');
+            return NextResponse.json(
+                { error: 'No valid files found to analyze. Please upload PDF or Image files.' },
+                { status: 400 }
+            );
         }
 
-        // Process with OpenAI GPT-4 Vision
-        console.log('[process-work-order] Calling OpenAI with', imageContents.length, 'images...');
+        // Process with Gemini 2.5 Pro
+        console.log('[process-work-order] Calling Gemini 2.5 Pro with', contentParts.length, 'files...');
         let analysisText: string;
 
         try {
-            analysisText = await analyzeWithOpenAI(imageContents, textContent);
-            console.log('[process-work-order] OpenAI response received, length:', analysisText.length);
-            // Log a truncated sample of the response for debugging
+            const model = genAI.getGenerativeModel({
+                model: 'gemini-2.5-pro-preview-06-05',
+                generationConfig: {
+                    responseMimeType: 'application/json',
+                },
+            });
+
+            const result = await model.generateContent([
+                ANALYSIS_PROMPT,
+                ...contentParts,
+            ]);
+
+            analysisText = result.response.text();
+            console.log('[process-work-order] Gemini response received, length:', analysisText.length);
             console.log('[process-work-order] Raw Response Sample:', analysisText.substring(0, 500));
-        } catch (openaiError: any) {
-            console.error('[process-work-order] OpenAI API error:', openaiError);
+        } catch (geminiError: any) {
+            console.error('[process-work-order] Gemini API error:', geminiError);
             return NextResponse.json(
-                { error: 'OpenAI API error', details: openaiError.message },
+                { error: 'Gemini API error', details: geminiError.message },
                 { status: 500 }
             );
         }
@@ -197,7 +205,7 @@ export async function POST(request: NextRequest) {
         // Parse the JSON response
         let analysis;
         try {
-            // Remove markdown code blocks if present
+            // Clean up if wrapped in markdown (shouldn't happen with responseMimeType but just in case)
             let cleanedText = analysisText
                 .replace(/```json\n?/g, '')
                 .replace(/```\n?/g, '')
@@ -224,7 +232,6 @@ export async function POST(request: NextRequest) {
             analysis: analysis,
         };
 
-        // Populate new fields from AI extraction if available
         if (analysis.work_order_number) {
             workOrderUpdate.work_order_number = String(analysis.work_order_number);
         }
@@ -250,7 +257,6 @@ export async function POST(request: NextRequest) {
             return arr.map(item => String(item)).filter(item => item.trim() !== '');
         };
 
-        // Populate requirements arrays with sanitization
         const skills = sanitizeStringArray(analysis.skills_required);
         if (skills) workOrderUpdate.skills_required = skills;
 
@@ -300,7 +306,6 @@ export async function POST(request: NextRequest) {
 
             if (tasksError) {
                 console.error('[process-work-order] Failed to insert tasks:', tasksError);
-                // Don't fail the whole request, just log it
             } else {
                 console.log('[process-work-order] Tasks created successfully');
             }
@@ -318,33 +323,4 @@ export async function POST(request: NextRequest) {
             { status: 500 }
         );
     }
-}
-
-// Analyze with OpenAI GPT-4 Vision
-async function analyzeWithOpenAI(
-    imageContents: { type: 'image_url'; image_url: { url: string; detail: 'high' } }[],
-    additionalText: string
-): Promise<string> {
-    const messages: any[] = [
-        {
-            role: 'system',
-            content: "You are a helpful assistant designed to output JSON."
-        },
-        {
-            role: 'user',
-            content: [
-                { type: 'text', text: ANALYSIS_PROMPT + (additionalText ? `\n\nAdditional context:\n${additionalText}` : '') },
-                ...imageContents
-            ]
-        }
-    ];
-
-    const response = await openai.chat.completions.create({
-        model: 'gpt-4o',
-        messages: messages,
-        max_tokens: 4096,
-        response_format: { type: "json_object" },
-    });
-
-    return response.choices[0]?.message?.content || '';
 }
