@@ -3,8 +3,9 @@
 import { useState, useRef } from 'react';
 import { Button, Card, Alert, UploadIcon, Textarea } from '@/components/ui';
 
+
 interface WorkOrderUploadFormProps {
-    onSubmit: (mainFile: File, associatedFiles: File[], shipmentStatus?: string) => Promise<void>;
+    onSubmit: (mainFile: File, associatedFiles: File[]) => Promise<void>;
     isLoading?: boolean;
 }
 
@@ -13,7 +14,6 @@ const MAX_ASSOCIATED_FILES = 9;
 export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUploadFormProps) {
     const [mainFile, setMainFile] = useState<File | null>(null);
     const [associatedFiles, setAssociatedFiles] = useState<File[]>([]);
-    const [shipmentStatus, setShipmentStatus] = useState('');
     const [error, setError] = useState<string | null>(null);
 
     // Refs for resetting inputs
@@ -60,11 +60,10 @@ export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUp
         }
 
         try {
-            await onSubmit(mainFile, associatedFiles, shipmentStatus || undefined);
+            await onSubmit(mainFile, associatedFiles);
             // Reset form on success
             setMainFile(null);
             setAssociatedFiles([]);
-            setShipmentStatus('');
             if (mainInputRef.current) mainInputRef.current.value = '';
             if (associatedInputRef.current) associatedInputRef.current.value = '';
         } catch (err) {
@@ -160,30 +159,13 @@ export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUp
                     )}
                 </div>
 
-                {/* Initial Shipping Comment */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Initial Shipping Comment (Optional)
-                    </label>
-                    <Textarea
-                        value={shipmentStatus}
-                        onChange={(e) => setShipmentStatus(e.target.value)}
-                        placeholder="Enter any initial notes about materials, shipment tracking, or delivery status..."
-                        rows={3}
-                        className="w-full"
-                    />
-                    <p className="mt-1 text-sm text-gray-500">
-                        This will be added as the first comment in the Shipping Comments section.
-                    </p>
-                </div>
-
                 <div className="pt-4 flex justify-end">
                     <Button
                         type="submit"
                         loading={isLoading}
                         leftIcon={<UploadIcon />}
                     >
-                        Upload & Process
+                        Upload & Analyze
                     </Button>
                 </div>
             </form>

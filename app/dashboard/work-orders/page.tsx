@@ -13,7 +13,8 @@ import { Search, Filter, X } from 'lucide-react';
 import {
     WorkOrderUploadForm,
     WorkOrderFilesModal,
-    WorkOrderAnalysisModal
+    WorkOrderAnalysisModal,
+    WorkOrderReviewModal
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
@@ -75,6 +76,10 @@ export default function WorkOrdersPage() {
 
     // Upload Modal State
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+
+    // Review Modal State
+    const [isReviewOpen, setIsReviewOpen] = useState(false);
+    const [currentWorkOrder, setCurrentWorkOrder] = useState<WorkOrder | null>(null);
 
     // Map of user IDs to profiles for "Uploaded By" column
     const [uploaders, setUploaders] = useState<Record<string, { name: string }>>({});
@@ -229,7 +234,7 @@ export default function WorkOrdersPage() {
     }, [openFilesModal]);
 
     // Handle Upload and Process
-    const handleUpload = async (mainFile: File, associatedFiles: File[], shipmentStatus?: string) => {
+    const handleUpload = async (mainFile: File, associatedFiles: File[]) => {
         setIsUploading(true);
         setUploadError(null);
         try {
@@ -246,25 +251,36 @@ export default function WorkOrdersPage() {
             const allFiles = [mainFile, ...associatedFiles];
             await workOrdersService.uploadFiles(order.id, allFiles);
 
-            // 3. Create initial shipping comment if provided
-            if (shipmentStatus?.trim()) {
-                await workOrdersService.addShippingComment(order.id, shipmentStatus.trim());
-            }
-
-            // 4. Trigger AI Processing
+            // 3. Trigger AI Processing
             setIsProcessing(true);
             const processResult = await workOrdersService.processWithAI(order.id);
 
+            let updatedOrder = order;
+
             if (!processResult.success) {
-                toast.warning('Work order uploaded but AI processing failed', {
+                toast.warning('Work order uploaded, but AI processing failed', {
                     description: processResult.error
                 });
             } else {
-                toast.success('Work order uploaded and analyzed');
+                // Update local object with analysis data for the review modal
+                if (processResult.analysis) {
+                    updatedOrder = { ...order, analysis: processResult.analysis };
+                    // We know the API also updated the DB site_address if found
+                    const analysis: any = processResult.analysis;
+                    if (analysis.site_address) {
+                        updatedOrder.site_address = analysis.site_address;
+                    }
+                }
             }
 
+            // 4. Transition to Review Step
             setIsUploadModalOpen(false);
+            setCurrentWorkOrder(updatedOrder);
+            setIsReviewOpen(true);
+
+            // Background refresh to show item in list (incomplete/open state)
             await refresh();
+
         } catch (error: any) {
             toast.error('Upload failed', { description: error.message });
             setUploadError(error.message || 'Failed to upload work order');
@@ -272,6 +288,11 @@ export default function WorkOrdersPage() {
             setIsUploading(false);
             setIsProcessing(false);
         }
+    };
+
+    const handleReviewComplete = async () => {
+        setIsReviewOpen(false);
+        await refresh();
     };
 
     const handleDelete = async (order: WorkOrder) => {
@@ -572,6 +593,13 @@ export default function WorkOrdersPage() {
                 isOpen={isAnalysisOpen}
                 onClose={closeAnalysis}
                 analysis={analysisData}
+            />
+
+            <WorkOrderReviewModal
+                isOpen={isReviewOpen}
+                onClose={() => setIsReviewOpen(false)}
+                workOrder={currentWorkOrder}
+                onSave={handleReviewComplete}
             />
 
             {/* Client Assignment Modal */}

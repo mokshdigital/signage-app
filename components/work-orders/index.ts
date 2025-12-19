@@ -5,4 +5,5 @@ export { default as ShipmentManager } from './ShipmentManager';
 export { WorkOrderTasks } from './WorkOrderTasks';
 export { FileViewerModal } from './FileViewerModal';
 export { ShippingComments } from './ShippingComments';
+export { WorkOrderReviewModal } from './WorkOrderReviewModal';
 
