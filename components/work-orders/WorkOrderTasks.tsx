@@ -389,7 +389,7 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
                                     + Assign
                                 </Button>
                                 {/* Simple Dropdown for assignment */}
-                                <div className="absolute top-full left-0 mt-1 w-48 bg-white border border-gray-200 shadow-lg rounded-md hidden group-hover:block z-10 p-1">
+                                <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-gray-200 shadow-lg rounded-md hidden group-hover:block z-10 p-1">
                                     {availableTechnicians.length === 0 ? <div className="p-2 text-xs text-gray-500">No techs on details page</div> :
                                         availableTechnicians.map(t => (
                                             <button
