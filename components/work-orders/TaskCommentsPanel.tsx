@@ -302,6 +302,11 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
         });
     };
 
+    const isImageFile = (url: string) => {
+        const ext = url.split('.').pop()?.toLowerCase();
+        return ['jpg', 'jpeg', 'png', 'gif', 'webp'].includes(ext || '');
+    };
+
     const getFileIcon = (url: string) => {
         const ext = url.split('.').pop()?.toLowerCase();
         if (ext === 'pdf') return <FileText className="w-4 h-4" />;
@@ -399,17 +404,34 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
 
                                                 {/* Attachments */}
                                                 {comment.attachments && comment.attachments.length > 0 && (
-                                                    <div className="flex flex-wrap gap-2 mt-2">
+                                                    <div className="flex flex-wrap gap-2 mt-3">
                                                         {comment.attachments.map((url, idx) => (
                                                             <button
                                                                 key={idx}
                                                                 onClick={() => openFileViewer(comment.attachments, idx)}
-                                                                className="flex items-center gap-1 px-2 py-1 bg-gray-200 dark:bg-gray-700 rounded text-xs hover:bg-gray-300 dark:hover:bg-gray-600"
+                                                                className="relative group overflow-hidden rounded-lg border border-gray-200 dark:border-gray-600 hover:border-blue-400 transition-colors"
                                                             >
-                                                                {getFileIcon(url)}
-                                                                <span className="truncate max-w-[100px]">
-                                                                    {url.split('/').pop()}
-                                                                </span>
+                                                                {isImageFile(url) ? (
+                                                                    /* Image thumbnail */
+                                                                    <div className="w-24 h-24 bg-gray-100 dark:bg-gray-700">
+                                                                        <img
+                                                                            src={url}
+                                                                            alt="attachment"
+                                                                            className="w-full h-full object-cover"
+                                                                        />
+                                                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                                                                            <span className="text-white opacity-0 group-hover:opacity-100 text-xs font-medium">View</span>
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    /* PDF file card */
+                                                                    <div className="w-24 h-24 bg-gray-100 dark:bg-gray-700 flex flex-col items-center justify-center p-2">
+                                                                        <FileText className="w-8 h-8 text-red-500 mb-1" />
+                                                                        <span className="text-[10px] text-gray-600 dark:text-gray-300 truncate w-full text-center">
+                                                                            {url.split('/').pop()?.substring(0, 12)}...
+                                                                        </span>
+                                                                    </div>
+                                                                )}
                                                             </button>
                                                         ))}
                                                     </div>
@@ -445,18 +467,28 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
                 <div className="border-t border-gray-200 dark:border-gray-700 p-4">
                     {/* Attachment previews */}
                     {newAttachments.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-2">
+                        <div className="flex flex-wrap gap-2 mb-3">
                             {newAttachments.map((url, idx) => (
                                 <div key={idx} className="relative group">
-                                    <div className="flex items-center gap-1 px-2 py-1 bg-gray-100 dark:bg-gray-800 rounded text-xs">
-                                        {getFileIcon(url)}
-                                        <span className="truncate max-w-[80px]">
-                                            {url.split('/').pop()}
-                                        </span>
-                                    </div>
+                                    {isImageFile(url) ? (
+                                        /* Image thumbnail preview */
+                                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                                            <img
+                                                src={url}
+                                                alt="attachment"
+                                                className="w-full h-full object-cover"
+                                            />
+                                        </div>
+                                    ) : (
+                                        /* PDF file preview */
+                                        <div className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
+                                            <FileText className="w-6 h-6 text-red-500" />
+                                            <span className="text-[8px] text-gray-500 mt-1">PDF</span>
+                                        </div>
+                                    )}
                                     <button
                                         onClick={() => handleRemoveAttachment(idx)}
-                                        className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white rounded-full flex items-center justify-center text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                                     >
                                         ×
                                     </button>
