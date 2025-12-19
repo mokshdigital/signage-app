@@ -112,14 +112,36 @@ Stores work order metadata and AI analysis results. Files are stored in the `wor
 |--------|------|-------------|-------------|
 | `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
 | `uploaded_by` | UUID | REFERENCES auth.users(id) | User who uploaded (nullable for now) |
+| `owner_id` | UUID | REFERENCES user_profiles(id) ON DELETE SET NULL | WO Owner - user responsible for the work order |
 | `processed` | BOOLEAN | DEFAULT FALSE | Whether AI has processed this order |
 | `analysis` | JSONB | | AI-extracted structured data from all files |
+| `work_order_number` | TEXT | | Official work order ID (e.g., WO-12345) |
+| `job_type_id` | UUID | REFERENCES job_types(id) ON DELETE SET NULL | Associated job type |
+| `site_address` | TEXT | | Location where work will be performed |
+| `planned_date` | DATE | | Scheduled installation date |
+| `work_order_date` | DATE | | Date the work order was issued |
+| `client_id` | UUID | REFERENCES clients(id) ON DELETE SET NULL | Associated client |
+| `pm_id` | UUID | REFERENCES project_managers(id) ON DELETE SET NULL | Associated project manager |
+| `skills_required` | TEXT[] | | Array of required technician skills |
+| `permits_required` | TEXT[] | | Array of required permits |
+| `equipment_required` | TEXT[] | | Array of required equipment |
+| `materials_required` | TEXT[] | | Array of required materials |
+| `recommended_techs` | INTEGER | | AI-recommended number of technicians |
+| `scope_of_work` | TEXT | | Full scope of work description |
+| `shipment_status` | TEXT | | Initial shipment/materials notes |
+| `job_status` | TEXT | CHECK, DEFAULT 'Open' | Workflow status: Open, Active, On Hold, Completed, Submitted, Invoiced, Cancelled |
+| `job_status_reason` | TEXT | | Reason when job is On Hold or Cancelled |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | Upload timestamp |
 
 #### Indexes
 - `idx_work_orders_uploaded_by` on `uploaded_by`
 - `idx_work_orders_processed` on `processed`
 - `idx_work_orders_created_at` on `created_at`
+- `idx_work_orders_work_order_number` on `work_order_number`
+- `idx_work_orders_job_type_id` on `job_type_id`
+- `idx_work_orders_client_id` on `client_id`
+- `idx_work_orders_job_status` on `job_status`
+- `idx_work_orders_owner_id` on `owner_id`
 
 #### Row Level Security (RLS)
 - **Enabled**: No (disabled for development)

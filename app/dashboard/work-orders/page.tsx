@@ -3,7 +3,7 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { WorkOrder, WorkOrderFile, Client, ProjectManager, JobType } from '@/types/database';
+import { WorkOrder, WorkOrderFile, Client, ProjectManager, JobType, JobStatus } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { clientsService } from '@/services/clients.service';
 import { useCrud, useModal, useConfirmDialog } from '@/hooks';
@@ -85,6 +85,7 @@ export default function WorkOrdersPage() {
         status: 'all' as 'all' | 'analyzed' | 'pending',
         jobType: 'all',
         client: 'all',
+        jobStatus: 'all' as 'all' | JobStatus,
         date: ''
     });
     const [jobTypes, setJobTypes] = useState<JobType[]>([]);
@@ -141,7 +142,10 @@ export default function WorkOrdersPage() {
                 matchesDate = orderDate === filters.date;
             }
 
-            return matchesSearch && matchesStatus && matchesJobType && matchesClient && matchesDate;
+            // Job Status Filter
+            const matchesJobStatus = filters.jobStatus === 'all' || order.job_status === filters.jobStatus;
+
+            return matchesSearch && matchesStatus && matchesJobType && matchesClient && matchesDate && matchesJobStatus;
         });
     }, [workOrders, searchTerm, filters, uploaders]);
 
@@ -151,6 +155,7 @@ export default function WorkOrdersPage() {
             status: 'all',
             jobType: 'all',
             client: 'all',
+            jobStatus: 'all',
             date: ''
         });
     };
@@ -224,23 +229,26 @@ export default function WorkOrdersPage() {
     }, [openFilesModal]);
 
     // Handle Upload and Process
-    const handleUpload = async (mainFile: File, associatedFiles: File[]) => {
+    const handleUpload = async (mainFile: File, associatedFiles: File[], shipmentStatus?: string) => {
         setIsUploading(true);
         setUploadError(null);
         try {
-            // 1. Create work order
-            // 1. Create work order
+            // 1. Create work order with owner and shipment status
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
-            const order = await workOrdersService.create({ uploaded_by: user?.id || null });
+            const order = await workOrdersService.create({
+                uploaded_by: user?.id || null,
+                owner_id: user?.id || null,
+                shipment_status: shipmentStatus || null,
+                job_status: 'Open'
+            });
 
             // 2. Upload files
             const allFiles = [mainFile, ...associatedFiles];
             await workOrdersService.uploadFiles(order.id, allFiles);
 
             // 3. Trigger AI Processing
-            // We do this in the background or await it? Let's await it to show immediate result
-            setIsProcessing(true); // Show processing overlay
+            setIsProcessing(true);
             const processResult = await workOrdersService.processWithAI(order.id);
 
             if (!processResult.success) {
@@ -251,8 +259,7 @@ export default function WorkOrdersPage() {
                 toast.success('Work order uploaded and analyzed');
             }
 
-            setIsUploadModalOpen(false); // Close modal on success
-            // Refresh list
+            setIsUploadModalOpen(false);
             await refresh();
         } catch (error: any) {
             toast.error('Upload failed', { description: error.message });
@@ -376,6 +383,27 @@ export default function WorkOrdersPage() {
             }
         },
         {
+            key: 'job_status',
+            header: 'Status',
+            render: (order) => {
+                const statusColors: Record<string, string> = {
+                    'Open': 'bg-blue-100 text-blue-800',
+                    'Active': 'bg-green-100 text-green-800',
+                    'On Hold': 'bg-yellow-100 text-yellow-800',
+                    'Completed': 'bg-purple-100 text-purple-800',
+                    'Submitted': 'bg-indigo-100 text-indigo-800',
+                    'Invoiced': 'bg-emerald-100 text-emerald-800',
+                    'Cancelled': 'bg-red-100 text-red-800'
+                };
+                const colorClass = statusColors[order.job_status] || 'bg-gray-100 text-gray-800';
+                return (
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${colorClass}`}>
+                        {order.job_status || 'Open'}
+                    </span>
+                );
+            }
+        },
+        {
             key: 'uploaded_by',
             header: 'Uploaded By',
             render: (order) => {
@@ -464,6 +492,22 @@ export default function WorkOrdersPage() {
                             ))}
                         </select>
 
+                        {/* Job Status Filter */}
+                        <select
+                            className="bg-white border border-gray-300 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2"
+                            value={filters.jobStatus}
+                            onChange={(e) => setFilters({ ...filters, jobStatus: e.target.value as any })}
+                        >
+                            <option value="all">All Job Status</option>
+                            <option value="Open">Open</option>
+                            <option value="Active">Active</option>
+                            <option value="On Hold">On Hold</option>
+                            <option value="Completed">Completed</option>
+                            <option value="Submitted">Submitted</option>
+                            <option value="Invoiced">Invoiced</option>
+                            <option value="Cancelled">Cancelled</option>
+                        </select>
+
                         {/* Date Filter */}
                         <input
                             type="date"
@@ -473,7 +517,7 @@ export default function WorkOrdersPage() {
                         />
 
                         {/* Clear Filters Button */}
-                        {(searchTerm || filters.status !== 'all' || filters.jobType !== 'all' || filters.client !== 'all' || filters.date) && (
+                        {(searchTerm || filters.status !== 'all' || filters.jobType !== 'all' || filters.client !== 'all' || filters.jobStatus !== 'all' || filters.date) && (
                             <Button
                                 variant="ghost"
                                 size="sm"

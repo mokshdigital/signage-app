@@ -121,6 +121,16 @@ export interface ReceiverOption {
     title?: string | null; // office_staff title or technician role info
 }
 
+// Job Status - workflow status for work orders
+export type JobStatus = 'Open' | 'Active' | 'On Hold' | 'Completed' | 'Submitted' | 'Invoiced' | 'Cancelled';
+
+// Owner profile type (partial user_profile for display)
+export interface WorkOrderOwner {
+    id: string;
+    display_name: string;
+    avatar_url: string | null;
+}
+
 export interface WorkOrder {
     id: string;
     uploaded_by: string | null;
@@ -143,6 +153,11 @@ export interface WorkOrder {
     materials_required: string[] | null;
     recommended_techs: number | null;
     scope_of_work: string | null;
+    // Owner and Status (Phase 15)
+    owner_id: string | null;
+    shipment_status: string | null;
+    job_status: JobStatus;
+    job_status_reason: string | null;
     // Optional: populated when files are joined in queries
     files?: WorkOrderFile[];
     // Optional: populated when client/PM are joined
@@ -156,6 +171,8 @@ export interface WorkOrder {
     shipments?: WorkOrderShipment[];
     // Optional: populated when tasks are joined
     tasks?: WorkOrderTask[];
+    // Optional: populated when owner is joined
+    owner?: WorkOrderOwner;
 }
 
 export interface ChecklistTemplate {

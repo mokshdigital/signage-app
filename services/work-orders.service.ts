@@ -43,7 +43,7 @@ export const workOrdersService = {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('work_orders')
-            .select('*, client:clients(*), job_type:job_types(*)')
+            .select('*, client:clients(*), job_type:job_types(*), owner:user_profiles!owner_id(id, display_name, avatar_url)')
             .order('created_at', { ascending: false });
 
         if (error) {
@@ -67,7 +67,8 @@ export const workOrdersService = {
                 assignments:work_order_assignments(*, technician:technicians(*)),
                 shipments:work_order_shipments(*),
                 client:clients(*),
-                project_manager:project_managers(*)
+                project_manager:project_managers(*),
+                owner:user_profiles!owner_id(id, display_name, avatar_url)
             `)
             .eq('id', id)
             .single();
@@ -94,6 +95,7 @@ export const workOrdersService = {
             .from('work_orders')
             .insert([{
                 uploaded_by: workOrder.uploaded_by || null,
+                owner_id: workOrder.owner_id || workOrder.uploaded_by || null,
                 processed: false,
                 analysis: null,
                 work_order_number: workOrder.work_order_number || null,
@@ -101,6 +103,8 @@ export const workOrdersService = {
                 site_address: workOrder.site_address || null,
                 planned_date: workOrder.planned_date || null,
                 work_order_date: workOrder.work_order_date || null,
+                shipment_status: workOrder.shipment_status || null,
+                job_status: workOrder.job_status || 'Open',
             }])
             .select()
             .single();
@@ -972,6 +976,49 @@ export const workOrdersService = {
 
             if (insertError) throw new Error(`Failed to apply template: ${insertError.message}`);
         }
+    },
+
+    // =============================================
+    // JOB STATUS
+    // =============================================
+
+    /**
+     * Update job status with optional reason (required for On Hold/Cancelled)
+     */
+    async updateJobStatus(
+        id: string,
+        status: 'Open' | 'Active' | 'On Hold' | 'Completed' | 'Submitted' | 'Invoiced' | 'Cancelled',
+        reason?: string
+    ): Promise<WorkOrder> {
+        // Validate reason is provided for On Hold and Cancelled
+        if ((status === 'On Hold' || status === 'Cancelled') && !reason?.trim()) {
+            throw new Error(`A reason is required when setting status to "${status}"`);
+        }
+
+        const supabase = createClient();
+        const updates: { job_status: string; job_status_reason?: string | null } = {
+            job_status: status,
+        };
+
+        // Clear reason for non-hold/cancelled statuses, or set it if provided
+        if (status === 'On Hold' || status === 'Cancelled') {
+            updates.job_status_reason = reason || null;
+        } else {
+            updates.job_status_reason = null;
+        }
+
+        const { data, error } = await supabase
+            .from('work_orders')
+            .update(updates)
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to update job status: ${error.message}`);
+        }
+
+        return data as WorkOrder;
     },
 };
 

@@ -22,6 +22,16 @@ export interface Database {
                     site_address: string | null
                     planned_date: string | null
                     work_order_date: string | null
+                    skills_required: string[] | null
+                    permits_required: string[] | null
+                    equipment_required: string[] | null
+                    materials_required: string[] | null
+                    recommended_techs: number | null
+                    scope_of_work: string | null
+                    owner_id: string | null
+                    shipment_status: string | null
+                    job_status: string
+                    job_status_reason: string | null
                     created_at: string
                 }
                 Insert: {
@@ -36,6 +46,16 @@ export interface Database {
                     site_address?: string | null
                     planned_date?: string | null
                     work_order_date?: string | null
+                    skills_required?: string[] | null
+                    permits_required?: string[] | null
+                    equipment_required?: string[] | null
+                    materials_required?: string[] | null
+                    recommended_techs?: number | null
+                    scope_of_work?: string | null
+                    owner_id?: string | null
+                    shipment_status?: string | null
+                    job_status?: string
+                    job_status_reason?: string | null
                     created_at?: string
                 }
                 Update: {
@@ -50,6 +70,16 @@ export interface Database {
                     site_address?: string | null
                     planned_date?: string | null
                     work_order_date?: string | null
+                    skills_required?: string[] | null
+                    permits_required?: string[] | null
+                    equipment_required?: string[] | null
+                    materials_required?: string[] | null
+                    recommended_techs?: number | null
+                    scope_of_work?: string | null
+                    owner_id?: string | null
+                    shipment_status?: string | null
+                    job_status?: string
+                    job_status_reason?: string | null
                     created_at?: string
                 }
                 Relationships: [
@@ -69,6 +99,12 @@ export interface Database {
                         foreignKeyName: "work_orders_job_type_id_fkey"
                         columns: ["job_type_id"]
                         referencedRelation: "job_types"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_orders_owner_id_fkey"
+                        columns: ["owner_id"]
+                        referencedRelation: "user_profiles"
                         referencedColumns: ["id"]
                     }
                 ]

@@ -8,7 +8,8 @@ import {
     JobType,
     WorkOrderAssignment,
     WorkOrderShipment,
-    Technician
+    Technician,
+    JobStatus
 } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { createClient } from '@/lib/supabase/client';
@@ -19,7 +20,9 @@ import {
     Input,
     LoadingSpinner,
     Alert,
-    TagInput
+    TagInput,
+    Modal,
+    Textarea
 } from '@/components/ui';
 import {
     WorkOrderFilesModal,
@@ -77,6 +80,24 @@ export default function WorkOrderDetailPage() {
 
     // File viewer modal
     const [isFileViewerOpen, setIsFileViewerOpen] = useState(false);
+
+    // Job Status modal
+    const [isJobStatusModalOpen, setIsJobStatusModalOpen] = useState(false);
+    const [pendingJobStatus, setPendingJobStatus] = useState<JobStatus | null>(null);
+    const [jobStatusReason, setJobStatusReason] = useState('');
+    const [savingJobStatus, setSavingJobStatus] = useState(false);
+
+    // Job Status helper
+    const JOB_STATUSES: JobStatus[] = ['Open', 'Active', 'On Hold', 'Completed', 'Submitted', 'Invoiced', 'Cancelled'];
+    const statusColors: Record<JobStatus, string> = {
+        'Open': 'bg-blue-100 text-blue-800',
+        'Active': 'bg-green-100 text-green-800',
+        'On Hold': 'bg-yellow-100 text-yellow-800',
+        'Completed': 'bg-purple-100 text-purple-800',
+        'Submitted': 'bg-indigo-100 text-indigo-800',
+        'Invoiced': 'bg-emerald-100 text-emerald-800',
+        'Cancelled': 'bg-red-100 text-red-800'
+    };
 
     // Fetch work order on mount
     useEffect(() => {
@@ -213,6 +234,49 @@ export default function WorkOrderDetailPage() {
         return new Date(dateStr).toLocaleDateString();
     };
 
+    const handleJobStatusChange = async (newStatus: JobStatus) => {
+        // If status requires reason, open modal
+        if (newStatus === 'On Hold' || newStatus === 'Cancelled') {
+            setPendingJobStatus(newStatus);
+            setJobStatusReason('');
+            setIsJobStatusModalOpen(true);
+            return;
+        }
+
+        // Otherwise update directly
+        setSavingJobStatus(true);
+        try {
+            await workOrdersService.updateJobStatus(workOrderId, newStatus);
+            toast.success(`Status changed to ${newStatus}`);
+            await fetchWorkOrder();
+        } catch (err: any) {
+            toast.error('Failed to update status', { description: err.message });
+        } finally {
+            setSavingJobStatus(false);
+        }
+    };
+
+    const handleJobStatusReasonSubmit = async () => {
+        if (!pendingJobStatus || !jobStatusReason.trim()) {
+            toast.error('Please provide a reason');
+            return;
+        }
+
+        setSavingJobStatus(true);
+        try {
+            await workOrdersService.updateJobStatus(workOrderId, pendingJobStatus, jobStatusReason.trim());
+            toast.success(`Status changed to ${pendingJobStatus}`);
+            setIsJobStatusModalOpen(false);
+            setPendingJobStatus(null);
+            setJobStatusReason('');
+            await fetchWorkOrder();
+        } catch (err: any) {
+            toast.error('Failed to update status', { description: err.message });
+        } finally {
+            setSavingJobStatus(false);
+        }
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -268,7 +332,7 @@ export default function WorkOrderDetailPage() {
             </div>
 
             {/* Quick Status */}
-            <div className="flex gap-3 flex-wrap">
+            <div className="flex gap-3 flex-wrap items-center">
                 <Badge variant={workOrder.processed ? 'success' : 'warning'} dot>
                     {workOrder.processed ? 'AI Analyzed' : 'Pending Analysis'}
                 </Badge>
@@ -277,6 +341,28 @@ export default function WorkOrderDetailPage() {
                 )}
                 {workOrder.job_type && (
                     <Badge variant="default">{safeRender(workOrder.job_type.name)}</Badge>
+                )}
+
+                {/* Job Status Dropdown */}
+                <div className="relative">
+                    <select
+                        value={workOrder.job_status || 'Open'}
+                        onChange={(e) => handleJobStatusChange(e.target.value as JobStatus)}
+                        disabled={savingJobStatus}
+                        className={`${statusColors[workOrder.job_status || 'Open']} px-3 py-1 rounded-full text-sm font-medium cursor-pointer border-0 appearance-none pr-6 focus:ring-2 focus:ring-blue-500`}
+                    >
+                        {JOB_STATUSES.map(status => (
+                            <option key={status} value={status}>{status}</option>
+                        ))}
+                    </select>
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none text-xs">▼</span>
+                </div>
+
+                {/* Show reason if on hold or cancelled */}
+                {(workOrder.job_status === 'On Hold' || workOrder.job_status === 'Cancelled') && workOrder.job_status_reason && (
+                    <span className="text-sm text-gray-500 italic">
+                        Reason: {safeRender(workOrder.job_status_reason)}
+                    </span>
                 )}
             </div>
 
@@ -568,6 +654,34 @@ export default function WorkOrderDetailPage() {
 
                 {/* Sidebar - 1 column */}
                 <div className="space-y-6">
+                    {/* WO Owner */}
+                    <Card title="WO Owner">
+                        <div className="flex items-center gap-3">
+                            {workOrder.owner?.avatar_url ? (
+                                <img
+                                    src={workOrder.owner.avatar_url}
+                                    alt={workOrder.owner.display_name}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                />
+                            ) : (
+                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                                    {workOrder.owner?.display_name?.charAt(0).toUpperCase() || '?'}
+                                </div>
+                            )}
+                            <div>
+                                <p className="font-medium text-gray-900">
+                                    {safeRender(workOrder.owner?.display_name) || 'Not assigned'}
+                                </p>
+                                {workOrder.shipment_status && (
+                                    <p className="text-xs text-gray-500">
+                                        Shipment: {safeRender(workOrder.shipment_status.substring(0, 50))}
+                                        {workOrder.shipment_status.length > 50 ? '...' : ''}
+                                    </p>
+                                )}
+                            </div>
+                        </div>
+                    </Card>
+
                     {/* Technician Assignments */}
                     <Card
                         title="Assigned Technicians"
@@ -734,6 +848,50 @@ export default function WorkOrderDetailPage() {
                 onClose={() => setIsFileViewerOpen(false)}
                 files={files}
             />
+
+            {/* Job Status Reason Modal */}
+            <Modal
+                isOpen={isJobStatusModalOpen}
+                onClose={() => {
+                    setIsJobStatusModalOpen(false);
+                    setPendingJobStatus(null);
+                    setJobStatusReason('');
+                }}
+                title={`${pendingJobStatus} - Provide Reason`}
+            >
+                <div className="space-y-4">
+                    <p className="text-sm text-gray-600">
+                        Please provide a reason for setting the status to <strong>{pendingJobStatus}</strong>.
+                    </p>
+                    <Textarea
+                        value={jobStatusReason}
+                        onChange={(e) => setJobStatusReason(e.target.value)}
+                        placeholder="Enter the reason..."
+                        rows={3}
+                        className="w-full"
+                    />
+                    <div className="flex gap-3 justify-end">
+                        <Button
+                            variant="secondary"
+                            onClick={() => {
+                                setIsJobStatusModalOpen(false);
+                                setPendingJobStatus(null);
+                                setJobStatusReason('');
+                            }}
+                            disabled={savingJobStatus}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleJobStatusReasonSubmit}
+                            loading={savingJobStatus}
+                            disabled={!jobStatusReason.trim()}
+                        >
+                            Update Status
+                        </Button>
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }
