@@ -659,3 +659,22 @@ Transformed `shipment_status` from a simple text field to a threaded comment sys
         *   Renamed "Initial Shipment Status" to "Initial Shipping Comment".
         *   Creates the first comment automatically upon upload.
 
+#### 8. Work Order Upload Flow Refactor (12:30 PM - 1:00 PM PST)
+Refactored the work order upload process into a two-step "Upload -> Analyze -> Review" workflow.
+
+*   **New Flow**:
+    1.  **Upload Modal**: User uploads files (no extra fields).
+    2.  **Processing**: Work order is created in DB, files uploaded, AI analysis runs.
+    3.  **Review Modal (New)**: automatically opens after analysis.
+        *   User reviews AI-extracted data.
+        *   Pre-fills "Site Address" from AI.
+        *   Provides AI recommendations for "Client" and "Job Type".
+        *   Allows choosing "Work Order Owner" and "Project Manager".
+        *   Initial "Shipping Comment" entry moved to this step.
+*   **Components**:
+    *   **New**: `WorkOrderReviewModal.tsx` handles the review/edit/save logic.
+    *   **Updated**: `WorkOrderUploadForm.tsx` (removed shipping comment field).
+    *   **Updated**: `WorkOrdersPage` manages the state transition between Upload and Review modals.
+*   **Result**: Users have a mandatory review step to verify AI data before considering the WO completely "setup", but the data is safely in the DB immediately after upload.
+
+
