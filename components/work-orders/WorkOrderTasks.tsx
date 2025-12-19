@@ -7,7 +7,7 @@ import { Button, Card, Badge, Modal, Input, Textarea } from '@/components/ui'; /
 import { toast } from '@/components/providers';
 import {
     CheckSquare, Plus, User, AlertCircle, Clock,
-    Calendar, ChevronDown, ChevronRight, X, UserPlus
+    Calendar, ChevronDown, ChevronRight, X, UserPlus, Pencil, Trash2
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { createClient } from '@/lib/supabase/client';
@@ -304,28 +304,17 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
                         ) : (
                             <ul className="space-y-2 mb-3">
                                 {checklists.map(item => (
-                                    <li key={item.id} className="group flex items-start gap-3 text-sm">
-                                        <input
-                                            type="checkbox"
-                                            checked={item.is_completed}
-                                            onChange={() => toggleChecklist(item)}
-                                            className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                                        />
-                                        <div className="flex-1">
-                                            <span className={`${item.is_completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
-                                                {item.content}
-                                            </span>
-                                            {item.is_completed && item.completed_by && (
-                                                <p className="text-[10px] text-gray-400 mt-0.5">
-                                                    Completed by {item.completed_by.display_name?.split(' ')[0]}
-                                                    {item.completed_at && ` on ${format(new Date(item.completed_at), 'MMM d, p')}`}
-                                                </p>
-                                            )}
-                                        </div>
-                                        <button onClick={() => deleteChecklist(item.id)} className="opacity-0 group-hover:opacity-100 text-gray-300 hover:text-red-500 transition-opacity">
-                                            <X className="w-3 h-3" />
-                                        </button>
-                                    </li>
+                                    <ChecklistItemRow
+                                        key={item.id}
+                                        item={item}
+                                        onToggle={() => toggleChecklist(item)}
+                                        onDelete={() => deleteChecklist(item.id)}
+                                        onUpdate={(newContent) => {
+                                            workOrdersService.updateChecklistItem(item.id, newContent).then(() => {
+                                                setChecklists(checklists.map(c => c.id === item.id ? { ...c, content: newContent } : c));
+                                            });
+                                        }}
+                                    />
                                 ))}
                             </ul>
                         )}
@@ -466,5 +455,87 @@ function TemplateSelector({ onSelect }: { onSelect: (id: string) => void }) {
             <option value="">+ Add from Template...</option>
             {templates.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
         </select>
+    );
+}
+
+function ChecklistItemRow({
+    item,
+    onToggle,
+    onDelete,
+    onUpdate
+}: {
+    item: TaskChecklist,
+    onToggle: () => void,
+    onDelete: () => void,
+    onUpdate: (newContent: string) => void
+}) {
+    const [isEditing, setIsEditing] = useState(false);
+    const [editValue, setEditValue] = useState(item.content);
+
+    const handleSave = () => {
+        if (editValue.trim() && editValue !== item.content) {
+            onUpdate(editValue.trim());
+        }
+        setIsEditing(false);
+    };
+
+    return (
+        <li className="flex items-start gap-3 text-sm py-1.5 px-2 -mx-2 rounded hover:bg-gray-50 group">
+            <input
+                type="checkbox"
+                checked={item.is_completed}
+                onChange={onToggle}
+                className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+            />
+            <div className="flex-1 min-w-0">
+                {isEditing ? (
+                    <input
+                        type="text"
+                        value={editValue}
+                        onChange={(e) => setEditValue(e.target.value)}
+                        onBlur={handleSave}
+                        onKeyDown={(e) => {
+                            if (e.key === 'Enter') handleSave();
+                            if (e.key === 'Escape') {
+                                setEditValue(item.content);
+                                setIsEditing(false);
+                            }
+                        }}
+                        autoFocus
+                        className="w-full text-sm border border-blue-300 rounded px-2 py-1 focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
+                    />
+                ) : (
+                    <>
+                        <span className={`${item.is_completed ? 'text-gray-400 line-through' : 'text-gray-700'}`}>
+                            {item.content}
+                        </span>
+                        {item.is_completed && item.completed_by && (
+                            <p className="text-[10px] text-gray-400 mt-0.5">
+                                Completed by {item.completed_by.display_name?.split(' ')[0]}
+                                {item.completed_at && ` on ${format(new Date(item.completed_at), 'MMM d, p')}`}
+                            </p>
+                        )}
+                    </>
+                )}
+            </div>
+            {!isEditing && (
+                <div className="flex items-center gap-1">
+                    <button
+                        onClick={() => setIsEditing(true)}
+                        className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                        title="Edit"
+                    >
+                        <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                    <button
+                        onClick={onDelete}
+                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                        title="Delete"
+                    >
+                        <Trash2 className="w-3.5 h-3.5" />
+                    </button>
+                </div>
+            )}
+        </li>
     );
 }

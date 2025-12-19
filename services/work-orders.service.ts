@@ -876,6 +876,22 @@ export const workOrdersService = {
         if (error) throw new Error(`Failed to delete checklist item: ${error.message}`);
     },
 
+    /**
+     * Update checklist item content
+     */
+    async updateChecklistItem(id: string, content: string): Promise<TaskChecklist> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('task_checklists')
+            .update({ content })
+            .eq('id', id)
+            .select()
+            .single();
+
+        if (error) throw new Error(`Failed to update checklist item: ${error.message}`);
+        return data as TaskChecklist;
+    },
+
     // =============================================
     // CHECKLIST TEMPLATES
     // =============================================
