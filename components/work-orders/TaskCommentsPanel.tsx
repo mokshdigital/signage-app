@@ -497,34 +497,39 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
                         </div>
                     )}
 
-                    {/* Mention dropdown */}
-                    {showMentionDropdown && filteredMentionUsers.length > 0 && (
-                        <div className="absolute bottom-full left-4 right-4 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-40 overflow-y-auto">
-                            {filteredMentionUsers.map(user => (
-                                <button
-                                    key={`${user.type}-${user.id}`}
-                                    onClick={() => handleSelectMention(user)}
-                                    className="w-full text-left px-3 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 flex items-center gap-2"
-                                >
-                                    <div className="w-6 h-6 rounded-full bg-blue-500 flex items-center justify-center text-white text-xs">
-                                        {user.name.charAt(0).toUpperCase()}
-                                    </div>
-                                    <span className="text-sm">{user.name}</span>
-                                    <span className="text-xs text-gray-500 ml-auto">
-                                        {user.type === 'technician' ? '🔧 Tech' : '👤 Staff'}
-                                    </span>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-
                     <div className="flex gap-2">
                         <div className="relative flex-1">
+                            {/* Mention dropdown - positioned above textarea */}
+                            {showMentionDropdown && filteredMentionUsers.length > 0 && (
+                                <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">
+                                    <div className="p-2 border-b border-gray-100 dark:border-gray-700">
+                                        <span className="text-xs text-gray-500 font-medium">Mention someone</span>
+                                    </div>
+                                    {filteredMentionUsers.map(user => (
+                                        <button
+                                            key={`${user.type}-${user.id}`}
+                                            onClick={() => handleSelectMention(user)}
+                                            className="w-full text-left px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                                        >
+                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-medium shadow-sm">
+                                                {user.name.charAt(0).toUpperCase()}
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <span className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</span>
+                                            </div>
+                                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
+                                                {user.type === 'technician' ? '🔧 Technician' : '👤 Staff'}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+
                             <Textarea
                                 ref={textareaRef}
                                 value={newContent}
                                 onChange={handleContentChange}
-                                placeholder="Type a comment... Use @ to mention"
+                                placeholder="Type a comment... Use @ to mention someone"
                                 rows={2}
                                 className="resize-none pr-10"
                             />
