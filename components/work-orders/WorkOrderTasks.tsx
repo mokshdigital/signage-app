@@ -391,20 +391,27 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
                                 {/* Simple Dropdown for assignment */}
                                 <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-gray-200 shadow-lg rounded-md hidden group-hover:block z-10 p-1">
                                     {availableTechnicians.length === 0 ? <div className="p-2 text-xs text-gray-500">No techs on details page</div> :
-                                        availableTechnicians.map(t => (
-                                            <button
-                                                key={t.id}
-                                                className="w-full text-left px-2 py-1 text-xs hover:bg-gray-100 rounded truncate"
-                                                onClick={() => {
-                                                    const currentIds = task.assignments?.map(a => a.technician_id) || [];
-                                                    if (!currentIds.includes(t.technician_id)) {
-                                                        workOrdersService.assignTask(task.id, [...currentIds, t.technician_id]).then(onUpdate);
-                                                    }
-                                                }}
-                                            >
-                                                {t.technician?.name}
-                                            </button>
-                                        ))
+                                        availableTechnicians.map(t => {
+                                            const currentIds = task.assignments?.map(a => a.technician_id) || [];
+                                            const isAssigned = currentIds.includes(t.technician_id);
+                                            return (
+                                                <button
+                                                    key={t.id}
+                                                    className={`w-full text-left px-2 py-1.5 text-xs rounded truncate flex items-center justify-between ${isAssigned
+                                                            ? 'bg-green-50 text-green-700 font-medium'
+                                                            : 'hover:bg-gray-100'
+                                                        }`}
+                                                    onClick={() => {
+                                                        if (!isAssigned) {
+                                                            workOrdersService.assignTask(task.id, [...currentIds, t.technician_id]).then(onUpdate);
+                                                        }
+                                                    }}
+                                                >
+                                                    <span>{t.technician?.name}</span>
+                                                    {isAssigned && <span className="text-green-600">✓</span>}
+                                                </button>
+                                            );
+                                        })
                                     }
                                 </div>
                             </div>
