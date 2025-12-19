@@ -208,7 +208,7 @@ function TaskItem({ task, onUpdate, availableTechnicians }: { task: WorkOrderTas
                             </span>
                         </div>
                     </div>
-                    {task.description && <p className="text-sm text-gray-500 mt-1 line-clamp-1">{task.description}</p>}
+                    {task.description && <p className={`text-sm text-gray-500 mt-1 ${expanded ? '' : 'line-clamp-3'}`}>{task.description}</p>}
 
                     <div className="flex items-center gap-4 mt-3 text-xs text-gray-500">
                         {task.due_date && (
