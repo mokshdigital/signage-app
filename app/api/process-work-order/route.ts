@@ -174,13 +174,13 @@ export async function POST(request: NextRequest) {
             );
         }
 
-        // Process with Gemini 2.5 Pro
-        console.log('[process-work-order] Calling Gemini 2.5 Pro with', contentParts.length, 'files...');
+        // Process with Gemini 3 Flash Preview
+        console.log('[process-work-order] Calling Gemini 3 Flash Preview with', contentParts.length, 'files...');
         let analysisText: string;
 
         try {
             const model = genAI.getGenerativeModel({
-                model: 'gemini-2.5-pro',
+                model: 'gemini-3-flash-preview',
                 generationConfig: {
                     responseMimeType: 'application/json',
                 },
