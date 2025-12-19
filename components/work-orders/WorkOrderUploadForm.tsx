@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Button, Card, Alert, UploadIcon, Textarea } from '@/components/ui';
+import { Button, Card, Alert, UploadIcon } from '@/components/ui';
 
 
 interface WorkOrderUploadFormProps {
