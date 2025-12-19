@@ -16,42 +16,45 @@ const openai = new OpenAI({
     apiKey: process.env.OPENAI_API_KEY || '',
 });
 
-const ANALYSIS_PROMPT = `You are analyzing work order documents for a signage installation company. You may receive multiple files including:
-- Work order documents (PDF/images)
-- Site plans and blueprints
-- Specifications
-- Site photos
-- Other relevant documents
+const ANALYSIS_PROMPT = `You are an expert AI assistant for a signage company. Your role is to analyze work order documents (PDFs, images) and extract specific operational data.
 
-Analyze ALL provided files together and extract comprehensive information. Return JSON with:
+**INSTRUCTIONS:**
+1. **Analyze ALL provided images/files** to build a complete understanding of the job.
+2. **Extract** the exact fields listed below.
+3. **Tasks Extraction**: Review the line items in the work order carefully. Identify the actual work to be done. 
+   - **Ignore** generic headers like "Installation", "Services", "Labor".
+   - **Extract** specific actions like "Install 14'x48' Face Replacement", "Service Outage", "Survey pylon sign".
+   - Create a list of specific, actionable tasks.
+4. **Format**: Return the result as a VALID JSON object matching the detailed structure.
 
-**IMPORTANT: Extract these fields for DIRECT DATABASE INSERTION (if found in the document):**
-work_order_number: the official work order number/ID from the document (e.g., "WO-2024-001", "12345", etc.)
-site_address: the full job site address where work will be performed
-work_order_date: the date on the work order document (format: YYYY-MM-DD)
-skills_required: array of strings listing specific technician skills needed (e.g. "Electrical", "Welding", "High Reach") - OPTIONAL
-permits_required: array of strings listing required permits - OPTIONAL
-equipment_required: array of strings listing required equipment (e.g. "Scissor Lift", "Bucket Truck", "Ladder") - OPTIONAL
-materials_required: array of strings listing required materials/parts - OPTIONAL
+**REQUIRED JSON STRUCTURE:**
+{
+  "work_order_number": "String. The official work order ID (e.g., WO-12345, 100200)",
+  "site_address": "String. The full address where work will be performed.",
+  "work_order_date": "String. Format: YYYY-MM-DD. The date the work order was created/issued.",
+  "planned_date": "String. Format: YYYY-MM-DD. The scheduled installation or due date, if found.",
+  "skills_required": ["String", "String", ...], // Array of skills needed (e.g. "Electrical", "Bucket Truck Operation", "Vinyl Application")
+  "permits_required": ["String", "String", ...], // Array of permits (e.g. "Electrical Permit", "Building Permit", "Lane Closure")
+  "equipment_required": ["String", "String", ...], // Array of equipment (e.g. "Scissor Lift", "Bucket Truck", "Ladder", "Crane")
+  "materials_required": ["String", "String", ...], // Array of materials (e.g. "LED Power Supply", "Vinyl", "Acrylic", "Fasteners")
+  "suggested_tasks": [
+    {
+      "name": "Concise task name (e.g. 'Install Main Sign Face')",
+      "description": "Detailed description from line items (e.g. 'Mount 4x8 cabinet to North wall using provided patterns')",
+      "priority": "Medium" // Options: 'Low', 'Medium', 'High', 'Emergency'. Default to Medium.
+    },
+    ...
+  ],
+  "jobType": "String. Brief categorization (e.g. 'Installation', 'Service', 'Survey', 'Removal')",
+  "scope_of_work": "String. A comprehensive summary text block of the entire scope."
+}
 
-**Additional Analysis Fields:**
-jobType: type of signage work
-location: full address (same as site_address)
-orderedBy: client name
-contactInfo: phone/email
-summary: brief summary of work
-recommended_technician_skills: legacy field (same as skills_required)
-estimatedHours: number
-safety_notes: safety warnings
-additionalDetails: any other relevant info
-
-scope_of_work: detailed text description of the scope of work based on the documents.
-suggested_tasks: array of objects representing actionable steps. Each object must have:
-  - name: string (concise task name)
-  - description: string (detailed instructions)
-  - priority: 'Low', 'Medium', 'High', or 'Emergency'
-
-Return ONLY valid JSON, no markdown formatting or code blocks.`;
+**CRITICAL NOTES:**
+- Return ONLY valid JSON.
+- Do not wrap in markdown code blocks.
+- If a field is not found, use null or empty array.
+- For tasks: Be precise. "Install Sign" is too vague. "Install channel letters on raceway" is better.
+`;
 
 export async function POST(request: NextRequest) {
     console.log('[process-work-order] POST request received');
@@ -97,14 +100,6 @@ export async function POST(request: NextRequest) {
         // Type assertion
         const workOrder = workOrderData as unknown as WorkOrder;
         console.log('[process-work-order] Work order fetched, processed:', workOrder.processed);
-
-        // Check if already processed
-        if (workOrder.processed) {
-            return NextResponse.json({
-                message: 'Work order already processed',
-                analysis: workOrder.analysis,
-            });
-        }
 
         // Fetch all files for this work order
         console.log('[process-work-order] Fetching files...');
@@ -167,16 +162,19 @@ export async function POST(request: NextRequest) {
                 });
                 console.log('[process-work-order] Added image content');
             } else if (fileExtension === 'pdf') {
-                textContent += `\n[PDF File: ${fileName} - Please analyze the content from images if available]\n`;
-                console.log('[process-work-order] PDF noted (not directly supported)');
+                textContent += `\n[PDF File: ${fileName} - Please analyze the content from images if available. If no images, I cannot see this PDF content directly.]\n`;
+                console.log('[process-work-order] PDF noted');
             }
         }
 
-        if (imageContents.length === 0 && !textContent) {
-            return NextResponse.json(
-                { error: 'No supported files found (images only for OpenAI). PDFs require conversion.' },
-                { status: 400 }
-            );
+        if (imageContents.length === 0) {
+            // If we only have PDFs and no images, we warn the user
+            if (!textContent) {
+                return NextResponse.json(
+                    { error: 'No supported image files found. Please upload images of the work order (JPG/PNG).' },
+                    { status: 400 }
+                );
+            }
         }
 
         // Process with OpenAI GPT-4 Vision
@@ -186,6 +184,8 @@ export async function POST(request: NextRequest) {
         try {
             analysisText = await analyzeWithOpenAI(imageContents, textContent);
             console.log('[process-work-order] OpenAI response received, length:', analysisText.length);
+            // Log a truncated sample of the response for debugging
+            console.log('[process-work-order] Raw Response Sample:', analysisText.substring(0, 500));
         } catch (openaiError: any) {
             console.error('[process-work-order] OpenAI API error:', openaiError);
             return NextResponse.json(
@@ -203,7 +203,6 @@ export async function POST(request: NextRequest) {
                 .replace(/```\n?/g, '')
                 .trim();
 
-            // Try to find JSON object in the response if it's wrapped in text
             const jsonMatch = cleanedText.match(/\{[\s\S]*\}/);
             if (jsonMatch) {
                 cleanedText = jsonMatch[0];
@@ -213,7 +212,6 @@ export async function POST(request: NextRequest) {
             console.log('[process-work-order] Analysis parsed successfully');
         } catch (parseError) {
             console.error('[process-work-order] Failed to parse AI response as JSON:', analysisText);
-            // Return the raw response for debugging
             return NextResponse.json(
                 { error: 'Failed to parse AI response', rawResponse: analysisText.substring(0, 1000) },
                 { status: 500 }
@@ -237,6 +235,12 @@ export async function POST(request: NextRequest) {
             const dateMatch = String(analysis.work_order_date).match(/^\d{4}-\d{2}-\d{2}/);
             if (dateMatch) {
                 workOrderUpdate.work_order_date = dateMatch[0];
+            }
+        }
+        if (analysis.planned_date) {
+            const dateMatch = String(analysis.planned_date).match(/^\d{4}-\d{2}-\d{2}/);
+            if (dateMatch) {
+                workOrderUpdate.planned_date = dateMatch[0];
             }
         }
 
@@ -323,6 +327,10 @@ async function analyzeWithOpenAI(
 ): Promise<string> {
     const messages: any[] = [
         {
+            role: 'system',
+            content: "You are a helpful assistant designed to output JSON."
+        },
+        {
             role: 'user',
             content: [
                 { type: 'text', text: ANALYSIS_PROMPT + (additionalText ? `\n\nAdditional context:\n${additionalText}` : '') },
@@ -335,6 +343,7 @@ async function analyzeWithOpenAI(
         model: 'gpt-4o',
         messages: messages,
         max_tokens: 4096,
+        response_format: { type: "json_object" },
     });
 
     return response.choices[0]?.message?.content || '';
