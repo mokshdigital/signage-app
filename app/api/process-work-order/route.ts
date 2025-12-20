@@ -121,8 +121,15 @@ export async function POST(request: NextRequest) {
             console.log('[process-work-order] Processing file:', file.file_name);
 
             // Extract file path from URL
-            const urlParts = file.file_url.split('/');
-            const filePath = urlParts[urlParts.length - 1];
+            // The URL format is: https://{project}.supabase.co/storage/v1/object/public/work-orders/{path}
+            // We need to extract the path after 'work-orders/'
+            const bucketMarker = '/work-orders/';
+            const bucketIndex = file.file_url.indexOf(bucketMarker);
+            const filePath = bucketIndex !== -1
+                ? file.file_url.substring(bucketIndex + bucketMarker.length)
+                : file.file_url.split('/').pop() || '';
+
+            console.log('[process-work-order] Downloading from path:', filePath);
 
             // Download file from Supabase Storage
             const { data: fileData, error: downloadError } = await supabase.storage
