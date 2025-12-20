@@ -183,6 +183,7 @@ export function WorkOrderUploadForm({ onSubmit, onCancel, isLoading = false }: W
 
                     {!hasSubcategories && (
                         <Button
+                            type="button"
                             variant="ghost"
                             size="sm"
                             onClick={() => triggerUpload(categoryKey)}
@@ -285,8 +286,8 @@ export function WorkOrderUploadForm({ onSubmit, onCancel, isLoading = false }: W
                                         if (e.key === 'Escape') setIsAddingCustom(false);
                                     }}
                                 />
-                                <Button size="sm" onClick={addCustomCategory} disabled={!newCategoryName.trim()}>Add</Button>
-                                <Button size="sm" variant="ghost" onClick={() => setIsAddingCustom(false)}>Cancel</Button>
+                                <Button type="button" size="sm" onClick={addCustomCategory} disabled={!newCategoryName.trim()}>Add</Button>
+                                <Button type="button" size="sm" variant="ghost" onClick={() => setIsAddingCustom(false)}>Cancel</Button>
                             </div>
                         ) : (
                             <Button

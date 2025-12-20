@@ -612,32 +612,34 @@ export default function WorkOrdersPage() {
             </Card>
 
             {/* Modals */}
-            <Modal
-                isOpen={isUploadModalOpen}
-                onClose={() => setIsUploadModalOpen(false)}
-                title="Upload Work Order"
-                size="xl"
-                showCloseButton={false}
-                footer={
-                    <div className="flex justify-end gap-3 w-full">
-                        <Button variant="ghost" onClick={() => setIsUploadModalOpen(false)}>Cancel</Button>
-                        <Button
-                            type="submit"
-                            form="wo-upload-form"
-                            loading={isUploading}
-                            leftIcon={<UploadIcon className="w-4 h-4" />}
-                        >
-                            Submit Work Order
-                        </Button>
-                    </div>
-                }
-            >
-                <WorkOrderUploadForm
-                    onSubmit={handleUpload}
-                    onCancel={() => setIsUploadModalOpen(false)}
-                    isLoading={isUploading}
-                />
-            </Modal>
+            {isUploadModalOpen && (
+                <Modal
+                    isOpen={isUploadModalOpen}
+                    onClose={() => setIsUploadModalOpen(false)}
+                    title="Upload Work Order"
+                    size="xl"
+                    showCloseButton={false}
+                    footer={
+                        <div className="flex justify-end gap-3 w-full">
+                            <Button variant="ghost" onClick={() => setIsUploadModalOpen(false)}>Cancel</Button>
+                            <Button
+                                type="submit"
+                                form="wo-upload-form"
+                                loading={isUploading}
+                                leftIcon={<UploadIcon className="w-4 h-4" />}
+                            >
+                                Submit Work Order
+                            </Button>
+                        </div>
+                    }
+                >
+                    <WorkOrderUploadForm
+                        onSubmit={handleUpload}
+                        onCancel={() => setIsUploadModalOpen(false)}
+                        isLoading={isUploading}
+                    />
+                </Modal>
+            )}
 
             <WorkOrderFilesModal
                 isOpen={isFilesOpen}
