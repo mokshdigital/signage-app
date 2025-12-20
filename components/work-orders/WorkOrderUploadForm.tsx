@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Button, Card, Alert, UploadIcon, Badge } from '@/components/ui';
+import { Button, Alert, Badge } from '@/components/ui';
 import { Folder, FileText, Image as ImageIcon, Trash2, Plus, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface WorkOrderUploadFormProps {
@@ -232,13 +232,13 @@ export function WorkOrderUploadForm({ onSubmit, onCancel, isLoading = false }: W
     };
 
     return (
-        <Card noPadding className="h-[65vh] flex flex-col">
+        <div className="flex flex-col">
             <div className="p-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-800">Organize Work Order Files</h2>
                 <p className="text-sm text-gray-500">Categorize your uploads for better organization.</p>
             </div>
 
-            <div className="flex-1 overflow-y-auto p-6">
+            <div className="p-6">
                 <form onSubmit={handleSubmit} id="wo-upload-form">
                     {error && (
                         <Alert variant="error" dismissible onDismiss={() => setError(null)} className="mb-4">
@@ -302,18 +302,6 @@ export function WorkOrderUploadForm({ onSubmit, onCancel, isLoading = false }: W
                     </div>
                 </form>
             </div>
-
-            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 rounded-b-lg">
-                <Button variant="ghost" type="button" onClick={onCancel}>Cancel</Button>
-                <Button
-                    type="submit"
-                    form="wo-upload-form"
-                    loading={isLoading}
-                    leftIcon={<UploadIcon className="w-4 h-4" />}
-                >
-                    Submit Work Order
-                </Button>
-            </div>
-        </Card>
+        </div>
     );
 }

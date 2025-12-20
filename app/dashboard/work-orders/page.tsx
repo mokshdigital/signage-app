@@ -7,7 +7,7 @@ import { WorkOrder, WorkOrderFile, Client, ProjectManager, JobType, JobStatus } 
 import { workOrdersService } from '@/services/work-orders.service';
 import { clientsService } from '@/services/clients.service';
 import { useCrud, useModal, useConfirmDialog } from '@/hooks';
-import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay, Modal, LoadingSpinner, Input } from '@/components/ui';
+import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay, Modal, LoadingSpinner, Input, UploadIcon } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
 import { Search, Filter, X } from 'lucide-react';
 import {
@@ -617,6 +617,20 @@ export default function WorkOrdersPage() {
                 onClose={() => setIsUploadModalOpen(false)}
                 title="Upload Work Order"
                 size="xl"
+                showCloseButton={false}
+                footer={
+                    <div className="flex justify-end gap-3 w-full">
+                        <Button variant="ghost" onClick={() => setIsUploadModalOpen(false)}>Cancel</Button>
+                        <Button
+                            type="submit"
+                            form="wo-upload-form"
+                            loading={isUploading}
+                            leftIcon={<UploadIcon className="w-4 h-4" />}
+                        >
+                            Submit Work Order
+                        </Button>
+                    </div>
+                }
             >
                 <WorkOrderUploadForm
                     onSubmit={handleUpload}

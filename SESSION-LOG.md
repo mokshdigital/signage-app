@@ -874,3 +874,13 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - [ ] Verify RBAC enforcement in RLS policies (applied in migration).
 
 **Git Commit**: `feat: Implement file categorization system with hierarchical folders and RBAC`
+
+### Session 13 Update: UI Fixes (Work Order Upload)
+**Changes Made**:
+- **Fixed UI Clipping**: Constrained `WorkOrderUploadForm` height (`h-[65vh]`) to ensure the footer buttons are always visible.
+- **Workflow Clarity**:
+  - Renamed submit button to "Submit Work Order".
+  - Updated loading state text to "Submitting and Starting AI Analysis..." to better reflect the process.
+  - Fixed "Cancel" button functionality.
+
+**Git Commit**: `fix: Prevent upload form UI clipping and improve workflow clarity`
