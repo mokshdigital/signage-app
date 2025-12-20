@@ -579,19 +579,44 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
 
 function CreateTaskModal({ isOpen, onClose, workOrderId, onCreated }: { isOpen: boolean, onClose: () => void, workOrderId: string, onCreated: () => void }) {
     const [data, setData] = useState({ name: '', description: '', priority: 'Medium', due_date: '' });
+    const [categoryId, setCategoryId] = useState<string | null>(null);
+    const [tagIds, setTagIds] = useState<string[]>([]);
+    const [isSubmitting, setIsSubmitting] = useState(false);
 
     const handleSubmit = async () => {
         if (!data.name) return;
         try {
-            await workOrdersService.createTask({
+            setIsSubmitting(true);
+
+            // Create the task first
+            const newTask = await workOrdersService.createTask({
                 work_order_id: workOrderId,
                 ...data,
                 priority: data.priority as any
             });
+
+            // Set category if selected
+            if (categoryId) {
+                await workOrdersService.setTaskCategory(newTask.id, categoryId);
+            }
+
+            // Assign tags if any selected
+            if (tagIds.length > 0) {
+                await workOrdersService.assignTagsToTask(newTask.id, tagIds);
+            }
+
             toast.success('Task created');
+
+            // Reset form
+            setData({ name: '', description: '', priority: 'Medium', due_date: '' });
+            setCategoryId(null);
+            setTagIds([]);
+
             onCreated();
         } catch (e) {
             toast.error('Failed to create task');
+        } finally {
+            setIsSubmitting(false);
         }
     };
 
@@ -612,9 +637,32 @@ function CreateTaskModal({ isOpen, onClose, workOrderId, onCreated }: { isOpen: 
                     </div>
                     <Input label="Due Date" type="date" value={data.due_date} onChange={e => setData({ ...data, due_date: e.target.value })} />
                 </div>
+
+                {/* Category Selector */}
+                <div>
+                    <label className="block text-sm font-medium mb-1">Category</label>
+                    <CategorySelector
+                        workOrderId={workOrderId}
+                        value={categoryId}
+                        onChange={setCategoryId}
+                    />
+                </div>
+
+                {/* Tag Selector */}
+                <div>
+                    <label className="block text-sm font-medium mb-1">Tags</label>
+                    <TagSelector
+                        taskId=""
+                        value={tagIds}
+                        onChange={setTagIds}
+                    />
+                </div>
+
                 <div className="flex justify-end gap-2 pt-4">
                     <Button variant="secondary" onClick={onClose}>Cancel</Button>
-                    <Button onClick={handleSubmit}>Create Task</Button>
+                    <Button onClick={handleSubmit} disabled={isSubmitting || !data.name}>
+                        {isSubmitting ? 'Creating...' : 'Create Task'}
+                    </Button>
                 </div>
             </div>
         </Modal>
