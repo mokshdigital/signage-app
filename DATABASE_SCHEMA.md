@@ -181,30 +181,70 @@ The `analysis` field contains structured data extracted by AI from all associate
 ---
 
 ### 5. `work_order_files`
-Stores multiple files associated with each work order (work orders, plans, specifications, site photos, etc.).
+Stores multiple files associated with each work order, organized by category.
 
 #### Columns
 | Column | Type | Constraints | Description |
 |--------|------|-------------|-------------|
 | `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
 | `work_order_id` | UUID | REFERENCES work_orders(id) ON DELETE CASCADE | Associated work order |
+| `category_id` | UUID | REFERENCES file_categories(id) ON DELETE SET NULL | File category |
 | `file_url` | TEXT | NOT NULL | Supabase Storage URL to the file |
 | `file_name` | TEXT | | Original filename |
 | `file_size` | INTEGER | | File size in bytes |
 | `mime_type` | TEXT | | MIME type of the file |
+| `uploaded_by` | UUID | REFERENCES user_profiles(id) | User who uploaded the file |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | Upload timestamp |
 
 #### Indexes
 - `idx_work_order_files_work_order_id` on `work_order_id`
+- `idx_work_order_files_category_id` on `category_id`
 
 #### Row Level Security (RLS)
-- **Enabled**: No (disabled for development)
-- **Cascade Delete**: When a work order is deleted, all associated files are automatically deleted from the database (CASCADE constraint)
+- **Enabled**: Yes
+- **Cascade Delete**: When a work order is deleted, all associated files are automatically deleted
+
+#### Storage Path Structure
+Files are stored in Supabase Storage at:
+```
+work-orders/{workOrderId}/{categorySlug}/{timestamp}_{filename}
+```
 
 #### Supported File Types
 - **PDFs**: Work orders, specifications, plans
 - **Images**: JPG, JPEG, PNG, GIF, WEBP (site photos, diagrams)
-- **Maximum Files**: Unlimited (UI restricted)
+
+---
+
+### 5.1 `file_categories`
+Hierarchical categories for organizing work order files.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
+| `work_order_id` | UUID | NOT NULL, REFERENCES work_orders(id) ON DELETE CASCADE | Associated work order |
+| `name` | TEXT | NOT NULL | Category name (e.g., "Work Order", "Pictures") |
+| `slug` | TEXT | | URL-friendly identifier |
+| `parent_id` | UUID | REFERENCES file_categories(id) ON DELETE CASCADE | Parent category for subcategories |
+| `rbac_level` | TEXT | DEFAULT 'office' | Access level: 'office', 'field', 'office_only' |
+| `is_system` | BOOLEAN | DEFAULT false | Whether this is a system-defined category |
+| `created_by` | UUID | REFERENCES user_profiles(id) | User who created the category |
+| `created_at` | TIMESTAMP | DEFAULT NOW() | Creation timestamp |
+
+#### System Categories
+The following categories are auto-created for each work order:
+- **Work Order** (required)
+- **Survey**
+- **Plans**
+- **Art Work**
+- **Pictures** (with subcategories: Reference, Before, WIP, After, Other)
+- **Tech Docs** (with subcategories: Permits, Safety Docs, Expense Receipts)
+- **Office Docs** (with subcategories: Quote, Client PO)
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: Read access for authenticated users, write access based on RBAC level
 
 
 ---

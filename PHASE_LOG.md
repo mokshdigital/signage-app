@@ -727,3 +727,15 @@ Implemented a robust file organization system with hierarchical folders (categor
 - `components/work-orders/WorkOrderUploadForm.tsx`
 - `components/work-orders/WorkOrderFilesCard.tsx`
 
+### Bug Fixes (Session 13 Continuation)
+1. **Upload Modal UI**: Fixed clipping/scrolling by using Modal's native footer for action buttons
+2. **Form Submission**: Added `type="button"` to all in-form buttons to prevent accidental submission
+3. **AI Processing Path**: Fixed file path extraction in `process-work-order` API to work with new category-based storage paths
+
+---
+
+## Phase 19: Pending Items
+- [ ] Run `017_file_categories_schema.sql` migration in Supabase
+- [ ] Verify RBAC enforcement in RLS policies
+- [ ] Test full upload → categorize → AI analysis workflow
+

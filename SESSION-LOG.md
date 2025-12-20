@@ -892,3 +892,45 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - **Cleaned Up**: Removed redundant "Close" button configurations.
 
 **Git Commit**: `fix: Refactor upload modal layout to use native footer for better scrolling`
+
+### Session 13 Update: Form Submission Bug Fix
+**Changes Made**:
+- **Bug**: Clicking "+ Add File" or other buttons inside the form was accidentally submitting the form and triggering AI analysis prematurely.
+- **Root Cause**: HTML buttons without a `type` attribute default to `type="submit"` when inside a `<form>`.
+- **Fix**: Added `type="button"` to all buttons inside `WorkOrderUploadForm`:
+  - "+ Add File" buttons (for each category)
+  - "Add" button (for custom category creation)
+  - "Cancel" button (for custom category input)
+- **Additional Fix**: Wrapped the upload Modal in a conditional render to ensure the form state resets when the modal closes.
+
+**Git Commit**: `fix: Prevent accidental form submission when adding files`
+
+### Session 13 Update: AI Processing Path Fix
+**Changes Made**:
+- **Bug**: AI processing failed with "StorageUnknownError" - 400 Bad Request when trying to download files.
+- **Root Cause**: The `process-work-order` API route was extracting only the filename from the storage URL, but the new category-based storage structure saves files at `{workOrderId}/{categorySlug}/{timestamp}_{filename}`.
+- **Fix**: Updated file path extraction in `/app/api/process-work-order/route.ts` to correctly parse the full path after the bucket name (`/work-orders/`).
+
+**Git Commit**: `fix: Correct file path extraction for AI processing with new category paths`
+
+---
+
+## Session Summary (Dec 19, 2024)
+**Total Commits**: 5
+1. `feat: Implement file categorization system with hierarchical folders and RBAC`
+2. `fix: Prevent upload form UI clipping and improve workflow clarity`
+3. `fix: Refactor upload modal layout to use native footer for better scrolling`
+4. `fix: Prevent accidental form submission when adding files`
+5. `fix: Correct file path extraction for AI processing with new category paths`
+
+**Key Features Delivered**:
+- File Categorization System with hierarchical folders
+- System categories (Work Order, Survey, Plans, Pictures, etc.)
+- Custom category support during upload
+- RBAC-aware file management
+
+**Bugs Fixed**:
+- Upload modal UI clipping and scrolling issues
+- Accidental form submission when adding files
+- AI processing path mismatch with new storage structure
+
