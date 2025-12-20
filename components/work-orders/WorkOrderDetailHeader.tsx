@@ -50,7 +50,7 @@ export function WorkOrderDetailHeader({
     const [savingStatus, setSavingStatus] = useState(false);
 
     const formatDate = (dateStr: string | null | undefined) => {
-        if (!dateStr) return '-';
+        if (!dateStr) return '—';
         return new Date(dateStr).toLocaleDateString('en-US', {
             day: '2-digit',
             month: 'short',
@@ -90,81 +90,26 @@ export function WorkOrderDetailHeader({
 
     return (
         <>
-            <div className="bg-white border-b border-gray-200 sticky top-0 z-20 shadow-sm">
-                {/* Top Section: Back + Title + Actions */}
-                <div className="px-8 py-6 border-b border-gray-100">
-                    <div className="flex items-start justify-between gap-6">
-                        {/* Left: Back + Title */}
-                        <div className="flex items-start gap-4">
-                            <button
-                                onClick={() => router.push(backUrl)}
-                                className="mt-1 p-2 rounded-lg text-gray-400 hover:text-gray-600 hover:bg-gray-100 transition-colors"
-                            >
-                                <ArrowLeft className="w-5 h-5" />
-                            </button>
-                            <div>
-                                <div className="flex items-center gap-3 mb-2">
-                                    <h1 className="text-2xl font-bold text-gray-900">
-                                        {workOrder.work_order_number
-                                            ? safeRender(workOrder.work_order_number)
-                                            : 'Work Order'
-                                        }
-                                    </h1>
-                                    {/* Status Dropdown - Inline with title */}
-                                    <div className="relative">
-                                        <select
-                                            value={workOrder.job_status || 'Open'}
-                                            onChange={(e) => handleStatusChange(e.target.value as JobStatus)}
-                                            disabled={savingStatus || saving}
-                                            className={`
-                                                ${statusColors[workOrder.job_status || 'Open']} 
-                                                px-3 py-1 rounded-full text-sm font-semibold cursor-pointer 
-                                                border appearance-none pr-7
-                                                focus:ring-2 focus:ring-blue-500 focus:outline-none
-                                                disabled:opacity-50 disabled:cursor-not-allowed
-                                                transition-colors
-                                            `}
-                                        >
-                                            {JOB_STATUSES.map(status => (
-                                                <option key={status} value={status}>{status}</option>
-                                            ))}
-                                        </select>
-                                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-60" />
-                                    </div>
-                                </div>
+            <div className="bg-white sticky top-0 z-20">
+                {/* Main Header Content */}
+                <div className="px-10 pt-8 pb-10">
 
-                                {/* Badges Row */}
-                                <div className="flex items-center gap-3">
-                                    <Badge
-                                        variant={workOrder.processed ? 'success' : 'warning'}
-                                        dot
-                                        className="text-xs"
-                                    >
-                                        {workOrder.processed ? 'AI Analyzed' : 'Pending Analysis'}
-                                    </Badge>
-                                    {workOrder.job_type && (
-                                        <span className="text-sm text-gray-500 flex items-center gap-1.5">
-                                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300" />
-                                            {safeRender(workOrder.job_type.name)}
-                                        </span>
-                                    )}
-                                    {/* Show reason if on hold or cancelled */}
-                                    {(workOrder.job_status === 'On Hold' || workOrder.job_status === 'Cancelled') && workOrder.job_status_reason && (
-                                        <span className="text-sm text-gray-400 italic" title={workOrder.job_status_reason}>
-                                            — {safeRender(workOrder.job_status_reason)}
-                                        </span>
-                                    )}
-                                </div>
-                            </div>
-                        </div>
+                    {/* Row 1: Back Button + Actions */}
+                    <div className="flex items-center justify-between mb-8">
+                        <button
+                            onClick={() => router.push(backUrl)}
+                            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors group"
+                        >
+                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                            <span className="text-sm font-medium">Back to Work Orders</span>
+                        </button>
 
-                        {/* Right: Action Buttons */}
+                        {/* Action Buttons */}
                         <div className="flex items-center gap-3">
                             <Button
                                 variant="secondary"
                                 size="sm"
                                 onClick={onViewFiles}
-                                className="shadow-sm"
                             >
                                 <FileText className="w-4 h-4 mr-2" />
                                 View WO
@@ -173,7 +118,7 @@ export function WorkOrderDetailHeader({
                                 variant="secondary"
                                 size="sm"
                                 onClick={onViewAISummary}
-                                className="shadow-sm bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 text-purple-700 hover:from-purple-100 hover:to-blue-100"
+                                className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 text-purple-700 hover:from-purple-100 hover:to-blue-100"
                             >
                                 <Sparkles className="w-4 h-4 mr-2" />
                                 AI Summary
@@ -226,91 +171,149 @@ export function WorkOrderDetailHeader({
                             </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Details Cards Section */}
-                <div className="px-8 py-5 bg-gray-50/50">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
-                        {/* Client */}
-                        <div className="space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-gray-400">
-                                <Building2 className="w-3.5 h-3.5" />
-                                <span className="text-xs font-medium uppercase tracking-wider">Client</span>
+                    {/* Row 2: Title + Status */}
+                    <div className="mb-8">
+                        <div className="flex items-center gap-4 mb-3">
+                            <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
+                                {workOrder.work_order_number
+                                    ? safeRender(workOrder.work_order_number)
+                                    : 'Work Order'
+                                }
+                            </h1>
+                            {/* Status Dropdown */}
+                            <div className="relative">
+                                <select
+                                    value={workOrder.job_status || 'Open'}
+                                    onChange={(e) => handleStatusChange(e.target.value as JobStatus)}
+                                    disabled={savingStatus || saving}
+                                    className={`
+                                        ${statusColors[workOrder.job_status || 'Open']} 
+                                        px-4 py-1.5 rounded-full text-sm font-semibold cursor-pointer 
+                                        border appearance-none pr-8
+                                        focus:ring-2 focus:ring-blue-500 focus:outline-none
+                                        disabled:opacity-50 disabled:cursor-not-allowed
+                                        transition-colors
+                                    `}
+                                >
+                                    {JOB_STATUSES.map(status => (
+                                        <option key={status} value={status}>{status}</option>
+                                    ))}
+                                </select>
+                                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-60" />
                             </div>
-                            <p className="text-sm font-semibold text-gray-900 truncate">
+                        </div>
+
+                        {/* Subtitle info */}
+                        <div className="flex items-center gap-4 text-gray-500">
+                            <Badge
+                                variant={workOrder.processed ? 'success' : 'warning'}
+                                dot
+                            >
+                                {workOrder.processed ? 'AI Analyzed' : 'Pending Analysis'}
+                            </Badge>
+                            {workOrder.job_type && (
+                                <>
+                                    <span className="text-gray-300">•</span>
+                                    <span className="text-sm">{safeRender(workOrder.job_type.name)}</span>
+                                </>
+                            )}
+                            {(workOrder.job_status === 'On Hold' || workOrder.job_status === 'Cancelled') && workOrder.job_status_reason && (
+                                <>
+                                    <span className="text-gray-300">•</span>
+                                    <span className="text-sm italic text-gray-400" title={workOrder.job_status_reason}>
+                                        {safeRender(workOrder.job_status_reason)}
+                                    </span>
+                                </>
+                            )}
+                        </div>
+                    </div>
+
+                    {/* Row 3: Details - Open Layout */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-12 gap-y-6">
+                        {/* Client */}
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
+                                <Building2 className="w-3.5 h-3.5" />
+                                Client
+                            </p>
+                            <p className="text-base font-semibold text-gray-900">
                                 {workOrder.client ? safeRender(workOrder.client.name) : <span className="text-gray-300 font-normal">Not assigned</span>}
                             </p>
                         </div>
 
                         {/* Project Manager */}
-                        <div className="space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-gray-400">
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <User className="w-3.5 h-3.5" />
-                                <span className="text-xs font-medium uppercase tracking-wider">PM</span>
-                            </div>
-                            <p className="text-sm font-semibold text-gray-900 truncate">
+                                Project Manager
+                            </p>
+                            <p className="text-base font-semibold text-gray-900">
                                 {workOrder.project_manager ? safeRender(workOrder.project_manager.name) : <span className="text-gray-300 font-normal">—</span>}
                             </p>
                         </div>
 
                         {/* WO Date */}
-                        <div className="space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-gray-400">
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <Calendar className="w-3.5 h-3.5" />
-                                <span className="text-xs font-medium uppercase tracking-wider">WO Date</span>
-                            </div>
-                            <p className="text-sm font-semibold text-gray-900">
+                                WO Date
+                            </p>
+                            <p className="text-base font-semibold text-gray-900">
                                 {formatDate(workOrder.work_order_date)}
                             </p>
                         </div>
 
                         {/* Planned Date */}
-                        <div className="space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-gray-400">
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <Calendar className="w-3.5 h-3.5" />
-                                <span className="text-xs font-medium uppercase tracking-wider">Planned</span>
-                            </div>
-                            <p className="text-sm font-semibold text-gray-900">
+                                Planned Date
+                            </p>
+                            <p className="text-base font-semibold text-gray-900">
                                 {formatDate(workOrder.planned_date)}
                             </p>
                         </div>
 
                         {/* WO Owner */}
-                        <div className="space-y-1.5">
-                            <div className="flex items-center gap-1.5 text-gray-400">
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <User className="w-3.5 h-3.5" />
-                                <span className="text-xs font-medium uppercase tracking-wider">Owner</span>
-                            </div>
-                            <div className="flex items-center gap-2">
+                                Owner
+                            </p>
+                            <div className="flex items-center gap-2.5">
                                 {workOrder.owner?.avatar_url ? (
                                     <img
                                         src={workOrder.owner.avatar_url}
                                         alt=""
-                                        className="w-6 h-6 rounded-full object-cover ring-2 ring-white"
+                                        className="w-7 h-7 rounded-full object-cover"
                                     />
                                 ) : workOrder.owner?.display_name ? (
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold ring-2 ring-white">
+                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
                                         {workOrder.owner.display_name.charAt(0).toUpperCase()}
                                     </div>
                                 ) : null}
-                                <p className="text-sm font-semibold text-gray-900 truncate">
+                                <p className="text-base font-semibold text-gray-900">
                                     {safeRender(workOrder.owner?.display_name) || <span className="text-gray-300 font-normal">—</span>}
                                 </p>
                             </div>
                         </div>
 
-                        {/* Site Address - Spans remaining space on larger screens */}
-                        <div className="space-y-1.5 col-span-2 md:col-span-3 lg:col-span-1">
-                            <div className="flex items-center gap-1.5 text-gray-400">
+                        {/* Site Address */}
+                        <div>
+                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
                                 <MapPin className="w-3.5 h-3.5" />
-                                <span className="text-xs font-medium uppercase tracking-wider">Site</span>
-                            </div>
-                            <p className="text-sm font-semibold text-gray-900 truncate" title={workOrder.site_address || ''}>
+                                Site Address
+                            </p>
+                            <p className="text-base font-semibold text-gray-900 truncate" title={workOrder.site_address || ''}>
                                 {safeRender(workOrder.site_address) || <span className="text-gray-300 font-normal">No address</span>}
                             </p>
                         </div>
                     </div>
                 </div>
+
+                {/* Bottom border */}
+                <div className="border-b border-gray-200" />
             </div>
 
             {/* Status Reason Modal */}
