@@ -884,3 +884,11 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
   - Fixed "Cancel" button functionality.
 
 **Git Commit**: `fix: Prevent upload form UI clipping and improve workflow clarity`
+
+### Session 13 Update: Layout Refactor (Upload Modal)
+**Changes Made**:
+- **Native Modal Footer**: Moved action buttons (Submit, Cancel) to the Modal's `footer` prop.
+- **Improved Scrolling**: Removed fixed height from the form, allowing the content to scroll naturally within the modal body while buttons remain fixed at the bottom.
+- **Cleaned Up**: Removed redundant "Close" button configurations.
+
+**Git Commit**: `fix: Refactor upload modal layout to use native footer for better scrolling`
