@@ -234,24 +234,71 @@ export default function WorkOrdersPage() {
     }, [openFilesModal]);
 
     // Handle Upload and Process
-    const handleUpload = async (mainFile: File, associatedFiles: File[]) => {
+    const handleUpload = async (categorizedFiles: Record<string, File[]>, customCategories: { name: string; parent?: string }[]) => {
         setIsUploading(true);
         setUploadError(null);
         try {
-            // 1. Create work order with owner
             const supabase = createClient();
             const { data: { user } } = await supabase.auth.getUser();
+            const userId = user?.id;
+
+            if (!userId) throw new Error('User not authenticated');
+
+            // 1. Create work order
             const order = await workOrdersService.create({
-                uploaded_by: user?.id || null,
-                owner_id: user?.id || null,
+                uploaded_by: userId,
+                owner_id: userId,
                 job_status: 'Open'
             });
 
-            // 2. Upload files
-            const allFiles = [mainFile, ...associatedFiles];
-            await workOrdersService.uploadFiles(order.id, allFiles);
+            // 2. Initialize System Categories
+            await workOrdersService.initializeSystemCategories(order.id, userId);
 
-            // 3. Trigger AI Processing
+            // 3. Create Custom Categories
+            // Note: Custom categories are top-level for now based on UI implementation
+            for (const cat of customCategories) {
+                await workOrdersService.createFileCategory({
+                    work_order_id: order.id,
+                    name: cat.name,
+                    created_by: userId
+                });
+            }
+
+            // 4. Fetch all categories to resolve IDs
+            const categories = await workOrdersService.getFileCategories(order.id);
+
+            // Helper to find category ID by path "Parent/Child" or "Name"
+            const findCategoryId = (path: string): string | undefined => {
+                const parts = path.split('/');
+                if (parts.length === 1) {
+                    return categories.find(c => c.name === parts[0] && !c.parent_id)?.id;
+                }
+                const [parentName, childName] = parts;
+                const parent = categories.find(c => c.name === parentName && !c.parent_id);
+                if (!parent) return undefined;
+                return categories.find(c => c.name === childName && c.parent_id === parent.id)?.id;
+            };
+
+            // 5. Upload files
+            const uploadPromises: Promise<any>[] = [];
+            for (const [pathKey, files] of Object.entries(categorizedFiles)) {
+                if (!files || files.length === 0) continue;
+
+                const catId = findCategoryId(pathKey);
+                if (catId) {
+                    for (const file of files) {
+                        uploadPromises.push(
+                            workOrdersService.uploadFileToCategory(order.id, catId, file, userId, pathKey)
+                        );
+                    }
+                } else {
+                    console.warn(`Category ID not found for path: ${pathKey}`);
+                }
+            }
+
+            await Promise.all(uploadPromises);
+
+            // 6. Trigger AI Processing
             setIsProcessing(true);
             const processResult = await workOrdersService.processWithAI(order.id);
 
@@ -262,10 +309,8 @@ export default function WorkOrdersPage() {
                     description: processResult.error
                 });
             } else {
-                // Update local object with analysis data for the review modal
                 if (processResult.analysis) {
                     updatedOrder = { ...order, analysis: processResult.analysis };
-                    // We know the API also updated the DB site_address if found
                     const analysis: any = processResult.analysis;
                     if (analysis.site_address) {
                         updatedOrder.site_address = analysis.site_address;
@@ -273,12 +318,9 @@ export default function WorkOrdersPage() {
                 }
             }
 
-            // 4. Transition to Review Step
             setIsUploadModalOpen(false);
             setCurrentWorkOrder(updatedOrder);
             setIsReviewOpen(true);
-
-            // Background refresh to show item in list (incomplete/open state)
             await refresh();
 
         } catch (error: any) {

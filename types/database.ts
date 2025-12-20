@@ -38,6 +38,22 @@ export interface OfficeStaff {
     created_at: string;
 }
 
+// File Category - for organizing WO files
+export interface FileCategory {
+    id: string;
+    work_order_id: string;
+    name: string;
+    parent_id: string | null;
+    is_system: boolean;
+    rbac_level: 'office' | 'field' | 'office_only';
+    display_order: number;
+    created_by: string | null;
+    created_at: string;
+    // Optional: populated when recursively joined
+    subcategories?: FileCategory[];
+    files?: WorkOrderFile[];
+}
+
 export interface WorkOrderFile {
     id: string;
     work_order_id: string;
@@ -45,7 +61,11 @@ export interface WorkOrderFile {
     file_name: string | null;
     file_size: number | null;
     mime_type: string | null;
+    category_id: string | null;
+    uploaded_by: string | null;
     created_at: string;
+    // Optional: populated when category is joined
+    category?: FileCategory;
 }
 
 // Client entity - corporate companies

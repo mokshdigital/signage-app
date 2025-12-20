@@ -798,6 +798,8 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - `feat: Add image thumbnail previews for comment attachments`
 - `fix: Improve @mention dropdown positioning and styling`
 - `feat: Change comment order to oldest first (chronological)`
+
+
 - `feat: Add task categories (WO-scoped) and global tags`
 - `feat: Add category and tag selectors to Create Task modal`
 
@@ -817,3 +819,58 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - Settings page for global tag management (admin CRUD)
 - Notification system for @mentions
 - Reporting/filtering by category and tags
+
+---
+
+### Session 13 - December 20, 2024 (Time: N/A)
+
+**Objective**: Implement Work Order File Categorization System
+
+**Changes Made**:
+
+#### 1. Database Schema (`database_migrations/017_file_categories_schema.sql`)
+- Created `file_categories` table for hierarchical file organization.
+  - Supports system vs custom categories.
+  - Supports parent-child relationship (infinite nesting possible, UI optimized for 2 levels).
+  - RBAC levels: `office`, `field`, `office_only`.
+- Updated `work_order_files` table:
+  - Added `category_id` FK.
+  - Added `uploaded_by` FK (previously just text/missing link).
+
+#### 2. Service Layer Updates (`services/work-orders.service.ts`)
+- Added methods for category management:
+  - `initializeSystemCategories`: Creates default structure (Work Order, Survey, Plans, Art Work, Pictures/Before/After/etc., Tech Docs, Office Docs).
+  - `getFileCategories`: Fetches categories with nested files.
+  - `createFileCategory`, `deleteFileCategory`.
+- Added/Updated file methods:
+  - `uploadFileToCategory`: Uploads to specific category and organized storage path.
+  - `recategorizeFile`: Move files between categories.
+  - `deleteFile`: Handles storage and DB deletion.
+
+#### 3. UI Implementation
+- **WorkOrderUploadForm Redesign**:
+  - Structured upload experience matching system categories.
+  - Support for creating custom categories on the fly.
+  - Foldable sections for clarity.
+  - "Work Order" category mandatory.
+- **WorkOrderFilesCard (New)**:
+  - Located on Work Order Detail page (Left Column).
+  - Categorized file viewer with hierarchical accordion layout.
+  - Actions: Upload new file to category, View file, Move file (recategorize), Delete file.
+  - RBAC-aware UI (simplified check).
+- **Details Page Integration**:
+  - Removed "View Files" button (modal) in favor of inline Card.
+  - Kept "View WO" file viewer for quick PDF access.
+
+#### 4. Workflow Updates
+- **Upload Flow**:
+  1. User categorizes files in Upload Form.
+  2. Categories created/initialized on submit.
+  3. Files uploaded to specific category paths.
+  4. AI analysis runs on the Work Order.
+
+**Pending Actions**:
+- [ ] Run `017_file_categories_schema.sql` migration in Supabase.
+- [ ] Verify RBAC enforcement in RLS policies (applied in migration).
+
+**Git Commit**: `feat: Implement file categorization system with hierarchical folders and RBAC`

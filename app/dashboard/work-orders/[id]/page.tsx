@@ -30,7 +30,8 @@ import {
     ShipmentManager,
     WorkOrderTasks,
     FileViewerModal,
-    ShippingComments
+    ShippingComments,
+    WorkOrderFilesCard
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
@@ -323,9 +324,6 @@ export default function WorkOrderDetailPage() {
                     </p>
                 </div>
                 <div className="flex gap-2">
-                    <Button variant="secondary" onClick={handleViewFiles}>
-                        View Files
-                    </Button>
                     <Button variant="primary" onClick={() => { handleViewFiles(); setIsFileViewerOpen(true); }}>
                         View WO
                     </Button>
@@ -634,6 +632,9 @@ export default function WorkOrderDetailPage() {
                             </div>
                         )}
                     </Card>
+
+                    {/* Files Section */}
+                    <WorkOrderFilesCard workOrderId={workOrderId} />
 
                     {/* Tasks Section */}
                     <WorkOrderTasks

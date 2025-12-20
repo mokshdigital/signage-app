@@ -17,7 +17,8 @@ import {
     TaskComment,
     MentionableUser,
     WorkOrderCategory,
-    TaskTag
+    TaskTag,
+    FileCategory
 } from '@/types/database';
 
 /**
@@ -247,6 +248,246 @@ export const workOrdersService = {
         }
 
         return uploadedFiles;
+    },
+
+    // =============================================
+    // FILE CATEGORIES & ORGANIZED UPLOAD
+    // =============================================
+
+    /**
+     * Get all file categories for a work order
+     */
+    async getFileCategories(workOrderId: string): Promise<FileCategory[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('file_categories')
+            .select('*, files:work_order_files(*)')
+            .eq('work_order_id', workOrderId)
+            .order('display_order', { ascending: true })
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching file categories:', error);
+            throw new Error(`Failed to fetch file categories: ${error.message}`);
+        }
+
+        return (data || []) as FileCategory[];
+    },
+
+    /**
+     * Initialize default system categories for a work order
+     */
+    async initializeSystemCategories(workOrderId: string, userId: string): Promise<void> {
+        const supabase = createClient();
+
+        // Check if categories already exist
+        const { count } = await supabase
+            .from('file_categories')
+            .select('*', { count: 'exact', head: true })
+            .eq('work_order_id', workOrderId);
+
+        if (count && count > 0) return;
+
+        const systemCategories = [
+            { name: 'Work Order', rbac_level: 'office', display_order: 10 },
+            { name: 'Survey', rbac_level: 'office', display_order: 20 },
+            { name: 'Plans', rbac_level: 'office', display_order: 30 },
+            { name: 'Art Work', rbac_level: 'office', display_order: 40 },
+            {
+                name: 'Pictures',
+                rbac_level: 'field',
+                display_order: 50,
+                subcategories: ['Reference', 'Before', 'WIP', 'After', 'Other']
+            },
+            {
+                name: 'Tech Docs',
+                rbac_level: 'field',
+                display_order: 60,
+                subcategories: ['Permits', 'Safety Docs', 'Expense Receipts']
+            },
+            {
+                name: 'Office Docs',
+                rbac_level: 'office_only',
+                display_order: 70,
+                subcategories: ['Quote', 'Client PO']
+            }
+        ];
+
+        for (const cat of systemCategories) {
+            // Create parent category
+            const { data: parent } = await supabase
+                .from('file_categories')
+                .insert({
+                    work_order_id: workOrderId,
+                    name: cat.name,
+                    is_system: true,
+                    rbac_level: cat.rbac_level,
+                    display_order: cat.display_order,
+                    created_by: userId
+                })
+                .select()
+                .single();
+
+            if (parent && 'subcategories' in cat && cat.subcategories) {
+                // Create subcategories
+                const subCats = cat.subcategories.map((subName, index) => ({
+                    work_order_id: workOrderId,
+                    name: subName,
+                    parent_id: parent.id,
+                    is_system: true,
+                    rbac_level: cat.rbac_level, // Inherit RBAC level
+                    display_order: index * 10,
+                    created_by: userId
+                }));
+
+                await supabase.from('file_categories').insert(subCats);
+            }
+        }
+    },
+
+    /**
+     * Create a custom category or subcategory
+     */
+    async createFileCategory(params: {
+        work_order_id: string;
+        name: string;
+        parent_id?: string | null;
+        rbac_level?: 'office' | 'field' | 'office_only';
+        created_by: string;
+    }): Promise<FileCategory> {
+        const supabase = createClient();
+
+        const { data, error } = await supabase
+            .from('file_categories')
+            .insert({
+                ...params,
+                is_system: false,
+                rbac_level: params.rbac_level || 'office',
+                display_order: 999 // Custom cats at the end
+            })
+            .select()
+            .single();
+
+        if (error) throw new Error(`Failed to create category: ${error.message}`);
+        return data as FileCategory;
+    },
+
+    /**
+     * Delete a file category (only if empty)
+     */
+    async deleteFileCategory(categoryId: string): Promise<void> {
+        const supabase = createClient();
+
+        // Check if has files
+        const { count: fileCount } = await supabase
+            .from('work_order_files')
+            .select('*', { count: 'exact', head: true })
+            .eq('category_id', categoryId);
+
+        if (fileCount && fileCount > 0) {
+            throw new Error('Cannot delete category containing files');
+        }
+
+        const { error } = await supabase
+            .from('file_categories')
+            .delete()
+            .eq('id', categoryId);
+
+        if (error) throw new Error(`Failed to delete category: ${error.message}`);
+    },
+
+    /**
+     * Upload a file to a specific category
+     */
+    async uploadFileToCategory(
+        workOrderId: string,
+        categoryId: string,
+        file: File,
+        userId: string,
+        categoryPathName: string = 'uploads' // Used for folder structure
+    ): Promise<WorkOrderFile> {
+        const supabase = createClient();
+
+        // Clean path name
+        const cleanPathName = categoryPathName.toLowerCase().replace(/[^a-z0-9]/g, '_');
+
+        // Generate unique file path: work-orders/{woId}/{category}/{timestamp}_{filename}
+        const fileExt = file.name.split('.').pop();
+        const safeFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+        const storagePath = `${workOrderId}/${cleanPathName}/${Date.now()}_${safeFileName}`;
+
+        // Upload to Storage
+        const { error: uploadError } = await supabase.storage
+            .from('work-orders')
+            .upload(storagePath, file);
+
+        if (uploadError) throw new Error(`Failed to upload file: ${uploadError.message}`);
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from('work-orders')
+            .getPublicUrl(storagePath);
+
+        // Create DB record
+        const { data, error } = await supabase
+            .from('work_order_files')
+            .insert({
+                work_order_id: workOrderId,
+                category_id: categoryId,
+                file_url: urlData.publicUrl,
+                file_name: file.name,
+                file_size: file.size,
+                mime_type: file.type,
+                uploaded_by: userId
+            })
+            .select('*, category:file_categories(*)')
+            .single();
+
+        if (error) throw new Error(`Failed to save file record: ${error.message}`);
+        return data as WorkOrderFile;
+    },
+
+    /**
+     * Move a file to a different category
+     */
+    async recategorizeFile(fileId: string, newCategoryId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_files')
+            .update({ category_id: newCategoryId })
+            .eq('id', fileId);
+
+        if (error) throw new Error(`Failed to move file: ${error.message}`);
+    },
+
+    /**
+     * Delete a file
+     */
+    async deleteFile(fileId: string): Promise<void> {
+        const supabase = createClient();
+
+        // Get file info first to delete from storage
+        const { data: file } = await supabase
+            .from('work_order_files')
+            .select('file_url')
+            .eq('id', fileId)
+            .single();
+
+        if (file) {
+            // Extract path from URL (simple assumption based on bucket structure)
+            const url = new URL(file.file_url);
+            const path = url.pathname.split('/work-orders/')[1];
+            if (path) {
+                await supabase.storage.from('work-orders').remove([decodeURIComponent(path)]);
+            }
+        }
+
+        const { error } = await supabase
+            .from('work_order_files')
+            .delete()
+            .eq('id', fileId);
+
+        if (error) throw new Error(`Failed to delete file: ${error.message}`);
     },
 
     // =============================================

@@ -679,3 +679,51 @@ Added two classification systems for tasks: WO-scoped categories (single-select)
 - Settings page for global tag management (admin CRUD)
 - Notification system for @mentions
 - Reporting/filtering by category and tags
+
+---
+
+## Phase 18: File Categorization System
+**Date**: December 20, 2024
+
+### Overview
+Implemented a robust file organization system with hierarchical folders (categories), RBAC enforcement, and drag-and-drop file management.
+
+### Completed Tasks
+
+#### A. Database Schema
+- ✅ **file_categories table**:
+  - Hierarchical structure (`parent_id`)
+  - System vs custom categories (`is_system`)
+  - RBAC levels (`office`, `field`, `office_only`)
+  - Ordering support
+- ✅ **work_order_files updates**:
+  - `category_id`: Foreign key to file categories
+  - `uploaded_by`: Linked to user profiles
+
+#### B. Service Layer
+- ✅ **Category Management**:
+  - `initializeSystemCategories`: Creates standard folder structure (Work Order, Pictures, etc.)
+  - `create/delete` custom categories
+- ✅ **File Management**:
+  - `uploadFileToCategory`: Uploads to structured paths
+  - `recategorizeFile`: Moves files between categories
+  - `deleteFile`: Removes from storage and DB
+
+#### C. UI Components
+- ✅ **WorkOrderUploadForm**:
+  - Categorized upload interface
+  - Custom category creation during upload
+- ✅ **WorkOrderFilesCard**:
+  - Hierarchical file explorer (accordion style)
+  - RBAC-aware actions (upload, delete, move)
+  - Folder and file status indicators
+- ✅ **Integration**:
+  - Embedded in Work Order Detail page
+  - Seamless transition from upload to organized view
+
+### Key Files
+- `database_migrations/017_file_categories_schema.sql`
+- `services/work-orders.service.ts`
+- `components/work-orders/WorkOrderUploadForm.tsx`
+- `components/work-orders/WorkOrderFilesCard.tsx`
+

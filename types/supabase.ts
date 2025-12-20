@@ -109,6 +109,61 @@ export interface Database {
                     }
                 ]
             }
+            file_categories: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    name: string
+                    parent_id: string | null
+                    is_system: boolean
+                    rbac_level: string
+                    display_order: number
+                    created_by: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    name: string
+                    parent_id?: string | null
+                    is_system?: boolean
+                    rbac_level?: string
+                    display_order?: number
+                    created_by?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    name?: string
+                    parent_id?: string | null
+                    is_system?: boolean
+                    rbac_level?: string
+                    display_order?: number
+                    created_by?: string | null
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "file_categories_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "file_categories_parent_id_fkey"
+                        columns: ["parent_id"]
+                        referencedRelation: "file_categories"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "file_categories_created_by_fkey"
+                        columns: ["created_by"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
             work_order_files: {
                 Row: {
                     id: string
@@ -117,6 +172,8 @@ export interface Database {
                     file_name: string | null
                     file_size: number | null
                     mime_type: string | null
+                    category_id: string | null
+                    uploaded_by: string | null
                     created_at: string
                 }
                 Insert: {
@@ -126,6 +183,8 @@ export interface Database {
                     file_name?: string | null
                     file_size?: number | null
                     mime_type?: string | null
+                    category_id?: string | null
+                    uploaded_by?: string | null
                     created_at?: string
                 }
                 Update: {
@@ -135,6 +194,8 @@ export interface Database {
                     file_name?: string | null
                     file_size?: number | null
                     mime_type?: string | null
+                    category_id?: string | null
+                    uploaded_by?: string | null
                     created_at?: string
                 }
                 Relationships: [
@@ -142,6 +203,18 @@ export interface Database {
                         foreignKeyName: "work_order_files_work_order_id_fkey"
                         columns: ["work_order_id"]
                         referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_files_category_id_fkey"
+                        columns: ["category_id"]
+                        referencedRelation: "file_categories"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_files_uploaded_by_fkey"
+                        columns: ["uploaded_by"]
+                        referencedRelation: "user_profiles"
                         referencedColumns: ["id"]
                     }
                 ]

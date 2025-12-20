@@ -9,3 +9,5 @@ export { WorkOrderReviewModal } from './WorkOrderReviewModal';
 export { TaskCommentsPanel } from './TaskCommentsPanel';
 export { CategorySelector } from './CategorySelector';
 export { TagSelector } from './TagSelector';
+export { WorkOrderFilesCard } from './WorkOrderFilesCard';
+

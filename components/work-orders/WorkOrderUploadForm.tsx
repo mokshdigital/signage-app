@@ -1,174 +1,318 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Button, Card, Alert, UploadIcon } from '@/components/ui';
-
+import { Button, Card, Alert, UploadIcon, Badge } from '@/components/ui';
+import { Folder, FileText, Image as ImageIcon, Trash2, Plus, ChevronRight, ChevronDown } from 'lucide-react';
 
 interface WorkOrderUploadFormProps {
-    onSubmit: (mainFile: File, associatedFiles: File[]) => Promise<void>;
+    onSubmit: (categorizedFiles: Record<string, File[]>, customCategories: { name: string; parent?: string }[]) => Promise<void>;
     isLoading?: boolean;
 }
 
-const MAX_ASSOCIATED_FILES = 9;
+interface CategoryDef {
+    name: string;
+    key: string;
+    required?: boolean;
+    subcategories?: CategoryDef[];
+    isCustom?: boolean;
+}
+
+const SYSTEM_CATEGORIES: CategoryDef[] = [
+    { name: 'Work Order', key: 'Work Order', required: true },
+    { name: 'Survey', key: 'Survey' },
+    { name: 'Plans', key: 'Plans' },
+    { name: 'Art Work', key: 'Art Work' },
+    {
+        name: 'Pictures',
+        key: 'Pictures',
+        subcategories: [
+            { name: 'Reference', key: 'Reference' },
+            { name: 'Before', key: 'Before' },
+            { name: 'WIP', key: 'WIP' },
+            { name: 'After', key: 'After' },
+            { name: 'Other', key: 'Other' }
+        ]
+    },
+    {
+        name: 'Tech Docs',
+        key: 'Tech Docs',
+        subcategories: [
+            { name: 'Permits', key: 'Permits' },
+            { name: 'Safety Docs', key: 'Safety Docs' },
+            { name: 'Expense Receipts', key: 'Expense Receipts' }
+        ]
+    },
+    {
+        name: 'Office Docs',
+        key: 'Office Docs',
+        subcategories: [
+            { name: 'Quote', key: 'Quote' },
+            { name: 'Client PO', key: 'Client PO' }
+        ]
+    }
+];
 
 export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUploadFormProps) {
-    const [mainFile, setMainFile] = useState<File | null>(null);
-    const [associatedFiles, setAssociatedFiles] = useState<File[]>([]);
+    // Map of "CategoryName/SubName" -> File[]
+    const [files, setFiles] = useState<Record<string, File[]>>({});
+    const [expanded, setExpanded] = useState<Record<string, boolean>>({
+        'Pictures': true,
+        'Tech Docs': false,
+        'Office Docs': false
+    });
+    const [customCategories, setCustomCategories] = useState<CategoryDef[]>([]);
     const [error, setError] = useState<string | null>(null);
+    const [isAddingCustom, setIsAddingCustom] = useState(false);
+    const [newCategoryName, setNewCategoryName] = useState('');
 
-    // Refs for resetting inputs
-    const mainInputRef = useRef<HTMLInputElement>(null);
-    const associatedInputRef = useRef<HTMLInputElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const activeCategoryRef = useRef<string | null>(null);
 
-    const handleMainFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files && e.target.files[0]) {
-            setMainFile(e.target.files[0]);
+    const toggleExpand = (key: string) => {
+        setExpanded(prev => ({ ...prev, [key]: !prev[key] }));
+    };
+
+    const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+        if (e.target.files && activeCategoryRef.current) {
+            const selectedFiles = Array.from(e.target.files);
+            const categoryKey = activeCategoryRef.current;
+
+            // Limit check? For now user said "No file limit"
+
+            setFiles(prev => ({
+                ...prev,
+                [categoryKey]: [...(prev[categoryKey] || []), ...selectedFiles]
+            }));
+
+            // Reset input
+            if (fileInputRef.current) fileInputRef.current.value = '';
+            activeCategoryRef.current = null;
             setError(null);
         }
     };
 
-    const handleAssociatedFilesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-        if (e.target.files) {
-            const filesArray = Array.from(e.target.files);
-            const totalFiles = associatedFiles.length + filesArray.length;
-
-            if (totalFiles > MAX_ASSOCIATED_FILES) {
-                setError(`Maximum ${MAX_ASSOCIATED_FILES} associated files allowed. You selected ${totalFiles} files.`);
-                return;
-            }
-
-            setAssociatedFiles(prev => [...prev, ...filesArray]);
-            setError(null);
-
-            // Reset input so same files can be selected again if needed (though unlikely)
-            if (associatedInputRef.current) {
-                associatedInputRef.current.value = '';
-            }
-        }
+    const triggerUpload = (categoryKey: string) => {
+        activeCategoryRef.current = categoryKey;
+        fileInputRef.current?.click();
     };
 
-    const removeAssociatedFile = (index: number) => {
-        setAssociatedFiles(prev => prev.filter((_, i) => i !== index));
+    const removeFile = (categoryKey: string, index: number) => {
+        setFiles(prev => ({
+            ...prev,
+            [categoryKey]: prev[categoryKey].filter((_, i) => i !== index)
+        }));
+    };
+
+    const addCustomCategory = () => {
+        if (!newCategoryName.trim()) return;
+        setCustomCategories(prev => [
+            ...prev,
+            { name: newCategoryName, key: newCategoryName, isCustom: true }
+        ]);
+        setNewCategoryName('');
+        setIsAddingCustom(false);
     };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
 
-        if (!mainFile) {
-            setError('Please select a main work order file.');
+        // Validation: Main Work Order file is required
+        const woFiles = files['Work Order'];
+        if (!woFiles || woFiles.length === 0) {
+            setError('The "Work Order" category requires at least one file.');
             return;
         }
 
         try {
-            await onSubmit(mainFile, associatedFiles);
-            // Reset form on success
-            setMainFile(null);
-            setAssociatedFiles([]);
-            if (mainInputRef.current) mainInputRef.current.value = '';
-            if (associatedInputRef.current) associatedInputRef.current.value = '';
-        } catch (err) {
-            // Error is handled by parent or service, but we keep form state
+            await onSubmit(files, customCategories.map(c => ({ name: c.name })));
+        } catch (err: any) {
+            setError(err.message || 'Upload failed');
         }
     };
 
     const formatSize = (bytes: number) => {
         if (bytes === 0) return '0 B';
         const k = 1024;
-        const sizes = ['B', 'KB', 'MB', 'GB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        const size = bytes / k;
+        if (size < 1024) return size.toFixed(1) + ' KB';
+        return (size / 1024).toFixed(1) + ' MB';
     };
 
-    return (
-        <Card title="Upload Work Order" className="mb-6">
-            <form onSubmit={handleSubmit} className="space-y-6">
-                {error && (
-                    <Alert variant="error" dismissible onDismiss={() => setError(null)}>
-                        {error}
-                    </Alert>
-                )}
+    const renderCategory = (cat: CategoryDef, level = 0, parentKey = '') => {
+        const categoryKey = parentKey ? `${parentKey}/${cat.name}` : cat.name;
+        // Use just the name for top-level if simple map is desired, but for uniqueness logic in state:
+        // System categories names are unique.
+        // Let's use name as key for lookup in `files` state to match service layer expected format?
+        // Service expects: Category name.
+        // But for subcategories, `files` state key needs to identify it unique.
+        // I will stick to "Parent/Child" format for internal key, and unpack it on submit.
+        // Actually, for system categories, names are distinct even across parents? No, "Other" is in Pictures.
+        // So I must track context.
 
-                {/* Main File */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Work Order File (Mandatory) <span className="text-red-500">*</span>
-                    </label>
-                    <div className="flex items-center gap-4">
-                        <input
-                            ref={mainInputRef}
-                            type="file"
-                            onChange={handleMainFileChange}
-                            className="block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-md file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-blue-50 file:text-blue-700
-                                hover:file:bg-blue-100"
-                            required
-                        />
+        const myFiles = files[categoryKey] || [];
+        const isExpanded = expanded[categoryKey];
+        const hasSubcategories = (cat.subcategories && cat.subcategories.length > 0);
+
+        return (
+            <div key={categoryKey} className={`mb-4 select-none ${level > 0 ? 'ml-6 border-l-2 border-gray-100 pl-4' : ''}`}>
+                {/* Header */}
+                <div className="flex items-center justify-between group">
+                    <div
+                        className="flex items-center gap-2 cursor-pointer py-1"
+                        onClick={() => hasSubcategories && toggleExpand(categoryKey)}
+                    >
+                        {hasSubcategories ? (
+                            isExpanded ? <ChevronDown className="w-4 h-4 text-gray-500" /> : <ChevronRight className="w-4 h-4 text-gray-500" />
+                        ) : (
+                            <Folder className={`w-4 h-4 ${cat.required && myFiles.length === 0 ? 'text-red-400' : 'text-blue-500'}`} />
+                        )}
+
+                        <span className={`font-medium ${level === 0 ? 'text-gray-800' : 'text-gray-600'} ${cat.required && myFiles.length === 0 ? 'text-red-500' : ''}`}>
+                            {cat.name}
+                        </span>
+
+                        {cat.required && <span className="text-xs text-red-500 ml-1">*</span>}
+
+                        {myFiles.length > 0 && (
+                            <Badge variant="default" className="ml-2">
+                                {myFiles.length}
+                            </Badge>
+                        )}
                     </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Upload the main PDF or image for the work order.
-                    </p>
-                </div>
 
-                {/* Associated Files */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Associated Files (Optional)
-                    </label>
-                    <div className="flex items-center gap-4">
-                        <input
-                            ref={associatedInputRef}
-                            type="file"
-                            multiple
-                            onChange={handleAssociatedFilesChange}
-                            className="block w-full text-sm text-gray-500
-                                file:mr-4 file:py-2 file:px-4
-                                file:rounded-md file:border-0
-                                file:text-sm file:font-semibold
-                                file:bg-gray-50 file:text-gray-700
-                                hover:file:bg-gray-100"
-                            disabled={associatedFiles.length >= MAX_ASSOCIATED_FILES}
-                        />
-                    </div>
-                    <p className="mt-1 text-sm text-gray-500">
-                        Photos, diagrams, or other related documents (Max 10 total).
-                    </p>
-
-                    {/* File List */}
-                    {associatedFiles.length > 0 && (
-                        <div className="mt-4 space-y-2">
-                            {associatedFiles.map((file, index) => (
-                                <div key={index} className="flex items-center justify-between p-2 bg-gray-50 rounded-md">
-                                    <div className="flex items-center gap-2 overflow-hidden">
-                                        <span className="text-gray-400">📄</span>
-                                        <span className="text-sm text-gray-700 truncate">{file.name}</span>
-                                        <span className="text-xs text-gray-400">({formatSize(file.size)})</span>
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={() => removeAssociatedFile(index)}
-                                        className="text-red-500 hover:text-red-700 p-1"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
+                    {!hasSubcategories && (
+                        <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => triggerUpload(categoryKey)}
+                            className="h-6 px-2 text-xs opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
+                            + Add File
+                        </Button>
                     )}
                 </div>
 
-                <div className="pt-4 flex justify-end">
-                    <Button
-                        type="submit"
-                        loading={isLoading}
-                        leftIcon={<UploadIcon />}
-                    >
-                        Upload & Analyze
-                    </Button>
-                </div>
-            </form>
+                {/* Subcategories (if expanded) */}
+                {hasSubcategories && isExpanded && (
+                    <div className="mt-2">
+                        {cat.subcategories!.map(sub => renderCategory(sub, level + 1, categoryKey))}
+                    </div>
+                )}
+
+                {/* File List */}
+                {!hasSubcategories && myFiles.length > 0 && (
+                    <div className="mt-2 space-y-2">
+                        {myFiles.map((file, idx) => (
+                            <div key={idx} className="flex items-center justify-between p-2 bg-gray-50 rounded-md text-sm group">
+                                <div className="flex items-center gap-3 overflow-hidden">
+                                    {file.type.startsWith('image/') ? (
+                                        <ImageIcon className="w-4 h-4 text-purple-500 flex-shrink-0" />
+                                    ) : (
+                                        <FileText className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    )}
+                                    <div className="flex flex-col min-w-0">
+                                        <span className="truncate text-gray-700">{file.name}</span>
+                                        <span className="text-xs text-gray-400">{formatSize(file.size)}</span>
+                                    </div>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => removeFile(categoryKey, idx)}
+                                    className="text-gray-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                >
+                                    <Trash2 className="w-4 h-4" />
+                                </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+        );
+    };
+
+    return (
+        <Card noPadding className="h-[80vh] flex flex-col">
+            <div className="p-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-gray-800">Organize Work Order Files</h2>
+                <p className="text-sm text-gray-500">Categorize your uploads for better organization.</p>
+            </div>
+
+            <div className="flex-1 overflow-y-auto p-6">
+                <form onSubmit={handleSubmit} id="wo-upload-form">
+                    {error && (
+                        <Alert variant="error" dismissible onDismiss={() => setError(null)} className="mb-4">
+                            {error}
+                        </Alert>
+                    )}
+
+                    {/* Hidden Global Input */}
+                    <input
+                        ref={fileInputRef}
+                        type="file"
+                        multiple
+                        className="hidden"
+                        onChange={handleFileSelect}
+                    />
+
+                    {/* System Categories */}
+                    {SYSTEM_CATEGORIES.map(cat => renderCategory(cat))}
+
+                    {/* Custom Categories */}
+                    {customCategories.length > 0 && (
+                        <div className="mt-8 border-t pt-4">
+                            <h3 className="text-sm font-semibold text-gray-500 mb-4 uppercase tracking-wider">Custom Categories</h3>
+                            {customCategories.map(cat => renderCategory(cat))}
+                        </div>
+                    )}
+
+                    {/* Add Custom Category Button */}
+                    <div className="mt-4">
+                        {isAddingCustom ? (
+                            <div className="flex items-center gap-2 max-w-sm">
+                                <input
+                                    type="text"
+                                    value={newCategoryName}
+                                    onChange={e => setNewCategoryName(e.target.value)}
+                                    placeholder="Enter category name..."
+                                    className="flex-1 px-3 py-1.5 text-sm border rounded hover:border-blue-400 focus:outline-none focus:border-blue-500"
+                                    autoFocus
+                                    onKeyDown={e => {
+                                        if (e.key === 'Enter') {
+                                            e.preventDefault();
+                                            addCustomCategory();
+                                        }
+                                        if (e.key === 'Escape') setIsAddingCustom(false);
+                                    }}
+                                />
+                                <Button size="sm" onClick={addCustomCategory} disabled={!newCategoryName.trim()}>Add</Button>
+                                <Button size="sm" variant="ghost" onClick={() => setIsAddingCustom(false)}>Cancel</Button>
+                            </div>
+                        ) : (
+                            <Button
+                                type="button"
+                                variant="secondary"
+                                size="sm"
+                                onClick={() => setIsAddingCustom(true)}
+                                leftIcon={<Plus className="w-4 h-4" />}
+                            >
+                                Add Custom Category
+                            </Button>
+                        )}
+                    </div>
+                </form>
+            </div>
+
+            <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 rounded-b-lg">
+                <Button variant="ghost" type="button">Cancel</Button>
+                <Button
+                    type="submit"
+                    form="wo-upload-form"
+                    loading={isLoading}
+                    leftIcon={<UploadIcon className="w-4 h-4" />}
+                >
+                    Upload & Process
+                </Button>
+            </div>
         </Card>
     );
 }
