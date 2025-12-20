@@ -6,6 +6,7 @@ import { Folder, FileText, Image as ImageIcon, Trash2, Plus, ChevronRight, Chevr
 
 interface WorkOrderUploadFormProps {
     onSubmit: (categorizedFiles: Record<string, File[]>, customCategories: { name: string; parent?: string }[]) => Promise<void>;
+    onCancel: () => void;
     isLoading?: boolean;
 }
 
@@ -52,7 +53,7 @@ const SYSTEM_CATEGORIES: CategoryDef[] = [
     }
 ];
 
-export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUploadFormProps) {
+export function WorkOrderUploadForm({ onSubmit, onCancel, isLoading = false }: WorkOrderUploadFormProps) {
     // Map of "CategoryName/SubName" -> File[]
     const [files, setFiles] = useState<Record<string, File[]>>({});
     const [expanded, setExpanded] = useState<Record<string, boolean>>({
@@ -231,7 +232,7 @@ export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUp
     };
 
     return (
-        <Card noPadding className="h-[80vh] flex flex-col">
+        <Card noPadding className="h-[65vh] flex flex-col">
             <div className="p-4 border-b border-gray-200">
                 <h2 className="text-lg font-semibold text-gray-800">Organize Work Order Files</h2>
                 <p className="text-sm text-gray-500">Categorize your uploads for better organization.</p>
@@ -303,14 +304,14 @@ export function WorkOrderUploadForm({ onSubmit, isLoading = false }: WorkOrderUp
             </div>
 
             <div className="p-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 rounded-b-lg">
-                <Button variant="ghost" type="button">Cancel</Button>
+                <Button variant="ghost" type="button" onClick={onCancel}>Cancel</Button>
                 <Button
                     type="submit"
                     form="wo-upload-form"
                     loading={isLoading}
                     leftIcon={<UploadIcon className="w-4 h-4" />}
                 >
-                    Upload & Process
+                    Submit Work Order
                 </Button>
             </div>
         </Card>

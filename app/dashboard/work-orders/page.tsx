@@ -620,6 +620,7 @@ export default function WorkOrdersPage() {
             >
                 <WorkOrderUploadForm
                     onSubmit={handleUpload}
+                    onCancel={() => setIsUploadModalOpen(false)}
                     isLoading={isUploading}
                 />
             </Modal>
@@ -740,7 +741,7 @@ export default function WorkOrdersPage() {
             />
 
             {isProcessing && (
-                <LoadingOverlay text="Analyzing Work Order with AI..." />
+                <LoadingOverlay text="Submitting and Starting AI Analysis..." />
             )}
         </div>
     );
