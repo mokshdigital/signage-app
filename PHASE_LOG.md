@@ -566,3 +566,116 @@
 - **Upload Flow**: Two-step process with mandatory review
 - **AI Integration**: Automatically extracts and suggests Client/Job Type matches
 
+---
+
+## Phase 16: Task Comments System
+**Date**: December 19, 2024
+
+### Overview
+Implemented a threaded comment system for individual work order tasks with @mention functionality and file attachments.
+
+### Completed Tasks
+
+#### A. Database Schema
+- ✅ **work_order_task_comments table**
+  - Threaded comments on individual tasks
+  - Text content with attachments array (max 5 files)
+  - created_at and updated_at timestamps
+  - FK to work_order_tasks and user_profiles
+
+- ✅ **task_comment_mentions table**
+  - Junction table for @mentions
+  - Supports both user_profiles and technicians
+  - For future notification system
+
+- ✅ **RLS Policies**
+  - Read: All authenticated users
+  - Insert: Authenticated users
+  - Update/Delete: Only comment owner
+
+#### B. Service Layer Methods
+- `getTaskComments(taskId)` - Fetch with user profiles and mentions
+- `getTaskCommentCount(taskId)` - Count for badge display
+- `addTaskComment(...)` - Create with attachments and mentions
+- `updateTaskComment(...)` - Edit own comments
+- `deleteTaskComment(commentId)` - Delete own comments
+- `getMentionableUsers(workOrderId)` - Office staff + assigned techs + WO owner
+- `uploadCommentAttachment(taskId, file)` - 25MB limit, PDF/images only
+
+#### C. UI Components
+- ✅ **TaskCommentsPanel** - Slide-out panel triggered from task cards
+  - @mention dropdown with type-ahead filtering
+  - File attachment with image thumbnails (96×96px)
+  - PDF file cards with icon display
+  - Edit/delete own comments with "(edited)" indicator
+  - FileViewerModal integration for attachment preview
+  - Comment count badge on task cards
+
+### Key Files
+- `database_migrations/015_task_comments.sql`
+- `components/work-orders/TaskCommentsPanel.tsx`
+- `services/work-orders.service.ts` (new methods)
+
+---
+
+## Phase 17: Task Categories and Tags
+**Date**: December 19, 2024
+
+### Overview
+Added two classification systems for tasks: WO-scoped categories (single-select) and global tags (multi-select), both with color support.
+
+### Completed Tasks
+
+#### A. Database Schema
+- ✅ **work_order_categories table**
+  - Categories scoped to each work order
+  - Single category per task
+  - Color support (hex values)
+  - Unique constraint on (work_order_id, name)
+
+- ✅ **task_tags table**
+  - Global tags shared across all work orders
+  - Multi-select per task
+  - Color support
+  - Unique name constraint
+
+- ✅ **task_tag_assignments table**
+  - Junction table for task-tag relationships
+  - Unique constraint per task-tag pair
+
+- ✅ **work_order_tasks update**
+  - Added `category_id` FK column
+
+#### B. Service Layer Methods
+- Category CRUD: `getCategories`, `createCategory`, `updateCategory`, `deleteCategory`
+- Tag CRUD: `getAllTags`, `createTag`, `updateTag`, `deleteTag`
+- Task assignments: `getTaskTags`, `assignTagsToTask`, `setTaskCategory`
+
+#### C. UI Components
+- ✅ **CategorySelector** - Dropdown with:
+  - Existing WO categories
+  - Inline creation with color picker
+  - 10 preset colors
+
+- ✅ **TagSelector** - Multi-select dropdown with:
+  - Search/filter functionality
+  - All global tags display
+  - Inline creation with color picker
+  - Tag pills with remove buttons
+
+- ✅ **WorkOrderTasks Updates**
+  - Category badge with folder icon on task cards
+  - Tag pills on task cards
+  - Selectors in Create Task modal
+  - Selectors in Edit Task modal
+
+### Key Files
+- `database_migrations/016_task_categories_and_tags.sql`
+- `components/work-orders/CategorySelector.tsx`
+- `components/work-orders/TagSelector.tsx`
+- `components/work-orders/WorkOrderTasks.tsx`
+
+### Future Enhancements
+- Settings page for global tag management (admin CRUD)
+- Notification system for @mentions
+- Reporting/filtering by category and tags

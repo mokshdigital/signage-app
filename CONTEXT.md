@@ -107,6 +107,9 @@ signage-app/
 │   │   ├── WorkOrderReviewModal.tsx  # Post-upload review/enrichment modal
 │   │   ├── FileViewerModal.tsx    # In-app PDF/image viewer
 │   │   ├── WorkOrderTasks.tsx     # Task management with checklists
+│   │   ├── TaskCommentsPanel.tsx  # Threaded comments with @mentions
+│   │   ├── CategorySelector.tsx   # WO-scoped category dropdown
+│   │   ├── TagSelector.tsx        # Global tag multi-select
 │   │   ├── ShippingComments.tsx   # Threaded shipping comment system
 │   │   ├── ShipmentManager.tsx    # Shipment tracking UI
 │   │   └── index.ts
@@ -280,12 +283,14 @@ Development sessions are tracked in `SESSION-LOG.md`. This file contains:
 - ~~User onboarding flow (profile completion after first sign-in)~~ ✅ Implemented
 - ~~User profiles with name, phone, photo, role/title~~ ✅ Implemented
 - ~~Role-based access control (Admin, Technician, etc.)~~ ✅ Implemented
+- ~~Task comments with @mentions and attachments~~ ✅ Implemented (Phase 16)
+- ~~Task categories and global tags~~ ✅ Implemented (Phase 17)
 - Admin panel for assigning user titles *(use RBAC admin pages now)*
 - Work order assignment to technicians
 - Calendar/scheduling view
 - Mobile app (React Native)
-- Real-time notifications
-- Analytics and reporting
+- Real-time notifications (including @mention alerts)
+- Analytics and reporting (with category/tag filtering)
 - Equipment maintenance tracking
 - Vehicle GPS tracking integration
 

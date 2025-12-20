@@ -37,8 +37,12 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   - Native PDF and image processing.
   - In-app File Viewer (PDF/images).
   - Advanced Search and Filtering.
-  - Task Management with checklists and templates.
-  - Technician assignment with status indicators.
+  - **Task Management**:
+    - Checklists and templates.
+    - Technician assignment with status indicators.
+    - **Task Comments**: Threaded comments with @mentions and file attachments.
+    - **Task Categories**: WO-scoped categories with colors.
+    - **Task Tags**: Global tags with multi-select and colors.
   - **Shipping Comments**: Threaded conversation system for tracking shipments.
 - **Client Management**:
   - Client directory with project manager contacts.

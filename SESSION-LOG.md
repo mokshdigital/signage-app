@@ -707,5 +707,113 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
+### Session 12 - December 19, 2024 (2:00 PM - 6:25 PM PST)
 
+**Objective**: Implement Task Comments System and Task Categories/Tags
 
+#### Phase 16: Task Comments System
+
+##### A. Database Schema
+- **Created `work_order_task_comments` table**
+  - Threaded comments on individual tasks
+  - Text content with attachments (max 5 files)
+  - `updated_at` for edit tracking
+  
+- **Created `task_comment_mentions` table**
+  - Junction table for @mentions
+  - Supports both user_profiles and technicians
+  - For future notification system
+
+##### B. Service Layer
+- `getTaskComments(taskId)` - Fetch comments with user profiles and mentions
+- `getTaskCommentCount(taskId)` - Count for badge display
+- `addTaskComment(...)` - Create with attachments and mentions
+- `updateTaskComment(...)` - Edit own comments
+- `deleteTaskComment(commentId)` - Delete own comments
+- `getMentionableUsers(workOrderId)` - Office staff + WO technicians + WO owner
+- `uploadCommentAttachment(taskId, file)` - 25MB limit, PDF/images only
+
+##### C. UI Components
+- **TaskCommentsPanel** - Slide-out panel for task comments
+  - @mention dropdown with type-ahead filtering
+  - File attachment with image thumbnails (96×96px)
+  - PDF file cards with icon display
+  - Edit/delete own comments with "(edited)" indicator
+  - FileViewerModal integration for attachment preview
+  - Comment count badge on task cards
+
+#### Phase 17: Task Categories and Tags
+
+##### A. Database Schema
+- **Created `work_order_categories` table**
+  - Categories scoped to each work order (WO-specific)
+  - Single category per task
+  - Color support for visual distinction
+  - Unique constraint on (work_order_id, name)
+
+- **Created `task_tags` table**
+  - Global tags shared across all work orders
+  - Multi-select per task
+  - Color support
+  - Unique name constraint
+
+- **Created `task_tag_assignments` junction table**
+  - Many-to-many relationship between tasks and tags
+
+- **Added `category_id` to `work_order_tasks`**
+
+##### B. Service Layer
+- Category CRUD: `getCategories`, `createCategory`, `updateCategory`, `deleteCategory`
+- Tag CRUD: `getAllTags`, `createTag`, `updateTag`, `deleteTag`
+- Task assignments: `getTaskTags`, `assignTagsToTask`, `setTaskCategory`
+
+##### C. UI Components
+- **CategorySelector** - Dropdown with inline creation and color picker
+- **TagSelector** - Multi-select with search, inline creation, color picker
+- Updated **WorkOrderTasks** to display category badge and tag pills
+- Added selectors to both Create Task and Edit Task modals
+
+#### Database Migrations Required
+⚠️ **Run these in Supabase SQL Editor:**
+- `015_task_comments.sql` - Task comments and mentions tables
+- `016_task_categories_and_tags.sql` - Categories, tags, and assignments tables
+
+#### Files Created/Modified
+| File | Change |
+|------|--------|
+| `database_migrations/015_task_comments.sql` | New |
+| `database_migrations/016_task_categories_and_tags.sql` | New |
+| `types/database.ts` | Added interfaces |
+| `types/supabase.ts` | Added table types |
+| `services/work-orders.service.ts` | Added 15+ methods |
+| `components/work-orders/TaskCommentsPanel.tsx` | New |
+| `components/work-orders/CategorySelector.tsx` | New |
+| `components/work-orders/TagSelector.tsx` | New |
+| `components/work-orders/WorkOrderTasks.tsx` | Updated |
+| `components/work-orders/index.ts` | Added exports |
+| `DATABASE_SCHEMA.md` | Phase 16 & 17 docs |
+
+#### Commit History
+- `feat: Implement task comments system with @mentions and attachments`
+- `feat: Add image thumbnail previews for comment attachments`
+- `fix: Improve @mention dropdown positioning and styling`
+- `feat: Change comment order to oldest first (chronological)`
+- `feat: Add task categories (WO-scoped) and global tags`
+- `feat: Add category and tag selectors to Create Task modal`
+
+---
+
+### Session 12 Summary
+**Duration**: ~4.5 hours  
+**Focus**: Task Comments, Categories, and Tags
+
+#### Key Deliverables
+1. **Task Comments** - Threaded comments with @mentions and file attachments
+2. **Task Categories** - WO-scoped categorization with colors
+3. **Task Tags** - Global tagging system with multi-select
+4. **Enhanced UI** - Thumbnails, dropdowns, inline creation
+
+#### Pending for Future Sessions
+- Settings page for global tag management (admin CRUD)
+- Notification system for @mentions
+- Reporting/filtering by category and tags
