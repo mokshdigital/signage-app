@@ -3,13 +3,14 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { usePermissions } from '@/hooks/usePermissions';
-import { Button } from '@/components/ui';
+import { Avatar, LogoutIcon } from '@/components/ui';
 
 interface SidebarProps {
     isOpen: boolean;
     onClose: () => void;
     isCollapsed: boolean;
     onToggleCollapse: () => void;
+    onSignOut: () => void;
 }
 
 interface NavItem {
@@ -19,9 +20,9 @@ interface NavItem {
     permission?: string | string[];
 }
 
-export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: SidebarProps) {
+export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse, onSignOut }: SidebarProps) {
     const pathname = usePathname();
-    const { hasPermission, hasAnyPermission, isLoading } = usePermissions();
+    const { profile, hasPermission, hasAnyPermission, isLoading } = usePermissions();
 
     const mainNavItems: NavItem[] = [
         { name: 'Dashboard', href: '/dashboard', icon: '📊', permission: 'dashboard:read' },
@@ -78,6 +79,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
         );
     };
 
+    const displayName = profile?.display_name || 'User';
+
     return (
         <>
             {/* Sidebar */}
@@ -87,35 +90,107 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
                     bg-white border-r border-gray-200 
                     transform transition-all duration-300 ease-in-out
                     ${isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}
-                    mt-16 lg:mt-0
+                    mt-16 lg:mt-0 h-[calc(100vh-4rem)] lg:h-screen
                     ${isCollapsed ? 'w-20' : 'w-64'}
+                    flex flex-col
                 `.replace(/\s+/g, ' ').trim()}
             >
-                <div className="flex flex-col h-full">
-                    <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-                        {/* Main Navigation */}
-                        {visibleMainItems.map(renderNavItem)}
-                    </nav>
+                {/* Logo Section */}
+                <div className={`
+                    px-4 py-5 border-b border-gray-100
+                    ${isCollapsed ? 'px-2 py-4' : ''}
+                `}>
+                    <Link href="/dashboard" className={`
+                        flex items-center gap-3
+                        ${isCollapsed ? 'justify-center' : ''}
+                    `}>
+                        <div className="w-10 h-10 bg-blue-600 rounded-xl flex items-center justify-center text-white font-bold shadow-md flex-shrink-0">
+                            TL
+                        </div>
+                        {!isCollapsed && (
+                            <span className="text-lg font-bold text-gray-900 tracking-tight">
+                                Tops Lighting
+                            </span>
+                        )}
+                    </Link>
+                </div>
 
-                    {/* Collapse Toggle (Desktop only) */}
+                {/* Navigation Items */}
+                <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+                    {visibleMainItems.map(renderNavItem)}
+                </nav>
 
-                    {/* Collapse Toggle (Desktop only) */}
-                    <div className="hidden lg:flex p-4 border-t border-gray-200 justify-end">
-                        <button
-                            onClick={onToggleCollapse}
-                            className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
-                            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                {/* Collapse Toggle */}
+                <div className={`
+                    hidden lg:flex px-4 py-3 border-t border-gray-100
+                    ${isCollapsed ? 'justify-center px-2' : 'justify-end'}
+                `}>
+                    <button
+                        onClick={onToggleCollapse}
+                        className="p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
+                        title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+                    >
+                        <svg
+                            className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
+                            fill="none"
+                            stroke="currentColor"
+                            viewBox="0 0 24 24"
                         >
-                            <svg
-                                className={`w-5 h-5 transition-transform duration-300 ${isCollapsed ? 'rotate-180' : ''}`}
-                                fill="none"
-                                stroke="currentColor"
-                                viewBox="0 0 24 24"
-                            >
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
-                            </svg>
-                        </button>
-                    </div>
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 19l-7-7 7-7m8 14l-7-7 7-7" />
+                        </svg>
+                    </button>
+                </div>
+
+                {/* User Section */}
+                <div className={`
+                    border-t border-gray-200 bg-gray-50
+                    ${isCollapsed ? 'p-2' : 'p-4'}
+                `}>
+                    {/* User Info */}
+                    <Link
+                        href="/dashboard/profile"
+                        className={`
+                            flex items-center gap-3 p-2 rounded-lg hover:bg-gray-100 transition-colors
+                            ${isCollapsed ? 'justify-center' : ''}
+                        `}
+                        title={isCollapsed ? displayName : undefined}
+                    >
+                        <Avatar
+                            src={profile?.avatar_url}
+                            alt={displayName}
+                            size="md"
+                            className="flex-shrink-0"
+                        />
+                        {!isCollapsed && (
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">
+                                    {displayName}
+                                </p>
+                            </div>
+                        )}
+                    </Link>
+
+                    {/* Divider */}
+                    <div className={`
+                        border-t border-gray-200 my-2
+                        ${isCollapsed ? 'mx-1' : 'mx-2'}
+                    `} />
+
+                    {/* Logout */}
+                    <button
+                        onClick={onSignOut}
+                        className={`
+                            flex items-center gap-3 w-full p-2 rounded-lg
+                            text-red-600 hover:bg-red-50 transition-colors
+                            ${isCollapsed ? 'justify-center' : ''}
+                        `}
+                        title={isCollapsed ? "Sign Out" : undefined}
+                    >
+                        <LogoutIcon className="w-5 h-5 flex-shrink-0" />
+                        {!isCollapsed && (
+                            <span className="text-sm font-medium">Sign Out</span>
+                        )}
+                    </button>
                 </div>
             </aside>
 

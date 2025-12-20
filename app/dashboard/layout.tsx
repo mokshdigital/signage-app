@@ -56,25 +56,24 @@ export default function DashboardLayout({
   return (
     <PermissionsProvider>
       <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
-        {/* Top Navigation Bar */}
+        {/* Mobile-only Header */}
         <Header
-          user={user}
-          onSignOut={handleSignOut}
           onToggleSidebar={() => setIsSidebarOpen(!isSidebarOpen)}
         />
 
         {/* Main Layout Area */}
-        <div className="flex flex-1 overflow-hidden pt-16">
+        <div className="flex flex-1 overflow-hidden">
           {/* Sidebar */}
           <Sidebar
             isOpen={isSidebarOpen}
             onClose={() => setIsSidebarOpen(false)}
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => setIsSidebarCollapsed(!isSidebarCollapsed)}
+            onSignOut={handleSignOut}
           />
 
-          {/* Main Content */}
-          <main className="flex-1 overflow-y-auto bg-gray-50 p-6 lg:p-8 w-full">
+          {/* Main Content - full height on desktop, offset on mobile */}
+          <main className="flex-1 overflow-y-auto bg-gray-50 p-6 lg:p-8 w-full pt-20 lg:pt-6">
             <div className="max-w-7xl mx-auto">{children}</div>
           </main>
         </div>
@@ -82,4 +81,3 @@ export default function DashboardLayout({
     </PermissionsProvider>
   )
 }
-

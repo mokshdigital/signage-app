@@ -1,25 +1,21 @@
 'use client';
 
 import Link from 'next/link';
-import { User } from '@supabase/supabase-js';
-import { Button, LogoutIcon } from '@/components/ui';
-import { UserProfile } from './UserProfile';
 
 interface HeaderProps {
-    user: User | null;
-    onSignOut: () => void;
     onToggleSidebar: () => void;
 }
 
-export function Header({ user, onSignOut, onToggleSidebar }: HeaderProps) {
+export function Header({ onToggleSidebar }: HeaderProps) {
     return (
-        <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30 h-16">
+        // Mobile-only header for hamburger menu
+        <header className="bg-white border-b border-gray-200 fixed top-0 left-0 right-0 z-30 h-16 lg:hidden">
             <div className="flex items-center justify-between px-4 h-full">
                 <div className="flex items-center gap-4">
                     {/* Mobile Menu Toggle */}
                     <button
                         onClick={onToggleSidebar}
-                        className="lg:hidden p-2 rounded-md hover:bg-gray-100 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        className="p-2 rounded-md hover:bg-gray-100 text-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-500"
                         aria-label="Toggle sidebar"
                     >
                         <svg
@@ -37,7 +33,7 @@ export function Header({ user, onSignOut, onToggleSidebar }: HeaderProps) {
                         </svg>
                     </button>
 
-                    {/* Logo */}
+                    {/* Logo (mobile only) */}
                     <Link href="/dashboard" className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold shadow-sm">
                             TL
@@ -46,11 +42,6 @@ export function Header({ user, onSignOut, onToggleSidebar }: HeaderProps) {
                             Tops Lighting
                         </span>
                     </Link>
-                </div>
-
-                {/* User Info & Logout */}
-                <div className="flex items-center gap-4">
-                    <UserProfile onSignOut={onSignOut} />
                 </div>
             </div>
         </header>
