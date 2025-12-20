@@ -10,4 +10,7 @@ export { TaskCommentsPanel } from './TaskCommentsPanel';
 export { CategorySelector } from './CategorySelector';
 export { TagSelector } from './TagSelector';
 export { WorkOrderFilesCard } from './WorkOrderFilesCard';
-
+export { TabNavigation } from './TabNavigation';
+export { WorkOrderDetailHeader } from './WorkOrderDetailHeader';
+export { AISummaryPanel } from './AISummaryPanel';
+export { WorkOrderEditModal } from './WorkOrderEditModal';

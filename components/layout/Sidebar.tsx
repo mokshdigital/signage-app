@@ -30,6 +30,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse }: Side
         { name: 'Vehicles', href: '/dashboard/vehicles', icon: '🚗', permission: 'vehicles:read' },
         { name: 'Clients', href: '/dashboard/clients', icon: '🏢', permission: 'work_orders:read' },
         { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋', permission: 'work_orders:read' },
+        { name: 'Work Orders (Beta)', href: '/dashboard/work-orders-v2', icon: '🆕', permission: 'work_orders:read' },
         {
             name: 'Settings',
             href: '/dashboard/settings',
