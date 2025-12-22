@@ -6,6 +6,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { useConfirmDialog } from '@/hooks';
 import { usersService, UnifiedUser, Invitation } from '@/services/users.service';
 import { InviteUserModal } from '@/components/settings/UserFormModal';
+import { EditUserModal } from '@/components/settings/EditUserModal';
 import { ConfirmDialog } from '@/components/ui';
 import { toast } from '@/components/providers';
 
@@ -17,6 +18,7 @@ export default function UsersPage() {
     const [error, setError] = useState<string | null>(null);
     const [showArchived, setShowArchived] = useState(false);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+    const [editingUser, setEditingUser] = useState<UnifiedUser | null>(null);
 
     const { confirm, dialogProps } = useConfirmDialog();
 
@@ -182,11 +184,14 @@ export default function UsersPage() {
                                             )}
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm">
-                                            {user.is_active === false ? (
-                                                <Button variant="ghost" size="sm" onClick={() => handleRestore(user)}>Restore</Button>
-                                            ) : (
-                                                <Button variant="ghost" size="sm" className="text-orange-600" onClick={() => handleArchive(user)}>Archive</Button>
-                                            )}
+                                            <div className="flex justify-end gap-2">
+                                                <Button variant="ghost" size="sm" onClick={() => setEditingUser(user)}>Edit</Button>
+                                                {user.is_active === false ? (
+                                                    <Button variant="ghost" size="sm" className="text-green-600" onClick={() => handleRestore(user)}>Restore</Button>
+                                                ) : (
+                                                    <Button variant="ghost" size="sm" className="text-orange-600" onClick={() => handleArchive(user)}>Archive</Button>
+                                                )}
+                                            </div>
                                         </td>
                                     </tr>
                                 ))}
@@ -282,6 +287,14 @@ export default function UsersPage() {
             <InviteUserModal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
+                onSuccess={fetchData}
+            />
+
+            {/* Edit Modal */}
+            <EditUserModal
+                isOpen={!!editingUser}
+                onClose={() => setEditingUser(null)}
+                user={editingUser}
                 onSuccess={fetchData}
             />
 
