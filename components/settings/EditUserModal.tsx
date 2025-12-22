@@ -30,6 +30,7 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
     // Form State
     const [displayName, setDisplayName] = useState('');
     const [nickName, setNickName] = useState('');
+    const [phone, setPhone] = useState('');
     const [roleId, setRoleId] = useState<string>('');
     const [isTechnician, setIsTechnician] = useState(false);
     const [isOfficeStaff, setIsOfficeStaff] = useState(false);
@@ -51,6 +52,7 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
         if (user && isOpen) {
             setDisplayName(user.display_name || '');
             setNickName(user.nick_name || '');
+            setPhone(user.phone || '');
             setRoleId(user.role?.id || '');
             setIsTechnician(!!user.technician);
             setIsOfficeStaff(!!user.office_staff);
@@ -71,6 +73,7 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
             const updateData: UpdateUserData = {
                 display_name: displayName,
                 nick_name: nickName || undefined,
+                phone: phone || undefined,
                 role_id: roleId || null,
                 is_technician: isTechnician,
                 is_office_staff: isOfficeStaff,
@@ -143,6 +146,19 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
                     </div>
                 </div>
 
+                {/* Phone */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Phone Number
+                    </label>
+                    <Input
+                        value={phone}
+                        onChange={(e) => setPhone(e.target.value)}
+                        placeholder="(555) 555-5555"
+                        type="tel"
+                    />
+                </div>
+
                 {/* Role */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -201,8 +217,8 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
                                     type="button"
                                     onClick={() => toggleSkill(skill)}
                                     className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${skills.includes(skill)
-                                            ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
                                         }`}
                                 >
                                     {skill}

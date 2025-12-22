@@ -49,6 +49,7 @@ export interface CreateInvitationData {
 export interface UpdateUserData {
     display_name?: string;
     nick_name?: string;
+    phone?: string;
     role_id?: string | null;
     is_technician?: boolean;
     is_office_staff?: boolean;
@@ -215,6 +216,7 @@ export const usersService = {
         const updateData: any = {};
         if (data.display_name !== undefined) updateData.display_name = data.display_name;
         if (data.nick_name !== undefined) updateData.nick_name = data.nick_name;
+        if (data.phone !== undefined) updateData.phone = data.phone;
         if (data.role_id !== undefined) updateData.role_id = data.role_id;
         if (data.is_active !== undefined) updateData.is_active = data.is_active;
 
