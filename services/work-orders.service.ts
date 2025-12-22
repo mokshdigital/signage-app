@@ -975,7 +975,7 @@ export const workOrdersService = {
             .from('work_order_tasks')
             .select(`
                 *,
-                assignments:task_assignments(*, technician:technicians(*)),
+                assignments:task_assignments(*, user_profile:user_profiles(id, display_name, avatar_url)),
                 checklists:task_checklists(*)
             `)
             .eq('work_order_id', workOrderId)
