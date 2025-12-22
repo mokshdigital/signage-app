@@ -89,15 +89,13 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
 
         try {
             setSubmitting(true);
-            const userIds = selectedMentions.filter(m => m.type === 'user').map(m => m.id);
-            const techIds = selectedMentions.filter(m => m.type === 'technician').map(m => m.id);
+            const mentionedIds = selectedMentions.map(m => m.id);
 
             await workOrdersService.addTaskComment(
                 task.id,
                 newContent,
                 newAttachments,
-                userIds,
-                techIds
+                mentionedIds
             );
 
             setNewContent('');
@@ -215,15 +213,13 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
         try {
             // Extract mentions from content
             const mentionMatches = editContent.match(/@(\w+(?:\s\w+)?)/g) || [];
-            const userIds: string[] = [];
-            const techIds: string[] = [];
+            const allIds: string[] = [];
 
             mentionMatches.forEach(match => {
                 const name = match.substring(1); // Remove @
                 const user = mentionableUsers.find(u => u.name === name);
                 if (user) {
-                    if (user.type === 'user') userIds.push(user.id);
-                    else techIds.push(user.id);
+                    allIds.push(user.id);
                 }
             });
 
@@ -231,8 +227,7 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
                 editingCommentId,
                 editContent,
                 editAttachments,
-                userIds,
-                techIds
+                allIds
             );
 
             setEditingCommentId(null);

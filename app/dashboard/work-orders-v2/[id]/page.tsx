@@ -126,7 +126,7 @@ export default function WorkOrderDetailV2Page() {
 
             // Initialize selected technicians
             if (data.assignments) {
-                setSelectedTechIds(data.assignments.map(a => a.technician_id));
+                setSelectedTechIds(data.assignments.map(a => a.user_profile_id));
             }
         } catch (err: any) {
             setError(err.message || 'Failed to load work order');
@@ -487,7 +487,7 @@ export default function WorkOrderDetailV2Page() {
                                                 className="flex-1"
                                                 onClick={() => {
                                                     if (workOrder?.assignments) {
-                                                        setSelectedTechIds(workOrder.assignments.map(a => a.technician_id));
+                                                        setSelectedTechIds(workOrder.assignments.map(a => a.user_profile_id));
                                                     } else {
                                                         setSelectedTechIds([]);
                                                     }
@@ -504,7 +504,7 @@ export default function WorkOrderDetailV2Page() {
                                             onClick={handleSaveAssignments}
                                             loading={savingAssignments}
                                             disabled={JSON.stringify(selectedTechIds.sort()) ===
-                                                JSON.stringify((workOrder?.assignments || []).map(a => a.technician_id).sort())}
+                                                JSON.stringify((workOrder?.assignments || []).map(a => a.user_profile_id).sort())}
                                         >
                                             Save Assignments
                                         </Button>

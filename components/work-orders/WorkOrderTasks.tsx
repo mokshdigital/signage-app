@@ -321,8 +321,8 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                             {task.assignments && task.assignments.length > 0 ? (
                                 <div className="flex -space-x-1">
                                     {task.assignments.map(a => (
-                                        <div key={a.id} className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] ring-1 ring-white" title={a.technician?.name}>
-                                            {getInitials(a.technician?.name)}
+                                        <div key={a.id} className="w-5 h-5 rounded-full bg-blue-500 text-white flex items-center justify-center text-[10px] ring-1 ring-white" title={a.user_profile?.display_name}>
+                                            {getInitials(a.user_profile?.display_name)}
                                         </div>
                                     ))}
                                 </div>
@@ -464,23 +464,16 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                         <span className="text-xs text-gray-500">Assigned Techs:</span>
                         <div className="flex gap-1 flex-wrap">
                             {(availableTechnicians || [])
-                                .filter(t => {
-                                    // Match TechnicianUser with task assignments via linked technician.id
-                                    const techId = t.technician?.[0]?.id;
-                                    return techId && task.assignments?.some(a => a.technician_id === techId);
-                                })
-                                .map(tech => {
-                                    const techId = tech.technician?.[0]?.id;
-                                    return (
-                                        <Badge key={tech.id} variant="default" className="text-xs">
-                                            {tech.display_name}
-                                            <button className="ml-1 hover:text-red-500" onClick={() => {
-                                                const newIds = task.assignments!.filter(a => a.technician_id !== techId).map(a => a.technician_id);
-                                                workOrdersService.assignTask(task.id, newIds).then(onUpdate);
-                                            }}>×</button>
-                                        </Badge>
-                                    );
-                                })
+                                .filter(t => task.assignments?.some(a => a.user_profile_id === t.id))
+                                .map(tech => (
+                                    <Badge key={tech.id} variant="default" className="text-xs">
+                                        {tech.display_name}
+                                        <button className="ml-1 hover:text-red-500" onClick={() => {
+                                            const newIds = task.assignments!.filter(a => a.user_profile_id !== tech.id).map(a => a.user_profile_id);
+                                            workOrdersService.assignTask(task.id, newIds).then(onUpdate);
+                                        }}>×</button>
+                                    </Badge>
+                                ))
                             }
                             <div className="relative group">
                                 <Button variant="secondary" size="sm" className="h-6 px-2 text-xs">
@@ -490,10 +483,8 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                                 <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-gray-200 shadow-lg rounded-md hidden group-hover:block z-10 p-1">
                                     {availableTechnicians.length === 0 ? <div className="p-2 text-xs text-gray-500">No techs available</div> :
                                         availableTechnicians.map(t => {
-                                            const techId = t.technician?.[0]?.id;
-                                            if (!techId) return null; // Skip users without linked technician record
-                                            const currentIds = task.assignments?.map(a => a.technician_id) || [];
-                                            const isAssigned = currentIds.includes(techId);
+                                            const currentIds = task.assignments?.map(a => a.user_profile_id) || [];
+                                            const isAssigned = currentIds.includes(t.id);
                                             return (
                                                 <button
                                                     key={t.id}
@@ -503,7 +494,7 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                                                         }`}
                                                     onClick={() => {
                                                         if (!isAssigned) {
-                                                            workOrdersService.assignTask(task.id, [...currentIds, techId]).then(onUpdate);
+                                                            workOrdersService.assignTask(task.id, [...currentIds, t.id]).then(onUpdate);
                                                         }
                                                     }}
                                                 >

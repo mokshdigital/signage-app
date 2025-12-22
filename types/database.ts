@@ -124,11 +124,16 @@ export interface JobType {
 export interface WorkOrderAssignment {
     id: string;
     work_order_id: string;
-    technician_id: string;
+    user_profile_id: string;  // References user_profiles.id directly
     assigned_at: string;
     notes: string | null;
-    // Optional: populated when technician is joined
-    technician?: Technician;
+    // Optional: populated when user_profile is joined
+    user_profile?: {
+        id: string;
+        display_name: string;
+        avatar_url: string | null;
+        email: string | null;
+    };
 }
 
 // Receipt type for received_by_type
@@ -282,9 +287,13 @@ export interface WorkOrderTask {
 export interface TaskAssignment {
     id: string;
     task_id: string;
-    technician_id: string;
-    // Optional
-    technician?: Technician;
+    user_profile_id: string;  // References user_profiles.id directly
+    // Optional: joined user profile data
+    user_profile?: {
+        id: string;
+        display_name: string;
+        avatar_url: string | null;
+    };
 }
 
 export interface TaskChecklist {
@@ -323,7 +332,6 @@ export interface TaskCommentMention {
     id: string;
     comment_id: string;
     mentioned_user_id: string | null;
-    mentioned_technician_id: string | null;
     created_at: string;
     // Joined data
     user?: { id: string; display_name: string };

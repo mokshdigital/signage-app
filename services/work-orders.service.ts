@@ -71,7 +71,7 @@ export const workOrdersService = {
             .select(`
                 *,
                 job_type:job_types(*),
-                assignments:work_order_assignments(*, technician:technicians(*)),
+                assignments:work_order_assignments(*, user_profile:user_profiles(id, display_name, avatar_url, email)),
                 shipments:work_order_shipments(*),
                 client:clients(*),
                 project_manager:project_managers(*),
@@ -651,7 +651,7 @@ export const workOrdersService = {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('work_order_assignments')
-            .select('*, technician:technicians(*)')
+            .select('*, user_profile:user_profiles(id, display_name, avatar_url, email)')
             .eq('work_order_id', workOrderId);
 
         if (error) {
@@ -678,7 +678,7 @@ export const workOrdersService = {
         if (technicianIds.length > 0) {
             const assignments = technicianIds.map(techId => ({
                 work_order_id: workOrderId,
-                technician_id: techId,
+                user_profile_id: techId,
             }));
 
             const { error } = await supabase
@@ -1070,7 +1070,7 @@ export const workOrdersService = {
         if (technicianIds.length > 0) {
             const assignments = technicianIds.map(techId => ({
                 task_id: taskId,
-                technician_id: techId
+                user_profile_id: techId
             }));
 
             const { error } = await supabase
@@ -1423,9 +1423,7 @@ export const workOrdersService = {
                 mentions:task_comment_mentions(
                     id,
                     mentioned_user_id,
-                    mentioned_technician_id,
-                    user:user_profiles(id, display_name),
-                    technician:technicians(id, name)
+                    user:user_profiles(id, display_name)
                 )
             `)
             .eq('task_id', taskId)
@@ -1463,8 +1461,7 @@ export const workOrdersService = {
         taskId: string,
         content: string,
         attachments: string[] = [],
-        mentionedUserIds: string[] = [],
-        mentionedTechnicianIds: string[] = []
+        mentionedUserIds: string[] = []
     ): Promise<TaskComment> {
         const supabase = createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -1497,19 +1494,10 @@ export const workOrdersService = {
             throw new Error(`Failed to add task comment: ${error.message}`);
         }
 
-        // Insert mentions
-        const mentions = [
-            ...mentionedUserIds.map(id => ({
-                comment_id: comment.id,
-                mentioned_user_id: id,
-                mentioned_technician_id: null
-            })),
-            ...mentionedTechnicianIds.map(id => ({
-                comment_id: comment.id,
-                mentioned_user_id: null,
-                mentioned_technician_id: id
-            }))
-        ];
+        const mentions = mentionedUserIds.map(id => ({
+            comment_id: comment.id,
+            mentioned_user_id: id
+        }));
 
         if (mentions.length > 0) {
             const { error: mentionError } = await supabase
@@ -1532,8 +1520,7 @@ export const workOrdersService = {
         commentId: string,
         content: string,
         attachments: string[] = [],
-        mentionedUserIds: string[] = [],
-        mentionedTechnicianIds: string[] = []
+        mentionedUserIds: string[] = []
     ): Promise<TaskComment> {
         const supabase = createClient();
 
@@ -1567,18 +1554,10 @@ export const workOrdersService = {
             .delete()
             .eq('comment_id', commentId);
 
-        const mentions = [
-            ...mentionedUserIds.map(id => ({
-                comment_id: commentId,
-                mentioned_user_id: id,
-                mentioned_technician_id: null
-            })),
-            ...mentionedTechnicianIds.map(id => ({
-                comment_id: commentId,
-                mentioned_user_id: null,
-                mentioned_technician_id: id
-            }))
-        ];
+        const mentions = mentionedUserIds.map(id => ({
+            comment_id: commentId,
+            mentioned_user_id: id
+        }));
 
         if (mentions.length > 0) {
             await supabase
@@ -1647,19 +1626,19 @@ export const workOrdersService = {
             }
         }
 
-        // 3. Get assigned technicians
+        // 3. Get assigned technicians (now from user_profiles via assignments)
         const { data: assignments } = await supabase
             .from('work_order_assignments')
-            .select('technician:technicians(id, name)')
+            .select('user_profile:user_profiles(id, display_name, avatar_url)')
             .eq('work_order_id', workOrderId);
 
-        (assignments || []).forEach((assignment: { technician: { id: string; name: string } | null }) => {
-            if (assignment.technician) {
+        (assignments || []).forEach((assignment: { user_profile: { id: string; display_name: string; avatar_url: string | null } | null }) => {
+            if (assignment.user_profile && !mentionableUsers.some(u => u.id === assignment.user_profile!.id)) {
                 mentionableUsers.push({
-                    id: assignment.technician.id,
-                    name: assignment.technician.name,
+                    id: assignment.user_profile.id,
+                    name: assignment.user_profile.display_name,
                     type: 'technician',
-                    avatar_url: null
+                    avatar_url: assignment.user_profile.avatar_url
                 });
             }
         });

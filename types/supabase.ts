@@ -646,21 +646,21 @@ export interface Database {
                 Row: {
                     id: string
                     work_order_id: string
-                    technician_id: string
+                    user_profile_id: string
                     assigned_at: string
                     notes: string | null
                 }
                 Insert: {
                     id?: string
                     work_order_id: string
-                    technician_id: string
+                    user_profile_id: string
                     assigned_at?: string
                     notes?: string | null
                 }
                 Update: {
                     id?: string
                     work_order_id?: string
-                    technician_id?: string
+                    user_profile_id?: string
                     assigned_at?: string
                     notes?: string | null
                 }
@@ -672,9 +672,9 @@ export interface Database {
                         referencedColumns: ["id"]
                     },
                     {
-                        foreignKeyName: "work_order_assignments_technician_id_fkey"
-                        columns: ["technician_id"]
-                        referencedRelation: "technicians"
+                        foreignKeyName: "work_order_assignments_user_profile_id_fkey"
+                        columns: ["user_profile_id"]
+                        referencedRelation: "user_profiles"
                         referencedColumns: ["id"]
                     }
                 ]
@@ -845,19 +845,19 @@ export interface Database {
                 Row: {
                     id: string
                     task_id: string
-                    technician_id: string
+                    user_profile_id: string
                     assigned_at: string
                 }
                 Insert: {
                     id?: string
                     task_id: string
-                    technician_id: string
+                    user_profile_id: string
                     assigned_at?: string
                 }
                 Update: {
                     id?: string
                     task_id?: string
-                    technician_id?: string
+                    user_profile_id?: string
                     assigned_at?: string
                 }
                 Relationships: [
@@ -868,9 +868,9 @@ export interface Database {
                         referencedColumns: ["id"]
                     },
                     {
-                        foreignKeyName: "task_assignments_technician_id_fkey"
-                        columns: ["technician_id"]
-                        referencedRelation: "technicians"
+                        foreignKeyName: "task_assignments_user_profile_id_fkey"
+                        columns: ["user_profile_id"]
+                        referencedRelation: "user_profiles"
                         referencedColumns: ["id"]
                     }
                 ]
@@ -1003,21 +1003,18 @@ export interface Database {
                     id: string
                     comment_id: string
                     mentioned_user_id: string | null
-                    mentioned_technician_id: string | null
                     created_at: string
                 }
                 Insert: {
                     id?: string
                     comment_id: string
                     mentioned_user_id?: string | null
-                    mentioned_technician_id?: string | null
                     created_at?: string
                 }
                 Update: {
                     id?: string
                     comment_id?: string
                     mentioned_user_id?: string | null
-                    mentioned_technician_id?: string | null
                     created_at?: string
                 }
                 Relationships: [
@@ -1031,12 +1028,6 @@ export interface Database {
                         foreignKeyName: "task_comment_mentions_mentioned_user_id_fkey"
                         columns: ["mentioned_user_id"]
                         referencedRelation: "user_profiles"
-                        referencedColumns: ["id"]
-                    },
-                    {
-                        foreignKeyName: "task_comment_mentions_mentioned_technician_id_fkey"
-                        columns: ["mentioned_technician_id"]
-                        referencedRelation: "technicians"
                         referencedColumns: ["id"]
                     }
                 ]

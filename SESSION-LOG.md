@@ -1089,3 +1089,35 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 **Git Commit**: `feat: Add admin UI for creating client portal accounts`
 
+---
+
+### Session 26 - December 22, 2024 (3:15 PM PST)
+
+**Objective**: Migrate work order assignments, task assignments, and task comment mentions to use unified `user_profile_id` instead of legacy `technician_id`.
+
+**Changes Made**:
+
+1.  **Database Migration** (`database_migrations/023_assignment_user_profile_fk.sql`):
+    -   Added `user_profile_id` to `work_order_assignments` and `task_assignments`.
+    -   Migrated existing data from `technician_id` to `user_profile_id`.
+    -   Migrated `task_comment_mentions` to use `mentioned_user_id` only.
+    -   Dropped legacy `technician_id` and `mentioned_technician_id` columns.
+    -   Added appropriate constraints and indexes.
+
+2.  **Service Layer Refactoring** (`services/work-orders.service.ts`):
+    -   `assignTechnicians` and `assignTask` now use `user_profile_id`.
+    -   `getAssignments` queries join `user_profiles` instead of `technicians`.
+    -   Mentions logic consolidated to `mentionedUserIds` (removed technician distinction).
+
+3.  **UI Updates**:
+    -   Updated `WorkOrderTasks.tsx` to handle assignments via user profiles.
+    -   Updated `TaskCommentsPanel.tsx` to use unified mention logic.
+    -   Updated Work Order Detail pages (v1 and v2) to track assignments by `user_profile_id`.
+
+4.  **Type Definitions**:
+    -   Updated `types/database.ts` and `types/supabase.ts` to reflect schema changes.
+
+**Pending Actions**:
+- [ ] Run `023_assignment_user_profile_fk.sql` migration in Supabase Dashboard.
+
+**Git Commit**: `feat: migrate assignments and mentions to unified user identity (user_profile_id)`
