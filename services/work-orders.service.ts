@@ -714,24 +714,30 @@ export const workOrdersService = {
         const techIds = shipments.filter(s => s.received_by_type === 'technician' && s.received_by_id).map(s => s.received_by_id!);
         const staffIds = shipments.filter(s => s.received_by_type === 'office_staff' && s.received_by_id).map(s => s.received_by_id!);
 
-        // Fetch technicians
+        // Fetch technicians with optional user_profile join
         let techMap: Record<string, string> = {};
         if (techIds.length > 0) {
             const { data: techs } = await supabase
                 .from('technicians')
-                .select('id, name')
+                .select('id, name, user_profile:user_profiles(display_name)')
                 .in('id', techIds);
-            techMap = (techs || []).reduce((acc, t) => ({ ...acc, [t.id]: t.name }), {});
+            techMap = (techs || []).reduce((acc: Record<string, string>, t: any) => ({
+                ...acc,
+                [t.id]: t.user_profile?.display_name || t.name
+            }), {});
         }
 
-        // Fetch office staff
+        // Fetch office staff with optional user_profile join
         let staffMap: Record<string, string> = {};
         if (staffIds.length > 0) {
             const { data: staff } = await supabase
                 .from('office_staff')
-                .select('id, name')
+                .select('id, name, user_profile:user_profiles(display_name)')
                 .in('id', staffIds);
-            staffMap = (staff || []).reduce((acc, s) => ({ ...acc, [s.id]: s.name }), {});
+            staffMap = (staff || []).reduce((acc: Record<string, string>, s: any) => ({
+                ...acc,
+                [s.id]: s.user_profile?.display_name || s.name
+            }), {});
         }
 
         // Enrich shipments
@@ -846,24 +852,26 @@ export const workOrdersService = {
 
     /**
      * Get combined list of technicians and office staff for "Received By" dropdown
+     * Uses unified user_profiles when available (user_profile_id linked),
+     * falls back to legacy name field for unlinked records.
      */
     async getReceiverOptions(): Promise<ReceiverOption[]> {
         const supabase = createClient();
 
-        // Fetch technicians
+        // Fetch technicians with optional user_profile join
         const { data: techs, error: techError } = await supabase
             .from('technicians')
-            .select('id, name')
+            .select('id, name, user_profile_id, user_profile:user_profiles(display_name)')
             .order('name', { ascending: true });
 
         if (techError) {
             console.error('Error fetching technicians:', techError);
         }
 
-        // Fetch office staff
+        // Fetch office staff with optional user_profile join
         const { data: staff, error: staffError } = await supabase
             .from('office_staff')
-            .select('id, name, title')
+            .select('id, name, title, user_profile_id, user_profile:user_profiles(display_name)')
             .order('name', { ascending: true });
 
         if (staffError) {
@@ -873,21 +881,23 @@ export const workOrdersService = {
         // Combine and format
         const options: ReceiverOption[] = [];
 
-        // Add technicians
-        (techs || []).forEach((tech: { id: string; name: string }) => {
+        // Add technicians - prefer user_profile.display_name if linked
+        (techs || []).forEach((tech: any) => {
+            const displayName = tech.user_profile?.display_name || tech.name;
             options.push({
                 id: tech.id,
-                name: tech.name,
+                name: displayName,
                 type: 'technician',
                 title: 'Technician'
             });
         });
 
-        // Add office staff
-        (staff || []).forEach((s: { id: string; name: string; title: string | null }) => {
+        // Add office staff - prefer user_profile.display_name if linked
+        (staff || []).forEach((s: any) => {
+            const displayName = s.user_profile?.display_name || s.name;
             options.push({
                 id: s.id,
-                name: s.name,
+                name: displayName,
                 type: 'office_staff',
                 title: s.title
             });

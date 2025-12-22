@@ -790,4 +790,135 @@ Implemented a robust file organization system with hierarchical folders (categor
 - [ ] Verify RBAC enforcement in RLS policies
 - [ ] Test full upload → categorize → AI analysis workflow
 
+---
+
+## Phase 21: Unified User Identity (December 22, 2024)
+
+### Objective
+Centralize user identity in `user_profiles` table and link `technicians`/`office_staff` as extension tables.
+
+### Database Changes (`019_unified_user_identity.sql`)
+- Added new columns to `user_profiles`:
+  - `nick_name` (TEXT) - Display alias
+  - `user_types` (TEXT[]) - Array of functional types: 'technician', 'office_staff', etc.
+  - `is_active` (BOOLEAN) - Soft-delete/archive support
+  - `email` (TEXT, UNIQUE) - For Google Sign-in linking
+- Added `user_profile_id` (UUID, FK) to `technicians` and `office_staff` tables
+- Created indexes for the new FK columns
+- Added simplified RLS policies for authenticated users
+
+### Service Layer Updates
+- **[NEW] `migration.service.ts`**: One-time utility to link existing data
+  - `migrateToUnifiedProfiles()`: Links technicians/office_staff to user_profiles by email
+  - `getMigrationStatus()`: Reports linked vs unlinked record counts
+  - `findOrCreateProfile()`: Helper for email-based profile lookup
+- **[UPDATED] `work-orders.service.ts`**:
+  - `getReceiverOptions()`: Now queries with user_profile join, prefers `display_name`
+  - `enrichShipmentsWithReceiverNames()`: Joins user_profiles for display names
+
+### Type Updates
+- Updated `types/supabase.ts`:
+  - Added `user_profile_id` to technicians and office_staff
+  - Added `nick_name`, `user_types`, `is_active`, `email` to user_profiles
+- Updated `types/database.ts`:
+  - Added `user_profile_id` to `Technician` and `OfficeStaff` interfaces
+
+### Key Files Modified
+- `database_migrations/019_unified_user_identity.sql`
+- `services/migration.service.ts` (NEW)
+- `services/work-orders.service.ts`
+- `services/index.ts`
+- `types/supabase.ts`
+- `types/database.ts`
+- `types/user-profile.ts`
+
+### Next Steps
+- [ ] Run migration service to link existing records by email
+- [ ] Test receiver dropdowns with linked profiles
+- [ ] Update admin UI to manage user_types and is_active flags
+
+---
+
+## Phase 22: Centrally Managed Identity - Auth Flow (December 22, 2024)
+
+### Objective
+Implement "Guest List" authentication - only pre-registered emails can access the app.
+
+### Auth Callback Changes (`app/auth/callback/route.ts`)
+- On Google Sign-in, retrieve user's email from metadata
+- Search `user_profiles` for matching email record
+- **If found**: Create/update profile with auth user's ID, link pre-created data
+- **If NOT found**: Sign user out, redirect to `/unauthorized` page
+
+### New Pages
+- **`app/unauthorized/page.tsx`**: Explains access denial, provides contact instructions
+
+### Middleware Updates (`lib/supabase/middleware.ts`)
+- Added `/unauthorized` bypass for unauthenticated access
+- Added `is_active` check - deactivated users are signed out
+- Cleaner onboarding redirect logic
+
+### Type Updates (`types/user-profile.ts`)
+- Made identity fields non-optional (they're now always present)
+- Added `nick_name` to `OnboardingFormData` and `UserProfileUpdate`
+- Added `is_active` and `user_types` to `UserProfileUpdate`
+
+### Key Files Modified
+- `app/auth/callback/route.ts`
+- `app/unauthorized/page.tsx` (NEW)
+- `lib/supabase/middleware.ts`
+- `types/user-profile.ts`
+
+### Security Model
+- Users cannot self-register
+- Admins pre-create profiles with email addresses
+- On first sign-in, user "claims" their profile
+- Deactivated users (`is_active: false`) are immediately signed out
+
+---
+
+## Phase 23: Unified User Management UI (December 22, 2024)
+
+### Objective
+Implement centralized user management in Settings > Users and refactor People directories.
+
+### New Service (`services/users.service.ts`)
+- `getAll()` / `getActive()` - Fetch all users with extension data
+- `getTechnicians()` / `getOfficeStaff()` - Filtered views for directories
+- `create(data)` - Create user with optional technician/office_staff records
+- `update(id, data)` - Update across all three tables
+- `archive(id)` / `restore(id)` - Soft delete/restore
+- `isEmailTaken(email)` - Uniqueness check
+
+### New Component (`components/settings/UserFormModal.tsx`)
+- Full Name, Nick Name, Email fields
+- RBAC Role dropdown
+- Technician checkbox → shows Skills multi-select
+- Office Staff checkbox → shows Job Title input
+- Auto-sets `onboarding_completed: true` for admin-created users
+
+### Updated Pages
+- **`app/dashboard/settings/users/page.tsx`**:
+  - Add User button with UserFormModal
+  - Edit/Archive/Restore actions (no Delete)
+  - Show archived toggle
+  - User types badges (Tech, Office)
+
+### Refactored Components
+- **`components/people/TechniciansTab.tsx`**: Read-only view, removed Add/Edit/Delete
+- **`components/people/OfficeStaffTab.tsx`**: Read-only view, removed Add/Edit/Delete
+- Both now use `usersService` and link to Settings > Users for management
+
+### Key Files Modified
+- `services/users.service.ts` (NEW)
+- `services/index.ts`
+- `components/settings/UserFormModal.tsx` (NEW)
+- `app/dashboard/settings/users/page.tsx`
+- `components/people/TechniciansTab.tsx`
+- `components/people/OfficeStaffTab.tsx`
+
+### Architecture
+- **Creation**: Settings > Users is the ONLY place to create/edit users
+- **Directories**: People > Technicians/Office Staff are read-only filtered views
+- **Archive**: Soft delete preserves data for historical records
 

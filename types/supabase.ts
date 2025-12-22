@@ -226,6 +226,7 @@ export interface Database {
                     email: string | null
                     phone: string | null
                     title: string | null
+                    user_profile_id: string | null
                     created_at: string
                 }
                 Insert: {
@@ -234,6 +235,7 @@ export interface Database {
                     email?: string | null
                     phone?: string | null
                     title?: string | null
+                    user_profile_id?: string | null
                     created_at?: string
                 }
                 Update: {
@@ -242,9 +244,17 @@ export interface Database {
                     email?: string | null
                     phone?: string | null
                     title?: string | null
+                    user_profile_id?: string | null
                     created_at?: string
                 }
-                Relationships: []
+                Relationships: [
+                    {
+                        foreignKeyName: "office_staff_user_profile_id_fkey"
+                        columns: ["user_profile_id"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
             },
             technicians: {
                 Row: {
@@ -253,6 +263,7 @@ export interface Database {
                     email: string | null
                     phone: string | null
                     skills: string[] | null
+                    user_profile_id: string | null
                     created_at: string
                 }
                 Insert: {
@@ -261,6 +272,7 @@ export interface Database {
                     email?: string | null
                     phone?: string | null
                     skills?: string[] | null
+                    user_profile_id?: string | null
                     created_at?: string
                 }
                 Update: {
@@ -269,9 +281,17 @@ export interface Database {
                     email?: string | null
                     phone?: string | null
                     skills?: string[] | null
+                    user_profile_id?: string | null
                     created_at?: string
                 }
-                Relationships: []
+                Relationships: [
+                    {
+                        foreignKeyName: "technicians_user_profile_id_fkey"
+                        columns: ["user_profile_id"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
             equipment: {
                 Row: {
@@ -334,6 +354,10 @@ export interface Database {
                     title: string | null
                     role_id: string | null
                     onboarding_completed: boolean
+                    nick_name: string | null
+                    user_types: string[] | null
+                    is_active: boolean
+                    email: string | null
                     created_at: string
                     updated_at: string
                 }
@@ -346,6 +370,10 @@ export interface Database {
                     title?: string | null
                     role_id?: string | null
                     onboarding_completed?: boolean
+                    nick_name?: string | null
+                    user_types?: string[] | null
+                    is_active?: boolean
+                    email?: string | null
                     created_at?: string
                     updated_at?: string
                 }
@@ -358,6 +386,10 @@ export interface Database {
                     title?: string | null
                     role_id?: string | null
                     onboarding_completed?: boolean
+                    nick_name?: string | null
+                    user_types?: string[] | null
+                    is_active?: boolean
+                    email?: string | null
                     created_at?: string
                     updated_at?: string
                 }

@@ -36,9 +36,16 @@ export async function updateSession(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    const isAuthPage = request.nextUrl.pathname === '/login'
-    const isOnboardingPage = request.nextUrl.pathname === '/onboarding'
-    const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
+    const pathname = request.nextUrl.pathname
+    const isAuthPage = pathname === '/login'
+    const isOnboardingPage = pathname === '/onboarding'
+    const isDashboardPage = pathname.startsWith('/dashboard')
+    const isUnauthorizedPage = pathname === '/unauthorized'
+
+    // Allow access to unauthorized page without auth
+    if (isUnauthorizedPage) {
+        return supabaseResponse
+    }
 
     // Protect dashboard and onboarding routes - redirect to login if not authenticated
     if (!user && (isDashboardPage || isOnboardingPage)) {
@@ -47,32 +54,42 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // For authenticated users, check onboarding status for dashboard access
-    if (user && isDashboardPage) {
-        // Check if user has completed onboarding
+    // For authenticated users, check profile and onboarding status
+    if (user && (isDashboardPage || isOnboardingPage)) {
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('onboarding_completed')
+            .select('onboarding_completed, is_active')
             .eq('id', user.id)
             .single()
 
-        // If no profile or onboarding not completed, redirect to onboarding
-        if (!profile || !profile.onboarding_completed) {
+        // If no profile exists for this user, they weren't properly claimed
+        // This shouldn't happen if callback worked, but handle edge case
+        if (!profile) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/unauthorized'
+            return NextResponse.redirect(url)
+        }
+
+        // Check if user is deactivated
+        if (profile.is_active === false) {
+            // Sign out and redirect to unauthorized
+            await supabase.auth.signOut()
+            const url = request.nextUrl.clone()
+            url.pathname = '/unauthorized'
+            url.searchParams.set('reason', 'deactivated')
+            return NextResponse.redirect(url)
+        }
+
+        // Handle onboarding redirects
+        if (isDashboardPage && !profile.onboarding_completed) {
+            // User needs to complete onboarding first
             const url = request.nextUrl.clone()
             url.pathname = '/onboarding'
             return NextResponse.redirect(url)
         }
-    }
 
-    // If user has completed onboarding and tries to access onboarding page, redirect to dashboard
-    if (user && isOnboardingPage) {
-        const { data: profile } = await supabase
-            .from('user_profiles')
-            .select('onboarding_completed')
-            .eq('id', user.id)
-            .single()
-
-        if (profile?.onboarding_completed) {
+        if (isOnboardingPage && profile.onboarding_completed) {
+            // User already completed onboarding, go to dashboard
             const url = request.nextUrl.clone()
             url.pathname = '/dashboard'
             return NextResponse.redirect(url)
@@ -81,7 +98,6 @@ export async function updateSession(request: NextRequest) {
 
     // Redirect authenticated users away from login page
     if (user && isAuthPage) {
-        // Check if they need onboarding first
         const { data: profile } = await supabase
             .from('user_profiles')
             .select('onboarding_completed')
@@ -93,13 +109,5 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // IMPORTANT: You *must* return the supabaseResponse object as is.
-    // If you're creating a new response object, make sure to:
-    // 1. Pass the request in it, like NextResponse.next({ request })
-    // 2. Copy over the cookies, like supabaseResponse.cookies.getAll().forEach(...)
-    // 3. Change the myNewResponse object to fit your needs, but avoid changing cookies
-    // 4. Finally: return myNewResponse
-
     return supabaseResponse
 }
-

@@ -4,6 +4,7 @@ export interface Technician {
     email: string | null;
     phone: string | null;
     skills: string[] | null;
+    user_profile_id: string | null; // Optional link to user_profiles
     created_at: string;
 }
 
@@ -35,6 +36,7 @@ export interface OfficeStaff {
     email: string | null;
     phone: string | null;
     title: string | null;
+    user_profile_id: string | null; // Optional link to user_profiles
     created_at: string;
 }
 
