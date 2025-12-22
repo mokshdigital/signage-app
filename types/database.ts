@@ -84,11 +84,11 @@ export interface Client {
 // Project Manager - external client contact (NOT internal office_staff)
 export interface ProjectManager {
     id: string;
-    client_id: string;
+    client_id?: string;
     name: string;
     email: string | null;
-    phone: string | null;
-    created_at: string;
+    phone?: string | null;
+    created_at?: string;
     // Optional: populated when client is joined
     client?: Client;
 }

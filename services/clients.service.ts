@@ -157,7 +157,7 @@ export const clientsService = {
     /**
      * Create a project manager for a client
      */
-    async createProjectManager(pm: Omit<ProjectManager, 'id' | 'created_at' | 'client'>): Promise<ProjectManager> {
+    async createProjectManager(pm: Omit<ProjectManager, 'id' | 'created_at' | 'client' | 'client_id'> & { client_id: string }): Promise<ProjectManager> {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('project_managers')
