@@ -922,3 +922,53 @@ Implement centralized user management in Settings > Users and refactor People di
 - **Directories**: People > Technicians/Office Staff are read-only filtered views
 - **Archive**: Soft delete preserves data for historical records
 
+---
+
+## Phase 24: Invitation System & Auth Refinement
+**Date**: December 22, 2024
+
+### Summary
+Implemented a proper invitation-based user registration system to fix authentication issues caused by FK constraints between `user_profiles` and `auth.users`. Replaced direct profile creation with an invitations table that allows admins to pre-register users by email.
+
+### New Database Table (`invitations`)
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | UUID | Primary key |
+| `email` | TEXT | Invited user's email (unique) |
+| `display_name` | TEXT | User's full name |
+| `nick_name` | TEXT | Optional nickname |
+| `role_id` | UUID | Pre-assigned RBAC role |
+| `is_technician` | BOOLEAN | Generate technician record on claim |
+| `is_office_staff` | BOOLEAN | Generate office_staff record on claim |
+| `skills` | TEXT[] | Technician skills |
+| `job_title` | TEXT | Office staff title |
+| `invited_by` | UUID | Admin who created invitation |
+| `claimed_at` | TIMESTAMPTZ | When user signed in |
+| `claimed_by` | UUID | Auth user who claimed |
+
+### Auth Flow Changes
+1. **Invite User**: Admin creates invitation with email, name, role, and types
+2. **User Signs In**: Auth callback checks `invitations` table
+3. **Invitation Found**: Creates `user_profile`, `technician`, `office_staff` records; marks invitation as claimed
+4. **No Invitation**: Redirects to `/unauthorized` page
+
+### Key Files Modified/Created
+- `database_migrations/021_invitations_table.sql` (NEW)
+- `services/users.service.ts` - Complete rewrite for invitation-based flow
+- `components/settings/UserFormModal.tsx` - Renamed to `InviteUserModal`
+- `components/settings/EditUserModal.tsx` (NEW) - Edit existing users
+- `app/auth/callback/route.ts` - Uses service role client, checks invitations
+- `lib/supabase/middleware.ts` - Simplified, removed aggressive redirects
+- `app/dashboard/settings/users/page.tsx` - Tabs for Active Users & Pending Invitations
+- `types/supabase.ts` - Added `invitations` table type
+
+### RLS Policies Fixed
+- Removed infinite recursion in `user_profiles` policies
+- Simple policies: authenticated can read, users manage own profile, allow inserts
+
+### UI Enhancements
+- **User Management Page**: Tabbed view (Active Users / Pending Invitations)
+- **Invite User Modal**: Create invitations with role, types, skills, job title
+- **Edit User Modal**: Change role, phone, types for existing users
+- **Revoke Invitation**: Delete pending invitations
+

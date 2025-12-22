@@ -186,28 +186,34 @@ NEXT_PUBLIC_APP_URL=http://localhost:3000
 ## Authentication
 
 ### Overview
-The app uses **Google OAuth only** for authentication via Supabase Auth. Users must sign in with a Google account to access the dashboard.
+The app uses **Google OAuth only** for authentication via Supabase Auth. Users must be **pre-invited** by an admin before they can access the dashboard.
+
+### Invitation System
+Admins pre-register users by creating invitations with email, name, role, and user types (technician/office staff). Users claim their invitation on first sign-in.
 
 ### Auth Flow
-1. User visits `/` → redirected to `/login` (if not authenticated)
-2. User clicks "Sign in with Google"
-3. Redirected to Google for authentication
+1. **Admin invites user**: Creates invitation via Settings > Users > Invite User
+2. User visits `/` → redirected to `/login` (if not authenticated)
+3. User clicks "Sign in with Google"
 4. Google redirects back to `/auth/callback`
-5. Callback exchanges code for session
-6. **New users** → redirected to `/onboarding` to complete profile setup
-7. **Returning users** (profile complete) → redirected to `/dashboard`
+5. Callback checks for existing profile OR invitation
+6. **Invitation found**: Creates profile + extension records, marks invitation claimed
+7. **No invitation**: Redirects to `/unauthorized` page
+8. **New users**: Redirected to `/onboarding` to complete profile setup
+9. **Returning users**: Redirected to `/dashboard`
 
 ### Onboarding Flow
 New users are required to complete their profile before accessing the dashboard:
-- **Required**: Display Name, Phone Number, Profile Picture
-- **Optional**: Alternate Email
-- **Admin-set**: Title/Role (set later by administrator)
+- **Pre-filled from invitation**: Display Name, Nick Name
+- **User enters**: Phone Number
+- **Admin pre-set**: RBAC Role, User Types (Technician/Office Staff)
 
 ### Protected Routes
 - All `/dashboard/*` routes require authentication AND completed onboarding
 - `/onboarding` route requires authentication but NOT completed onboarding
 - Middleware automatically redirects users based on their onboarding status
 - Authenticated users on `/login` are redirected appropriately
+
 
 
 ### Supabase Clients

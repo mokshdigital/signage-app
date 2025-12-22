@@ -963,3 +963,58 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
     *   Improved type definitions in `types/database.ts`.
 
 **Git Commit**: `feat: Add WO scheduling fields - estimated_days, scheduling_notes, planned_dates array, review needed badge`
+
+---
+
+### Session 24 - December 22, 2024 (Invitation System & Auth Fix)
+
+**Objective**: Fix authentication lockout and implement proper invitation-based user registration.
+
+**Problem Encountered**:
+- RLS policies on `user_profiles` caused infinite recursion error
+- FK constraint between `user_profiles.id` and `auth.users.id` prevented admin creation of profiles for new users
+- User was locked out due to aggressive unauthorized redirects in auth callback and middleware
+
+**Solution Implemented**:
+
+1.  **Created `invitations` Table** (`database_migrations/021_invitations_table.sql`):
+    - Stores pre-registered user data (email, name, role, type settings)
+    - Admins invite users; users claim their invitation on first sign-in
+
+2.  **Rewrote Auth Flow** (`app/auth/callback/route.ts`):
+    - Uses service role client to bypass RLS
+    - Checks for existing profile by auth ID first
+    - Checks `invitations` table for new users
+    - Creates profile + extension records on invitation claim
+    - Redirects to `/unauthorized` if no invitation exists
+
+3.  **Simplified Middleware** (`lib/supabase/middleware.ts`):
+    - Removed aggressive profile checks that caused lockout
+    - Simple onboarding redirect logic
+
+4.  **Fixed RLS Policies**:
+    - Removed recursive admin check in `user_profiles` policies
+    - Simple policies: authenticated can read, users manage own profile
+
+5.  **Updated User Management** (`app/dashboard/settings/users/page.tsx`):
+    - Tabbed interface: Active Users | Pending Invitations
+    - Invite User button creates invitation
+    - Edit button opens EditUserModal for existing users
+    - Revoke action for pending invitations
+
+6.  **Created EditUserModal** (`components/settings/EditUserModal.tsx`):
+    - Edit display name, nick name, phone number
+    - Change RBAC role
+    - Toggle Technician/Office Staff types with skills/title
+    - Archive/Restore users
+
+7.  **Updated Types** (`types/supabase.ts`):
+    - Added `invitations` table type definition
+
+**Git Commits**:
+- `EMERGENCY: Revert to simple auth callback - disable guest list`
+- `EMERGENCY: Revert middleware - remove unauthorized redirects`
+- `feat: Implement invitation system for user pre-registration`
+- `feat: Add Edit User modal for role and type management`
+- `feat: Add phone number field to Edit User modal`
+

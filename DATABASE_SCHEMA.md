@@ -288,10 +288,14 @@ Stores extended user profile information collected during onboarding.
 |--------|------|-------------|-------------|
 | `id` | UUID | PRIMARY KEY, REFERENCES auth.users(id) ON DELETE CASCADE | User's auth ID |
 | `display_name` | TEXT | NOT NULL | User's display name |
+| `nick_name` | TEXT | | Short display name for compact UIs |
+| `email` | TEXT | | User's email address |
 | `avatar_url` | TEXT | | Profile picture URL |
 | `phone` | TEXT | | Phone number |
 | `alternate_email` | TEXT | | Secondary email address |
-| `title` | TEXT | | Role/title (set by administrator) |
+| `role_id` | UUID | FK -> roles(id) ON DELETE SET NULL | RBAC role assignment |
+| `user_types` | TEXT[] | DEFAULT '{}' | Array: 'technician', 'office_staff' |
+| `is_active` | BOOLEAN | DEFAULT TRUE | Soft delete flag |
 | `onboarding_completed` | BOOLEAN | DEFAULT FALSE | Whether onboarding is complete |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | Record creation timestamp |
 | `updated_at` | TIMESTAMP | DEFAULT NOW() | Last update timestamp |
@@ -299,19 +303,56 @@ Stores extended user profile information collected during onboarding.
 #### Indexes
 - `idx_user_profiles_onboarding` on `onboarding_completed`
 - `idx_user_profiles_phone` on `phone`
+- `idx_user_profiles_email` on `email`
 
 #### Row Level Security (RLS)
 - **Enabled**: Yes
 - **Policies**:
-  - `Users can view own profile`: SELECT where auth.uid() = id
-  - `Users can create own profile`: INSERT where auth.uid() = id
-  - `Users can update own profile`: UPDATE where auth.uid() = id
-  - `Service role has full access`: ALL for service_role
+  - `Authenticated users can read profiles`: SELECT where auth.uid() IS NOT NULL
+  - `Users can manage own profile`: ALL where auth.uid() = id
+  - `Allow profile insert`: INSERT where auth.uid() IS NOT NULL
 
 #### Notes
-- The `title` field is intended to be set by administrators only
 - `onboarding_completed` must be true for users to access the dashboard
-- Auto-updates `updated_at` timestamp on any updates via trigger
+- `is_active` = false effectively archives the user without deleting data
+- `user_types` determines which extension tables (technicians, office_staff) link to this profile
+
+---
+
+### 6.1 `invitations`
+Pre-registration table for users who haven't signed in yet. Claimed on first Google sign-in.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
+| `email` | TEXT | UNIQUE, NOT NULL | Invited email (must match Google sign-in) |
+| `display_name` | TEXT | NOT NULL | User's full name |
+| `nick_name` | TEXT | | Optional short name |
+| `role_id` | UUID | FK -> roles(id) ON DELETE SET NULL | Pre-assigned RBAC role |
+| `is_technician` | BOOLEAN | DEFAULT FALSE | Create technician record on claim |
+| `is_office_staff` | BOOLEAN | DEFAULT FALSE | Create office_staff record on claim |
+| `skills` | TEXT[] | | Technician skills (if is_technician) |
+| `job_title` | TEXT | | Office staff title (if is_office_staff) |
+| `invited_by` | UUID | FK -> auth.users(id) ON DELETE SET NULL | Admin who created invitation |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Invitation creation time |
+| `claimed_at` | TIMESTAMPTZ | | When user signed in and claimed |
+| `claimed_by` | UUID | FK -> auth.users(id) ON DELETE SET NULL | Auth ID of claiming user |
+
+#### Indexes
+- `idx_invitations_email` on `email`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**:
+  - Authenticated users can read/insert/update/delete invitations
+
+#### Claim Flow
+1. Admin creates invitation via Settings > Users > Invite User
+2. User signs in with Google using invited email
+3. Auth callback finds invitation, creates user_profile + extension records
+4. Invitation marked as claimed (claimed_at, claimed_by set)
+5. User redirected to onboarding
 
 ---
 

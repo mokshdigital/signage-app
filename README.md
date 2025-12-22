@@ -25,7 +25,8 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 - **Dashboard**: Centralized hub for managing signage operations.
 - **Settings & RBAC**: Comprehensive Role-Based Access Control and System Settings.
   - Manage Roles and Permissions.
-  - Manage Users and assignments.
+  - **Invitation System**: Pre-register users by email before they sign in.
+  - Manage Users: Edit roles, phone, technician/office staff types.
   - **Job Types**: Customize available job categories.
 - **User Profile**:
   - Rich profile dropdown with Avatar and Role display.
