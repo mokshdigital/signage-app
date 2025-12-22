@@ -42,20 +42,49 @@ export async function GET(request: Request) {
                 // GUEST LIST CHECK: Only pre-registered emails allowed
                 // ==============================================
 
-                // Look for a pre-created profile with this email
+                // First, try to find profile by auth user ID (already claimed)
+                const { data: existingProfile } = await supabase
+                    .from('user_profiles')
+                    .select('id, email, onboarding_completed')
+                    .eq('id', user.id)
+                    .maybeSingle();
+
+                // If user already has a profile by ID, they're good
+                if (existingProfile) {
+                    console.log(`User ${userEmail} already has profile, proceeding...`);
+
+                    // Determine redirect path
+                    let redirectPath = next;
+                    if (!existingProfile.onboarding_completed) {
+                        redirectPath = '/onboarding';
+                    }
+
+                    const forwardedHost = request.headers.get('x-forwarded-host');
+                    const isLocalEnv = process.env.NODE_ENV === 'development';
+
+                    if (isLocalEnv) {
+                        return NextResponse.redirect(`${origin}${redirectPath}`);
+                    } else if (forwardedHost) {
+                        return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`);
+                    } else {
+                        return NextResponse.redirect(`${origin}${redirectPath}`);
+                    }
+                }
+
+                // Look for a pre-created profile with this email (case-insensitive)
                 const { data: invitedProfile, error: profileError } = await supabase
                     .from('user_profiles')
                     .select('id, email, onboarding_completed')
-                    .eq('email', userEmail)
-                    .maybeSingle()
+                    .ilike('email', userEmail || '')
+                    .maybeSingle();
 
                 if (profileError) {
-                    console.error('Error checking invited profile:', profileError)
+                    console.error('Error checking invited profile:', profileError);
                 }
 
                 // If NO pre-created profile exists, user wasn't invited
                 if (!invitedProfile) {
-                    console.log(`Unauthorized access attempt: ${userEmail} not in guest list`)
+                    console.log(`Unauthorized access attempt: ${userEmail} not in guest list`);
 
                     // Sign them out immediately
                     await supabase.auth.signOut()
