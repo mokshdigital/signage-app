@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -30,6 +31,12 @@ export async function GET(request: Request) {
             }
         )
 
+        // Service role client to bypass RLS for profile lookups
+        const adminClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
@@ -40,51 +47,52 @@ export async function GET(request: Request) {
 
                 // ==============================================
                 // GUEST LIST CHECK: Only pre-registered emails allowed
+                // Uses admin client to bypass RLS
                 // ==============================================
 
                 // First, try to find profile by auth user ID (already claimed)
-                const { data: existingProfile } = await supabase
+                const { data: existingProfile } = await adminClient
                     .from('user_profiles')
                     .select('id, email, onboarding_completed')
                     .eq('id', user.id)
-                    .maybeSingle();
+                    .maybeSingle()
 
                 // If user already has a profile by ID, they're good
                 if (existingProfile) {
-                    console.log(`User ${userEmail} already has profile, proceeding...`);
+                    console.log(`User ${userEmail} already has profile, proceeding...`)
 
                     // Determine redirect path
-                    let redirectPath = next;
+                    let redirectPath = next
                     if (!existingProfile.onboarding_completed) {
-                        redirectPath = '/onboarding';
+                        redirectPath = '/onboarding'
                     }
 
-                    const forwardedHost = request.headers.get('x-forwarded-host');
-                    const isLocalEnv = process.env.NODE_ENV === 'development';
+                    const forwardedHost = request.headers.get('x-forwarded-host')
+                    const isLocalEnv = process.env.NODE_ENV === 'development'
 
                     if (isLocalEnv) {
-                        return NextResponse.redirect(`${origin}${redirectPath}`);
+                        return NextResponse.redirect(`${origin}${redirectPath}`)
                     } else if (forwardedHost) {
-                        return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`);
+                        return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
                     } else {
-                        return NextResponse.redirect(`${origin}${redirectPath}`);
+                        return NextResponse.redirect(`${origin}${redirectPath}`)
                     }
                 }
 
                 // Look for a pre-created profile with this email (case-insensitive)
-                const { data: invitedProfile, error: profileError } = await supabase
+                const { data: invitedProfile, error: profileError } = await adminClient
                     .from('user_profiles')
                     .select('id, email, onboarding_completed')
                     .ilike('email', userEmail || '')
-                    .maybeSingle();
+                    .maybeSingle()
 
                 if (profileError) {
-                    console.error('Error checking invited profile:', profileError);
+                    console.error('Error checking invited profile:', profileError)
                 }
 
                 // If NO pre-created profile exists, user wasn't invited
                 if (!invitedProfile) {
-                    console.log(`Unauthorized access attempt: ${userEmail} not in guest list`);
+                    console.log(`Unauthorized access attempt: ${userEmail} not in guest list`)
 
                     // Sign them out immediately
                     await supabase.auth.signOut()
@@ -106,13 +114,9 @@ export async function GET(request: Request) {
                 if (invitedProfile.id !== user.id) {
                     console.log(`Claiming profile for ${userEmail}: updating ID from ${invitedProfile.id} to ${user.id}`)
 
-                    // Create a new profile with the auth user's ID, copying data from invited profile
-                    // Note: We can't just update the ID due to FK constraints, so we need to handle this carefully
-                    // For now, let's update the profile to link to this user
-
                     // Since user_profiles.id must match auth.users.id (FK constraint),
-                    // we need a different approach: create a new profile for this user
-                    const { error: createError } = await supabase
+                    // we need to create a new profile for this user
+                    const { error: createError } = await adminClient
                         .from('user_profiles')
                         .upsert({
                             id: user.id,
@@ -121,19 +125,18 @@ export async function GET(request: Request) {
                             avatar_url: user.user_metadata?.avatar_url || null,
                             onboarding_completed: invitedProfile.onboarding_completed || false,
                             is_active: true,
-                            user_types: ['invited'], // Mark as invited user
+                            user_types: ['invited'],
                         }, { onConflict: 'id' })
 
                     if (createError) {
                         console.error('Error creating/updating profile:', createError)
                     } else {
-                        // Optionally: Copy over any roles or other data from the invited profile
                         // Delete the old invited profile (no longer needed)
-                        await supabase
+                        await adminClient
                             .from('user_profiles')
                             .delete()
                             .eq('id', invitedProfile.id)
-                            .neq('id', user.id) // Safety: don't delete the one we just created
+                            .neq('id', user.id)
                     }
                 }
 
@@ -141,7 +144,7 @@ export async function GET(request: Request) {
                 let redirectPath = next
 
                 // Re-fetch the profile (might have been just created)
-                const { data: currentProfile } = await supabase
+                const { data: currentProfile } = await adminClient
                     .from('user_profiles')
                     .select('onboarding_completed')
                     .eq('id', user.id)
