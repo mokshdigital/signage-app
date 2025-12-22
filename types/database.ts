@@ -180,11 +180,11 @@ export interface WorkOrder {
     work_order_number: string | null;
     job_type_id: string | null;
     site_address: string | null;
-    planned_dates: string[] | null;  // Array of DATE ISO strings
+    planned_dates?: string[] | null;  // Array of DATE ISO strings
     work_order_date: string | null;  // DATE stored as ISO string
     // Scheduling fields
-    estimated_days: number | null;
-    scheduling_notes: string | null;
+    estimated_days?: number | null;
+    scheduling_notes?: string | null;
     // Sub-Phase B: Requirements
     skills_required: string[] | null;
     permits_required: string[] | null;
@@ -196,6 +196,7 @@ export interface WorkOrder {
     owner_id: string | null;
     shipment_status: string | null;
     job_status: JobStatus;
+    review_needed?: boolean;
     job_status_reason: string | null;
     // Optional: populated when files are joined in queries
     files?: WorkOrderFile[];

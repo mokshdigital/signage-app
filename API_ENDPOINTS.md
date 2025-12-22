@@ -59,6 +59,8 @@ POST /api/process-work-order
     "numberOfTechs": "2 technicians",
     "estimatedHours": 8,
     "estimatedDays": 1,
+    "planned_dates": ["2023-12-25"],
+    "scheduling_notes": "Weekend work preferred",
     "clientQuestions": ["What is the warranty?"],
     "technicianQuestions": ["Power source location?"],
     "technicalRequirements": "220V power supply",

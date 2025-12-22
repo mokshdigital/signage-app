@@ -123,7 +123,7 @@ export default function WorkOrderDetailPage() {
             setEditData({
                 work_order_number: data.work_order_number || '',
                 site_address: data.site_address || '',
-                planned_date: data.planned_date || '',
+                planned_date: data.planned_dates?.[0] || '',
                 work_order_date: data.work_order_date || '',
                 job_type_id: data.job_type_id || '',
                 skills_required: data.skills_required || [],
@@ -190,7 +190,7 @@ export default function WorkOrderDetailPage() {
             await workOrdersService.update(workOrderId, {
                 work_order_number: editData.work_order_number || null,
                 site_address: editData.site_address || null,
-                planned_date: editData.planned_date || null,
+                planned_dates: editData.planned_date ? [editData.planned_date] : null,
                 work_order_date: editData.work_order_date || null,
                 job_type_id: editData.job_type_id || null,
                 skills_required: editData.skills_required,
@@ -486,7 +486,7 @@ export default function WorkOrderDetailPage() {
                                 </div>
                                 <div>
                                     <p className="text-sm text-gray-500">Planned Date</p>
-                                    <p className="font-medium">{formatDate(workOrder.planned_date)}</p>
+                                    <p className="font-medium">{workOrder.planned_dates && workOrder.planned_dates.length > 0 ? formatDate(workOrder.planned_dates[0]) : '-'}</p>
                                 </div>
                             </div>
                         )}

@@ -6,6 +6,7 @@
 ALTER TABLE work_orders ADD COLUMN IF NOT EXISTS estimated_days integer;
 ALTER TABLE work_orders ADD COLUMN IF NOT EXISTS scheduling_notes text;
 ALTER TABLE work_orders ADD COLUMN IF NOT EXISTS planned_dates date[];
+ALTER TABLE work_orders ADD COLUMN IF NOT EXISTS review_needed boolean DEFAULT true;
 
 -- 2. Migrate existing planned_date to array
 UPDATE work_orders 

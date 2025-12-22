@@ -734,8 +734,55 @@ Implemented a robust file organization system with hierarchical folders (categor
 
 ---
 
-## Phase 19: Pending Items
+## Phase 19: Work Order Scheduling & Review
+**Date**: December 22, 2024
+
+### Overview
+ implemented robust scheduling capabilities for work orders, including multi-date support, estimated duration, and a "Review Needed" workflow for incomplete work orders.
+
+### Completed Tasks
+
+#### A. Database Schema
+- ✅ **New Scheduling Fields**:
+  - `estimated_days` (integer): Duration of the job
+  - `scheduling_notes` (text): Special instructions for scheduling
+  - `planned_dates` (date[]): Array of scheduled dates (replaced single `planned_date`)
+  - `review_needed` (boolean): Flag for manual attention
+
+- ✅ **Migration (`018_wo_scheduling_fields.sql`)**:
+  - Adds new columns
+  - Migrates existing `planned_date` data to `planned_dates` array
+  - Drops legacy `planned_date` column
+
+#### B. UI Components
+- ✅ **WorkOrderReviewModal & EditModal**:
+  - Added "Est. Days" and "Scheduling Notes" inputs
+  - Implemented multi-date picker component
+  - Removed single date picker
+
+- ✅ **WorkOrderDetailHeader**:
+  - Added "Review Needed" badge with popover
+  - Popover lists missing fields (Client, PM, Owner)
+  - Displays formatted list of planned dates
+
+#### C. Backend Integration
+- ✅ **API Updates**:
+  - `process-work-order`: Converts AI-extracted single date to `planned_dates` array
+- ✅ **Service Layer**:
+  - Updated `create` and `update` methods to handle new fields
+
+### Key Files
+- `database_migrations/018_wo_scheduling_fields.sql`
+- `components/work-orders/WorkOrderDetailHeader.tsx`
+- `components/work-orders/WorkOrderReviewModal.tsx`
+- `components/work-orders/WorkOrderEditModal.tsx`
+
+---
+
+## Phase 20: Pending Items
 - [ ] Run `017_file_categories_schema.sql` migration in Supabase
+- [ ] Run `018_wo_scheduling_fields.sql` migration in Supabase
 - [ ] Verify RBAC enforcement in RLS policies
 - [ ] Test full upload → categorize → AI analysis workflow
+
 

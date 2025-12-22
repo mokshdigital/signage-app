@@ -10,6 +10,7 @@ A comprehensive dashboard application for managing a signage installation busine
 - **Vehicle Fleet Management**: Track company vehicles, license plates, VIN, GVW, driver assignments, and maintenance status
 - **AI-Powered Work Order Processing**: Upload multiple work order files (PDF/images), automatically extract job details using Google's Gemini AI, and view structured analysis
 - **Resource Planning**: Match work orders with required technicians, equipment, and vehicles
+- **Scheduling & Review**: Track estimated days, scheduling notes, and multiple planned dates. Review needed workflow for missing info.
 
 ## Tech Stack
 

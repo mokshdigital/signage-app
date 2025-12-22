@@ -934,3 +934,32 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - Accidental form submission when adding files
 - AI processing path mismatch with new storage structure
 
+
+### Session 23 - December 22, 2024 (Logistics & Scheduling)
+
+**Objective**: Implement work order scheduling fields, review workflow, and multi-date support.
+
+**Changes Made**:
+
+1.  **Database Migration (`018_wo_scheduling_fields.sql`)**:
+    *   Added `estimated_days` (integer) for job duration.
+    *   Added `scheduling_notes` (text) for special requirements.
+    *   Added `review_needed` (boolean, default true) flag.
+    *   Replaced `planned_date` with `planned_dates` (date array) for multi-day jobs.
+
+2.  **UI Updates**:
+    *   **WorkOrderReviewModal**: Added inputs for new fields and multi-date picker.
+    *   **WorkOrderEditModal**: Synced with new scheduling fields.
+    *   **WorkOrderDetailHeader**:
+        *   Added "Review Needed" badge with popover listing missing critical info (Client, PM, Owner).
+        *   Updated schedule section to display multiple planned dates.
+
+3.  **API & Services**:
+    *   Updated `workOrdersService` to handle new fields and array transformations.
+    *   Updated `/api/process-work-order` to extract `planned_dates` as an array from AI analysis.
+
+4.  **Refactoring**:
+    *   Cleaned up `planned_date` usage across the codebase.
+    *   Improved type definitions in `types/database.ts`.
+
+**Git Commit**: `feat: Add WO scheduling fields - estimated_days, scheduling_notes, planned_dates array, review needed badge`

@@ -118,7 +118,10 @@ Stores work order metadata and AI analysis results. Files are stored in the `wor
 | `work_order_number` | TEXT | | Official work order ID (e.g., WO-12345) |
 | `job_type_id` | UUID | REFERENCES job_types(id) ON DELETE SET NULL | Associated job type |
 | `site_address` | TEXT | | Location where work will be performed |
-| `planned_date` | DATE | | Scheduled installation date |
+| `planned_dates` | DATE[] | | Array of scheduled installation dates |
+| `estimated_days` | INTEGER | | Estimated number of days needed for the job |
+| `scheduling_notes` | TEXT | | Special scheduling needs (weekend, after hours, etc.) |
+| `review_needed` | BOOLEAN | DEFAULT TRUE | Flag indicating if manual review is required |
 | `work_order_date` | DATE | | Date the work order was issued |
 | `client_id` | UUID | REFERENCES clients(id) ON DELETE SET NULL | Associated client |
 | `pm_id` | UUID | REFERENCES project_managers(id) ON DELETE SET NULL | Associated project manager |
