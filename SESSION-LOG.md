@@ -1055,3 +1055,37 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 **Git Commit**: `feat: Add dedicated client login page with email/password auth`
 
+---
+
+### Session 25 (Continued) - December 22, 2024 (2:00 PM PST)
+
+**Objective**: Add Admin UI for creating client portal accounts for Project Managers.
+
+**Clarification**: Client logins are for **Project Managers** (client contacts), not the `clients` table (corporate entities).
+
+**Changes Made**:
+
+1.  **Database Migration** (`database_migrations/022_project_manager_auth.sql`):
+    - Added `user_profile_id` column to `project_managers` table
+    - Created index for efficient lookups
+
+2.  **Server Action** (`app/actions/client-accounts.ts`):
+    - `createClientAccount()`: Creates auth user + user_profile with `user_types: ['client']`
+    - `generateSecurePassword()`: Auto-generates secure 10-char password
+    - Links PM to user_profile via `projectManagerId` parameter
+
+3.  **New Component** (`components/clients/CreatePortalAccountModal.tsx`):
+    - Password input with "Generate" button
+    - Shows credentials summary after creation
+    - Copy-to-clipboard functionality for email/password
+
+4.  **Updated Client Detail Page** (`app/dashboard/clients/[id]/page.tsx`):
+    - Added "Portal Access" column with status badge
+    - Added "Create Portal" button for PMs without portal access
+    - Integrated CreatePortalAccountModal
+
+5.  **Updated Type** (`types/database.ts`):
+    - Added `user_profile_id?: string | null` to ProjectManager interface
+
+**Git Commit**: `feat: Add admin UI for creating client portal accounts`
+

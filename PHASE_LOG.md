@@ -972,3 +972,58 @@ Implemented a proper invitation-based user registration system to fix authentica
 - **Edit User Modal**: Change role, phone, types for existing users
 - **Revoke Invitation**: Delete pending invitations
 
+---
+
+## Phase 25: Client Portal - Foundation
+**Date**: December 22, 2024
+
+### Summary
+Implemented external client portal for Project Managers (client contacts) to access work order information via email/password authentication, separate from the internal Google OAuth flow.
+
+### Architecture
+- **Internal Team**: Google OAuth → `/login` → `/dashboard`
+- **Client Contacts**: Email/Password → `/client-login` → `/client-dashboard`
+- **User Type**: `user_types: ['client']` identifies portal users
+
+### Database Changes
+
+#### Migration: `022_project_manager_auth.sql`
+```sql
+ALTER TABLE project_managers 
+ADD COLUMN user_profile_id UUID REFERENCES user_profiles(id);
+```
+
+### New Pages
+| Route | Purpose |
+|-------|---------|
+| `/client-login` | Email/password login for client contacts |
+| `/client-dashboard` | Placeholder dashboard for clients |
+
+### Server Action
+**`app/actions/client-accounts.ts`**
+- `createClientAccount()`: Uses `SUPABASE_SERVICE_ROLE_KEY` to create auth users
+- Creates `user_profiles` with `user_types: ['client']`
+- Links PM record via `user_profile_id`
+- `generateSecurePassword()`: Auto-generate secure passwords
+
+### UI Components
+**`components/clients/CreatePortalAccountModal.tsx`**
+- Triggered from Client Detail page PM cards
+- Password input with auto-generate button
+- Credentials summary with copy-to-clipboard
+
+### Client Detail Page Updates
+- Added "Portal Access" column showing badge status
+- Added "Create Portal" button for PMs without portal access
+- Integrated `CreatePortalAccountModal`
+
+### Middleware Updates
+- `/client-login`: Allows unauthenticated access
+- `/client-dashboard`: Requires auth + validates `user_types: ['client']`
+- Non-clients accessing client routes are signed out
+
+### Future (Phase 2)
+- `work_order_client_access` junction table for WO-scoped permissions
+- "Clients" tab on WO detail page to grant access
+- Client dashboard shows only accessible WOs
+

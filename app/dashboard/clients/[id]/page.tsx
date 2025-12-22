@@ -9,6 +9,7 @@ import { useModal, useConfirmDialog } from '@/hooks';
 import { Button, Modal, Card, Badge, ConfirmDialog, Alert, LoadingSpinner, PlusIcon } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
 import { ClientForm, ClientFormData, ProjectManagerForm, ProjectManagerFormData } from '@/components/forms';
+import { CreatePortalAccountModal } from '@/components/clients';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
 
@@ -41,6 +42,14 @@ export default function ClientDetailPage() {
         open: openPMModal,
         close: closePMModal,
         data: editingPM
+    } = useModal<ProjectManager>();
+
+    // Portal Account Modal
+    const {
+        isOpen: isPortalModalOpen,
+        open: openPortalModal,
+        close: closePortalModal,
+        data: portalPM
     } = useModal<ProjectManager>();
 
     // Delete Confirmation Hook
@@ -179,11 +188,35 @@ export default function ClientDetailPage() {
             )
         },
         {
+            key: 'portal',
+            header: 'Portal Access',
+            render: (item: any) => (
+                item.user_profile_id ? (
+                    <Badge variant="success" size="sm">Has Portal</Badge>
+                ) : (
+                    <Badge variant="default" size="sm">No Portal</Badge>
+                )
+            )
+        },
+        {
             key: 'actions',
             header: 'Actions',
             align: 'right',
-            render: (item) => (
+            render: (item: any) => (
                 <div className="flex justify-end gap-2">
+                    {!item.user_profile_id && item.email && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-green-600 hover:text-green-700 hover:bg-green-50"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openPortalModal(item);
+                            }}
+                        >
+                            Create Portal
+                        </Button>
+                    )}
                     <Button
                         size="sm"
                         variant="ghost"
@@ -330,8 +363,8 @@ export default function ClientDetailPage() {
                     <button
                         onClick={() => setActiveTab('contacts')}
                         className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'contacts'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                     >
                         Client Contacts ({projectManagers.length})
@@ -339,8 +372,8 @@ export default function ClientDetailPage() {
                     <button
                         onClick={() => setActiveTab('history')}
                         className={`py-4 px-1 border-b-2 font-medium text-sm transition-colors ${activeTab === 'history'
-                                ? 'border-blue-500 text-blue-600'
-                                : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                            ? 'border-blue-500 text-blue-600'
+                            : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                             }`}
                     >
                         Work History ({workOrders.length})
@@ -420,6 +453,14 @@ export default function ClientDetailPage() {
                     onCancel={closePMModal}
                 />
             </Modal>
+
+            {/* Create Portal Account Modal */}
+            <CreatePortalAccountModal
+                isOpen={isPortalModalOpen}
+                onClose={closePortalModal}
+                projectManager={portalPM ?? null}
+                onSuccess={fetchClient}
+            />
 
             {/* Delete Confirmation */}
             <ConfirmDialog

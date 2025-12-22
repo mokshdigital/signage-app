@@ -90,6 +90,7 @@ export interface ProjectManager {
     name: string;
     email: string | null;
     phone?: string | null;
+    user_profile_id?: string | null;  // Link to auth account for portal access
     created_at?: string;
     // Optional: populated when client is joined
     client?: Client;
