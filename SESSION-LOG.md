@@ -1018,3 +1018,40 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - `feat: Add Edit User modal for role and type management`
 - `feat: Add phone number field to Edit User modal`
 
+---
+
+### Session 25 - December 22, 2024 (1:45 PM PST)
+
+**Objective**: Implement dedicated Client Login Page with email/password authentication.
+
+**Changes Made**:
+
+1.  **Created Client Login Page** (`app/client-login/page.tsx`):
+    - Email/password login form with professional dark theme design
+    - Uses `supabase.auth.signInWithPassword()` for authentication
+    - Validates user has `'client'` in `user_types` array
+    - Error handling: Invalid credentials, account not found, deactivated account, non-client access
+    - Signs out unauthorized users immediately
+
+2.  **Created Client Dashboard** (`app/client-dashboard/page.tsx`):
+    - Placeholder dashboard with dark glassmorphism design
+    - Welcome header with user name and sign-out functionality
+    - Three placeholder cards: Active Projects, Documents, Messages
+    - Contact info section for support
+
+3.  **Updated Middleware** (`lib/supabase/middleware.ts`):
+    - Added `/client-login` page handling (allows unauthenticated access)
+    - Added `/client-dashboard` route protection:
+        - Requires authentication
+        - Validates `user_types` includes `'client'`
+        - Validates account is active (`is_active: true`)
+    - Redirects authenticated clients away from `/client-login` → `/client-dashboard`
+    - Non-client users accessing client dashboard are signed out
+
+**Architecture**:
+- Internal team: Uses Google OAuth at `/login` → `/dashboard`
+- External clients: Uses email/password at `/client-login` → `/client-dashboard`
+- Client accounts must be manually created with `user_types: ['client']` and password set in Supabase
+
+**Git Commit**: `feat: Add dedicated client login page with email/password auth`
+

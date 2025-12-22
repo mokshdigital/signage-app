@@ -34,17 +34,53 @@ export async function updateSession(request: NextRequest) {
     } = await supabase.auth.getUser()
 
     const isAuthPage = request.nextUrl.pathname === '/login'
+    const isClientLoginPage = request.nextUrl.pathname === '/client-login'
     const isOnboardingPage = request.nextUrl.pathname === '/onboarding'
     const isDashboardPage = request.nextUrl.pathname.startsWith('/dashboard')
+    const isClientDashboardPage = request.nextUrl.pathname.startsWith('/client-dashboard')
 
-    // Protect dashboard and onboarding routes - redirect to login if not authenticated
+    // Protect internal dashboard and onboarding routes - redirect to login if not authenticated
     if (!user && (isDashboardPage || isOnboardingPage)) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
     }
 
-    // For authenticated users, check onboarding status for dashboard access
+    // Protect client dashboard - redirect to client-login if not authenticated
+    if (!user && isClientDashboardPage) {
+        const url = request.nextUrl.clone()
+        url.pathname = '/client-login'
+        return NextResponse.redirect(url)
+    }
+
+    // For authenticated users accessing client dashboard, verify they are a client
+    if (user && isClientDashboardPage) {
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('user_types, is_active')
+            .eq('id', user.id)
+            .single()
+
+        // If no profile, not active, or not a client - redirect to client-login
+        if (!profile || !profile.is_active) {
+            await supabase.auth.signOut()
+            const url = request.nextUrl.clone()
+            url.pathname = '/client-login'
+            return NextResponse.redirect(url)
+        }
+
+        const userTypes = profile.user_types || []
+        if (!userTypes.includes('client')) {
+            // Not a client - sign out and redirect
+            await supabase.auth.signOut()
+            const url = request.nextUrl.clone()
+            url.pathname = '/client-login'
+            url.searchParams.set('error', 'unauthorized')
+            return NextResponse.redirect(url)
+        }
+    }
+
+    // For authenticated users, check onboarding status for internal dashboard access
     if (user && isDashboardPage) {
         // Check if user has completed onboarding
         const { data: profile } = await supabase
@@ -76,7 +112,7 @@ export async function updateSession(request: NextRequest) {
         }
     }
 
-    // Redirect authenticated users away from login page
+    // Redirect authenticated users away from internal login page
     if (user && isAuthPage) {
         // Check if they need onboarding first
         const { data: profile } = await supabase
@@ -90,5 +126,22 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
+    // Redirect authenticated client users away from client-login page
+    if (user && isClientLoginPage) {
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('user_types')
+            .eq('id', user.id)
+            .single()
+
+        const userTypes = profile?.user_types || []
+        if (userTypes.includes('client')) {
+            const url = request.nextUrl.clone()
+            url.pathname = '/client-dashboard'
+            return NextResponse.redirect(url)
+        }
+    }
+
     return supabaseResponse
 }
+
