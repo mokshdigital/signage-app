@@ -74,33 +74,56 @@ export function WorkOrderDetailHeader({
         const scrollContainer = document.querySelector('main.overflow-y-auto') as HTMLElement | null;
         if (!scrollContainer) return;
 
+        let ticking = false;
+        let lastChangeTime = 0;
+        const cooldownMs = 300; // Prevent rapid toggling
+        const collapseThreshold = 150; // Scroll down this far to collapse
+        const expandThreshold = 50; // Scroll up to this point to expand
+
         const handleScroll = () => {
-            // Don't auto-collapse if user manually expanded
-            if (manuallyExpanded) return;
+            if (ticking) return;
 
-            const currentScrollY = scrollContainer.scrollTop;
-            const scrollThreshold = 100;
+            ticking = true;
+            requestAnimationFrame(() => {
+                // Don't auto-collapse if user manually expanded
+                if (manuallyExpanded) {
+                    ticking = false;
+                    return;
+                }
 
-            if (currentScrollY > scrollThreshold && currentScrollY > lastScrollY.current) {
-                // Scrolling down past threshold - collapse
-                setIsCollapsed(true);
-            } else if (currentScrollY < lastScrollY.current - 20) {
-                // Scrolling up significantly - expand
-                setIsCollapsed(false);
-            }
+                const currentScrollY = scrollContainer.scrollTop;
+                const now = Date.now();
 
-            // Reset manual expansion when at top
-            if (currentScrollY < 50) {
-                setManuallyExpanded(false);
-                setIsCollapsed(false);
-            }
+                // Cooldown check - prevent rapid toggling
+                if (now - lastChangeTime < cooldownMs) {
+                    ticking = false;
+                    return;
+                }
 
-            lastScrollY.current = currentScrollY;
+                // Use hysteresis: different thresholds for collapse vs expand
+                if (!isCollapsed && currentScrollY > collapseThreshold && currentScrollY > lastScrollY.current + 30) {
+                    // Scrolling down past threshold - collapse
+                    setIsCollapsed(true);
+                    lastChangeTime = now;
+                } else if (isCollapsed && currentScrollY < expandThreshold) {
+                    // Near top - expand
+                    setIsCollapsed(false);
+                    setManuallyExpanded(false);
+                    lastChangeTime = now;
+                } else if (isCollapsed && currentScrollY < lastScrollY.current - 50) {
+                    // Scrolling up significantly - expand
+                    setIsCollapsed(false);
+                    lastChangeTime = now;
+                }
+
+                lastScrollY.current = currentScrollY;
+                ticking = false;
+            });
         };
 
         scrollContainer.addEventListener('scroll', handleScroll, { passive: true });
         return () => scrollContainer.removeEventListener('scroll', handleScroll);
-    }, [manuallyExpanded]);
+    }, [manuallyExpanded, isCollapsed]);
 
     const toggleCollapse = () => {
         if (isCollapsed) {
