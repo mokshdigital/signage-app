@@ -214,6 +214,30 @@ New users are required to complete their profile before accessing the dashboard:
 - Middleware automatically redirects users based on their onboarding status
 - Authenticated users on `/login` are redirected appropriately
 
+### Client Portal (External Access)
+The app has a **separate authentication flow** for external client contacts:
+
+#### Dual Auth Model
+| User Type | Auth Method | Login URL | Destination |
+|-----------|-------------|-----------|-------------|
+| Internal Team | Google OAuth | `/login` | `/dashboard` |
+| Client Contacts | Email/Password | `/client-login` | `/client-dashboard` |
+
+#### Client Account Creation
+1. Admin navigates to **Clients → [Client Name] → Client Contacts**
+2. Clicks **"Create Portal"** button on a PM row
+3. Generates or enters a password
+4. Copies credentials to share with the client contact
+
+#### Client User Profile
+- `user_types: ['client']` - Identifies portal users
+- `project_managers.user_profile_id` - Links PM to auth account
+- Clients skip onboarding flow (`onboarding_completed: true`)
+
+#### Client Routes
+- `/client-login` - Allows unauthenticated access
+- `/client-dashboard` - Requires auth + validates `user_types` includes `'client'`
+
 
 
 ### Supabase Clients

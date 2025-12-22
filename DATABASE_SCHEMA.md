@@ -409,12 +409,14 @@ External client contacts (Project Managers). Distinct from internal `office_staf
 | `name` | TEXT | NOT NULL | Contact name |
 | `email` | TEXT | | Email address |
 | `phone` | TEXT | | Phone number |
+| `user_profile_id` | UUID | FK to user_profiles(id), ON DELETE SET NULL | Link to auth account for portal access |
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
 
 #### Indexes
 - `idx_project_managers_client_id` on `client_id`
 - `idx_project_managers_name` on `name`
 - `idx_project_managers_email` on `email`
+- `idx_project_managers_user_profile_id` on `user_profile_id`
 
 #### Row Level Security (RLS)
 - **Enabled**: Yes
@@ -423,6 +425,7 @@ External client contacts (Project Managers). Distinct from internal `office_staf
 #### Notes
 - When a `client` is deleted, all associated `project_managers` are automatically deleted (CASCADE).
 - These are **external** contacts, not to be confused with internal `office_staff`.
+- `user_profile_id` links PM to an auth account for client portal login (`/client-login`).
 
 
 ---

@@ -48,6 +48,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 - **Client Management**:
   - Client directory with project manager contacts.
   - Link work orders to clients.
+  - **Client Portal**: External access for client contacts (Project Managers).
+    - Email/password authentication (separate from internal Google OAuth).
+    - Admin UI to create portal accounts with auto-generated passwords.
 - **Resource Management**:
   - Technicians, Equipment, and Vehicle tracking.
 
