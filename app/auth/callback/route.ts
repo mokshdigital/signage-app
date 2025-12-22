@@ -1,4 +1,5 @@
 import { createServerClient } from '@supabase/ssr'
+import { createClient } from '@supabase/supabase-js'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
@@ -30,39 +31,122 @@ export async function GET(request: Request) {
             }
         )
 
+        // Admin client to bypass RLS for profile operations
+        const adminClient = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL!,
+            process.env.SUPABASE_SERVICE_ROLE_KEY!
+        )
+
         const { error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (!error) {
-            const forwardedHost = request.headers.get('x-forwarded-host')
-            const isLocalEnv = process.env.NODE_ENV === 'development'
-
             const { data: { user } } = await supabase.auth.getUser()
-            let redirectPath = next
 
             if (user) {
-                // Check if user has completed onboarding
-                const { data: profile } = await supabase
+                const userEmail = user.email?.toLowerCase()
+
+                // Check if user already has a profile (returning user)
+                const { data: existingProfile } = await adminClient
                     .from('user_profiles')
-                    .select('onboarding_completed')
+                    .select('id, onboarding_completed')
                     .eq('id', user.id)
-                    .single()
+                    .maybeSingle()
 
-                // If no profile or onboarding not completed, redirect to onboarding
-                if (!profile || !profile.onboarding_completed) {
-                    redirectPath = '/onboarding'
+                if (existingProfile) {
+                    // User already has profile - redirect based on onboarding
+                    const redirectPath = existingProfile.onboarding_completed ? next : '/onboarding'
+                    return redirectTo(request, origin, redirectPath)
                 }
-            }
 
-            if (isLocalEnv) {
-                return NextResponse.redirect(`${origin}${redirectPath}`)
-            } else if (forwardedHost) {
-                return NextResponse.redirect(`https://${forwardedHost}${redirectPath}`)
-            } else {
-                return NextResponse.redirect(`${origin}${redirectPath}`)
+                // Check for invitation by email
+                const { data: invitation } = await adminClient
+                    .from('invitations')
+                    .select('*')
+                    .ilike('email', userEmail || '')
+                    .is('claimed_at', null)
+                    .maybeSingle()
+
+                if (!invitation) {
+                    // No invitation = not authorized
+                    console.log(`Unauthorized: ${userEmail} has no invitation`)
+                    await supabase.auth.signOut()
+                    return redirectTo(request, origin, `/unauthorized?email=${encodeURIComponent(userEmail || '')}`)
+                }
+
+                // Claim invitation: Create user profile
+                console.log(`Claiming invitation for ${userEmail}`)
+
+                const userTypes: string[] = []
+                if (invitation.is_technician) userTypes.push('technician')
+                if (invitation.is_office_staff) userTypes.push('office_staff')
+
+                // Create user_profile
+                const { error: profileError } = await adminClient
+                    .from('user_profiles')
+                    .insert({
+                        id: user.id,
+                        display_name: invitation.display_name,
+                        nick_name: invitation.nick_name,
+                        email: userEmail,
+                        avatar_url: user.user_metadata?.avatar_url || null,
+                        role_id: invitation.role_id,
+                        user_types: userTypes,
+                        is_active: true,
+                        onboarding_completed: false, // Will complete onboarding
+                    })
+
+                if (profileError) {
+                    console.error('Error creating profile:', profileError)
+                    return redirectTo(request, origin, `/login?error=Failed to create profile`)
+                }
+
+                // Create technician record if needed
+                if (invitation.is_technician) {
+                    await adminClient.from('technicians').insert({
+                        name: invitation.display_name,
+                        email: userEmail,
+                        skills: invitation.skills || [],
+                        user_profile_id: user.id,
+                    })
+                }
+
+                // Create office_staff record if needed
+                if (invitation.is_office_staff) {
+                    await adminClient.from('office_staff').insert({
+                        name: invitation.display_name,
+                        email: userEmail,
+                        title: invitation.job_title || null,
+                        user_profile_id: user.id,
+                    })
+                }
+
+                // Mark invitation as claimed
+                await adminClient
+                    .from('invitations')
+                    .update({
+                        claimed_at: new Date().toISOString(),
+                        claimed_by: user.id,
+                    })
+                    .eq('id', invitation.id)
+
+                // New users go to onboarding
+                return redirectTo(request, origin, '/onboarding')
             }
         }
     }
 
-    // Return the user to an error page with instructions
     return NextResponse.redirect(`${origin}/login?error=Could not authenticate user`)
+}
+
+function redirectTo(request: Request, origin: string, path: string): NextResponse {
+    const forwardedHost = request.headers.get('x-forwarded-host')
+    const isLocalEnv = process.env.NODE_ENV === 'development'
+
+    if (isLocalEnv) {
+        return NextResponse.redirect(`${origin}${path}`)
+    } else if (forwardedHost) {
+        return NextResponse.redirect(`https://${forwardedHost}${path}`)
+    } else {
+        return NextResponse.redirect(`${origin}${path}`)
+    }
 }

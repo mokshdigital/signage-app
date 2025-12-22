@@ -293,6 +293,73 @@ export interface Database {
                     }
                 ]
             }
+            invitations: {
+                Row: {
+                    id: string
+                    email: string
+                    display_name: string
+                    nick_name: string | null
+                    role_id: string | null
+                    is_technician: boolean
+                    is_office_staff: boolean
+                    skills: string[] | null
+                    job_title: string | null
+                    invited_by: string | null
+                    created_at: string
+                    claimed_at: string | null
+                    claimed_by: string | null
+                }
+                Insert: {
+                    id?: string
+                    email: string
+                    display_name: string
+                    nick_name?: string | null
+                    role_id?: string | null
+                    is_technician?: boolean
+                    is_office_staff?: boolean
+                    skills?: string[] | null
+                    job_title?: string | null
+                    invited_by?: string | null
+                    created_at?: string
+                    claimed_at?: string | null
+                    claimed_by?: string | null
+                }
+                Update: {
+                    id?: string
+                    email?: string
+                    display_name?: string
+                    nick_name?: string | null
+                    role_id?: string | null
+                    is_technician?: boolean
+                    is_office_staff?: boolean
+                    skills?: string[] | null
+                    job_title?: string | null
+                    invited_by?: string | null
+                    created_at?: string
+                    claimed_at?: string | null
+                    claimed_by?: string | null
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "invitations_role_id_fkey"
+                        columns: ["role_id"]
+                        referencedRelation: "roles"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "invitations_invited_by_fkey"
+                        columns: ["invited_by"]
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "invitations_claimed_by_fkey"
+                        columns: ["claimed_by"]
+                        referencedRelation: "users"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
             equipment: {
                 Row: {
                     id: string

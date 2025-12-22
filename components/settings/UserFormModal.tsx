@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Button, Modal, Input, Select, Alert } from '@/components/ui';
-import { usersService, CreateUserData, UpdateUserData, UnifiedUser } from '@/services/users.service';
+import { usersService, CreateInvitationData } from '@/services/users.service';
 import { getRoles } from '@/services/rbac.service';
 import type { Role } from '@/types/rbac';
 
@@ -19,14 +19,13 @@ const SKILL_OPTIONS = [
     'Survey',
 ];
 
-interface UserFormModalProps {
+interface InviteUserModalProps {
     isOpen: boolean;
     onClose: () => void;
-    user?: UnifiedUser | null;
     onSuccess: () => void;
 }
 
-export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModalProps) {
+export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalProps) {
     // Form State
     const [displayName, setDisplayName] = useState('');
     const [nickName, setNickName] = useState('');
@@ -47,19 +46,9 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         getRoles().then(setRoles).catch(console.error);
     }, []);
 
-    // Populate form when editing
+    // Reset form when modal opens
     useEffect(() => {
-        if (user) {
-            setDisplayName(user.display_name || '');
-            setNickName(user.nick_name || '');
-            setEmail(user.email || '');
-            setRoleId(user.role?.id || '');
-            setIsTechnician(!!user.technician);
-            setIsOfficeStaff(!!user.office_staff);
-            setSkills(user.technician?.skills || []);
-            setJobTitle(user.office_staff?.title || '');
-        } else {
-            // Reset form for new user
+        if (isOpen) {
             setDisplayName('');
             setNickName('');
             setEmail('');
@@ -68,9 +57,9 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
             setIsOfficeStaff(false);
             setSkills([]);
             setJobTitle('');
+            setError(null);
         }
-        setError(null);
-    }, [user, isOpen]);
+    }, [isOpen]);
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -86,48 +75,32 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
             return;
         }
 
-        // Check email uniqueness
-        const emailTaken = await usersService.isEmailTaken(email, user?.id);
+        // Check if email is already taken
+        const emailTaken = await usersService.isEmailTaken(email);
         if (emailTaken) {
-            setError('This email is already in use');
+            setError('This email is already invited or registered');
             return;
         }
 
         setLoading(true);
 
         try {
-            if (user) {
-                // Update existing user
-                const updateData: UpdateUserData = {
-                    display_name: displayName,
-                    nick_name: nickName || undefined,
-                    email,
-                    role_id: roleId || null,
-                    is_technician: isTechnician,
-                    is_office_staff: isOfficeStaff,
-                    skills: isTechnician ? skills : undefined,
-                    job_title: isOfficeStaff ? jobTitle : undefined,
-                };
-                await usersService.update(user.id, updateData);
-            } else {
-                // Create new user
-                const createData: CreateUserData = {
-                    display_name: displayName,
-                    nick_name: nickName || undefined,
-                    email,
-                    role_id: roleId || null,
-                    is_technician: isTechnician,
-                    is_office_staff: isOfficeStaff,
-                    skills: isTechnician ? skills : undefined,
-                    job_title: isOfficeStaff ? jobTitle : undefined,
-                };
-                await usersService.create(createData);
-            }
+            const invitationData: CreateInvitationData = {
+                display_name: displayName,
+                nick_name: nickName || undefined,
+                email,
+                role_id: roleId || null,
+                is_technician: isTechnician,
+                is_office_staff: isOfficeStaff,
+                skills: isTechnician ? skills : undefined,
+                job_title: isOfficeStaff ? jobTitle : undefined,
+            };
 
+            await usersService.createInvitation(invitationData);
             onSuccess();
             onClose();
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to save user');
+            setError(err instanceof Error ? err.message : 'Failed to create invitation');
         } finally {
             setLoading(false);
         }
@@ -145,7 +118,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={user ? 'Edit User' : 'Add New User'}
+            title="Invite New User"
             size="lg"
         >
             <form onSubmit={handleSubmit} className="space-y-6">
@@ -154,6 +127,12 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                         {error}
                     </Alert>
                 )}
+
+                <div className="p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-800">
+                        <strong>Note:</strong> This creates an invitation. The user will need to sign in with Google using this email to claim their account.
+                    </p>
+                </div>
 
                 {/* Basic Info */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -193,7 +172,7 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                             placeholder="john@company.com"
                             required
                         />
-                        <p className="text-xs text-gray-500 mt-1">Used for Google Sign-in</p>
+                        <p className="text-xs text-gray-500 mt-1">Must match their Google account</p>
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -293,10 +272,13 @@ export function UserFormModal({ isOpen, onClose, user, onSuccess }: UserFormModa
                         type="submit"
                         disabled={loading}
                     >
-                        {loading ? 'Saving...' : (user ? 'Save Changes' : 'Add User')}
+                        {loading ? 'Inviting...' : 'Send Invitation'}
                     </Button>
                 </div>
             </form>
         </Modal>
     );
 }
+
+// Re-export old name for backwards compatibility
+export const UserFormModal = InviteUserModal;
