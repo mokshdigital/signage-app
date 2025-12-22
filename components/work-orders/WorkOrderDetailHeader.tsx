@@ -17,7 +17,9 @@ import {
     MapPin,
     Calendar,
     User,
-    Building2
+    Building2,
+    AlertTriangle,
+    X
 } from 'lucide-react';
 import { safeRender } from '@/lib/utils/helpers';
 
@@ -64,6 +66,9 @@ export function WorkOrderDetailHeader({
     const [pendingStatus, setPendingStatus] = useState<JobStatus | null>(null);
     const [statusReason, setStatusReason] = useState('');
     const [savingStatus, setSavingStatus] = useState(false);
+
+    // Review needed popover
+    const [isReviewPopoverOpen, setIsReviewPopoverOpen] = useState(false);
 
     // Collapse state - initialized from localStorage
     const [isCollapsed, setIsCollapsed] = useState(false);
@@ -153,6 +158,61 @@ export function WorkOrderDetailHeader({
     const currentStatus = workOrder.job_status || 'Open';
     const statusStyle = statusConfig[currentStatus];
 
+    // Review needed logic: show if client, PM, or owner is missing
+    const missingItems: string[] = [];
+    if (!workOrder.client_id) missingItems.push('Client not assigned');
+    if (!workOrder.pm_id) missingItems.push('Contact/PM not selected');
+    if (!workOrder.owner_id) missingItems.push('WO Owner not assigned');
+    const needsReview = missingItems.length > 0;
+
+    // Review Needed Badge with Popover
+    const ReviewBadge = () => {
+        if (!needsReview) return null;
+
+        return (
+            <div className="relative">
+                <button
+                    onClick={() => setIsReviewPopoverOpen(!isReviewPopoverOpen)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors"
+                >
+                    <AlertTriangle className="w-4 h-4" />
+                    Review Needed
+                </button>
+
+                {isReviewPopoverOpen && (
+                    <>
+                        <div className="fixed inset-0 z-30" onClick={() => setIsReviewPopoverOpen(false)} />
+                        <div className="absolute left-0 top-full mt-2 w-64 bg-white rounded-xl shadow-lg border border-gray-200 p-4 z-40">
+                            <div className="flex items-center justify-between mb-3">
+                                <h4 className="text-sm font-semibold text-gray-900">Missing Information</h4>
+                                <button
+                                    onClick={() => setIsReviewPopoverOpen(false)}
+                                    className="p-1 text-gray-400 hover:text-gray-600 rounded-lg"
+                                >
+                                    <X className="w-4 h-4" />
+                                </button>
+                            </div>
+                            <ul className="space-y-2">
+                                {missingItems.map((item, i) => (
+                                    <li key={i} className="flex items-start gap-2 text-sm text-red-600">
+                                        <span className="mt-0.5">❌</span>
+                                        {item}
+                                    </li>
+                                ))}
+                            </ul>
+                            <button
+                                onClick={() => { setIsReviewPopoverOpen(false); onEdit(); }}
+                                className="w-full mt-3 px-3 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 transition-colors"
+                            >
+                                Edit Details
+                            </button>
+                        </div>
+                    </>
+                )}
+            </div>
+        );
+    };
+
     // Collapse Toggle Pill Button Component
     const CollapsePill = () => (
         <div className="flex justify-center py-3 border-t border-gray-100 bg-gray-50/50">
@@ -230,10 +290,10 @@ export function WorkOrderDetailHeader({
                                     {workOrder.client && (
                                         <span>{safeRender(workOrder.client.name)}</span>
                                     )}
-                                    {workOrder.planned_date && (
+                                    {workOrder.planned_dates && workOrder.planned_dates.length > 0 && (
                                         <>
                                             <span>•</span>
-                                            <span>{formatDateShort(workOrder.planned_date)}</span>
+                                            <span>{formatDateShort(workOrder.planned_dates[0])}</span>
                                         </>
                                     )}
                                 </div>
@@ -434,6 +494,8 @@ export function WorkOrderDetailHeader({
                                         </span>
                                     </>
                                 )}
+                                {/* Review Badge */}
+                                <ReviewBadge />
                             </div>
                         </div>
 
@@ -482,10 +544,18 @@ export function WorkOrderDetailHeader({
                                             </div>
 
                                             <div>
-                                                <p className="text-xs text-gray-400 mb-1">Planned Date</p>
-                                                <p className="text-base font-semibold text-gray-900">
-                                                    {formatDate(workOrder.planned_date)}
-                                                </p>
+                                                <p className="text-xs text-gray-400 mb-1">Planned Dates</p>
+                                                {workOrder.planned_dates && workOrder.planned_dates.length > 0 ? (
+                                                    <div className="space-y-1">
+                                                        {workOrder.planned_dates.map((date, i) => (
+                                                            <p key={i} className="text-base font-semibold text-gray-900">
+                                                                {formatDate(date)}
+                                                            </p>
+                                                        ))}
+                                                    </div>
+                                                ) : (
+                                                    <p className="text-base font-semibold text-gray-300">—</p>
+                                                )}
                                             </div>
                                         </div>
                                     </div>

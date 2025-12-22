@@ -107,7 +107,7 @@ export const workOrdersService = {
                 work_order_number: workOrder.work_order_number || null,
                 job_type_id: workOrder.job_type_id || null,
                 site_address: workOrder.site_address || null,
-                planned_date: workOrder.planned_date || null,
+                planned_dates: workOrder.planned_dates || null,
                 work_order_date: workOrder.work_order_date || null,
                 shipment_status: workOrder.shipment_status || null,
                 job_status: workOrder.job_status || 'Open',

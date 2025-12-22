@@ -7,6 +7,7 @@ import { clientsService } from '@/services/clients.service';
 import { createClient } from '@/lib/supabase/client';
 import { Button, Modal, Input, LoadingSpinner } from '@/components/ui';
 import { toast } from '@/components/providers';
+import { Plus, X } from 'lucide-react';
 
 interface UserProfile {
     id: string;
@@ -35,12 +36,16 @@ export function WorkOrderEditModal({
         work_order_number: '',
         site_address: '',
         work_order_date: '',
-        planned_date: '',
         job_type_id: '',
         client_id: '',
         pm_id: '',
-        owner_id: ''
+        owner_id: '',
+        estimated_days: '' as number | '',
+        scheduling_notes: ''
     });
+
+    // Planned dates as array
+    const [plannedDates, setPlannedDates] = useState<string[]>([]);
 
     // Dropdown options
     const [clients, setClients] = useState<Client[]>([]);
@@ -56,12 +61,14 @@ export function WorkOrderEditModal({
                 work_order_number: workOrder.work_order_number || '',
                 site_address: workOrder.site_address || '',
                 work_order_date: workOrder.work_order_date || '',
-                planned_date: workOrder.planned_date || '',
                 job_type_id: workOrder.job_type_id || '',
                 client_id: workOrder.client_id || '',
                 pm_id: workOrder.pm_id || '',
-                owner_id: workOrder.owner_id || ''
+                owner_id: workOrder.owner_id || '',
+                estimated_days: workOrder.estimated_days || '',
+                scheduling_notes: workOrder.scheduling_notes || ''
             });
+            setPlannedDates(workOrder.planned_dates || []);
             loadDropdownData();
         }
     }, [isOpen, workOrder]);
@@ -122,20 +129,39 @@ export function WorkOrderEditModal({
         }
     };
 
+    // Planned Dates Management
+    const addPlannedDate = () => {
+        setPlannedDates([...plannedDates, '']);
+    };
+
+    const updatePlannedDate = (index: number, value: string) => {
+        const updated = [...plannedDates];
+        updated[index] = value;
+        setPlannedDates(updated);
+    };
+
+    const removePlannedDate = (index: number) => {
+        setPlannedDates(plannedDates.filter((_, i) => i !== index));
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setSaving(true);
 
         try {
+            const validDates = plannedDates.filter(d => d.trim() !== '');
+
             await workOrdersService.update(workOrder.id, {
                 work_order_number: formData.work_order_number || null,
                 site_address: formData.site_address || null,
                 work_order_date: formData.work_order_date || null,
-                planned_date: formData.planned_date || null,
+                planned_dates: validDates.length > 0 ? validDates : null,
                 job_type_id: formData.job_type_id || null,
                 client_id: formData.client_id || null,
                 pm_id: formData.pm_id || null,
-                owner_id: formData.owner_id || null
+                owner_id: formData.owner_id || null,
+                estimated_days: formData.estimated_days === '' ? null : Number(formData.estimated_days),
+                scheduling_notes: formData.scheduling_notes || null
             });
 
             toast.success('Work order updated');
@@ -202,7 +228,7 @@ export function WorkOrderEditModal({
                         />
                     </div>
 
-                    {/* Dates */}
+                    {/* WO Date & Est. Days */}
                     <div className="grid grid-cols-2 gap-4">
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -216,14 +242,66 @@ export function WorkOrderEditModal({
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-gray-700 mb-1">
-                                Planned Date
+                                Est. Days
                             </label>
                             <Input
-                                type="date"
-                                value={formData.planned_date}
-                                onChange={(e) => setFormData(prev => ({ ...prev, planned_date: e.target.value }))}
+                                type="number"
+                                min={1}
+                                value={formData.estimated_days}
+                                onChange={(e) => setFormData(prev => ({
+                                    ...prev,
+                                    estimated_days: e.target.value === '' ? '' : parseInt(e.target.value)
+                                }))}
+                                placeholder="e.g., 3"
                             />
                         </div>
+                    </div>
+
+                    {/* Planned Dates */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                            Planned Dates
+                        </label>
+                        <div className="space-y-2">
+                            {plannedDates.map((date, index) => (
+                                <div key={index} className="flex items-center gap-2">
+                                    <div className="flex-1">
+                                        <Input
+                                            type="date"
+                                            value={date}
+                                            onChange={(e) => updatePlannedDate(index, e.target.value)}
+                                        />
+                                    </div>
+                                    <button
+                                        type="button"
+                                        onClick={() => removePlannedDate(index)}
+                                        className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ))}
+                            <button
+                                type="button"
+                                onClick={addPlannedDate}
+                                className="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                            >
+                                <Plus className="w-4 h-4" />
+                                Add Date
+                            </button>
+                        </div>
+                    </div>
+
+                    {/* Scheduling Notes */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Scheduling Notes
+                        </label>
+                        <Input
+                            value={formData.scheduling_notes}
+                            onChange={(e) => setFormData(prev => ({ ...prev, scheduling_notes: e.target.value }))}
+                            placeholder="e.g., Weekend only, After hours"
+                        />
                     </div>
 
                     {/* Client & PM */}

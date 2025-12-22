@@ -8,6 +8,7 @@ import { clientsService } from '@/services/clients.service';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
+import { Plus, X, Calendar } from 'lucide-react';
 
 interface WorkOrderReviewModalProps {
     isOpen: boolean;
@@ -32,6 +33,11 @@ export function WorkOrderReviewModal({
     const [pmId, setPmId] = useState('');
     const [siteAddress, setSiteAddress] = useState('');
     const [shippingComment, setShippingComment] = useState('');
+
+    // New Scheduling Fields
+    const [estimatedDays, setEstimatedDays] = useState<number | ''>('');
+    const [schedulingNotes, setSchedulingNotes] = useState('');
+    const [plannedDates, setPlannedDates] = useState<string[]>([]);
 
     // Options State
     const [users, setUsers] = useState<{ id: string; display_name: string }[]>([]);
@@ -68,6 +74,11 @@ export function WorkOrderReviewModal({
             setOwnerId(workOrder?.owner_id || workOrder?.uploaded_by || '');
             setSiteAddress(workOrder?.site_address || '');
             setJobTypeId(workOrder?.job_type_id || '');
+
+            // New fields
+            setEstimatedDays(workOrder?.estimated_days || '');
+            setSchedulingNotes(workOrder?.scheduling_notes || '');
+            setPlannedDates(workOrder?.planned_dates || []);
 
             // 3. AI Recommendations Logic
             const analysis = workOrder?.analysis || {};
@@ -150,11 +161,29 @@ export function WorkOrderReviewModal({
         }
     };
 
+    // Planned Dates Management
+    const addPlannedDate = () => {
+        setPlannedDates([...plannedDates, '']);
+    };
+
+    const updatePlannedDate = (index: number, value: string) => {
+        const updated = [...plannedDates];
+        updated[index] = value;
+        setPlannedDates(updated);
+    };
+
+    const removePlannedDate = (index: number) => {
+        setPlannedDates(plannedDates.filter((_, i) => i !== index));
+    };
+
     const handleSave = async () => {
         if (!workOrder) return;
 
         setSaving(true);
         try {
+            // Filter out empty dates
+            const validDates = plannedDates.filter(d => d.trim() !== '');
+
             // 1. Update Work Order
             await workOrdersService.update(workOrder.id, {
                 owner_id: ownerId || null,
@@ -162,7 +191,9 @@ export function WorkOrderReviewModal({
                 client_id: clientId || null,
                 pm_id: pmId || null,
                 site_address: siteAddress,
-                // Note: job_status is already Open, shipment_status is ignored (we use comment)
+                estimated_days: estimatedDays === '' ? null : Number(estimatedDays),
+                scheduling_notes: schedulingNotes || null,
+                planned_dates: validDates.length > 0 ? validDates : null,
             });
 
             // 2. Add Shipping Comment if provided
@@ -247,6 +278,73 @@ export function WorkOrderReviewModal({
                             />
                         </div>
 
+                        {/* Est. Days */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Est. Days
+                            </label>
+                            <Input
+                                type="number"
+                                min={1}
+                                value={estimatedDays}
+                                onChange={(e) => setEstimatedDays(e.target.value === '' ? '' : parseInt(e.target.value))}
+                                placeholder="e.g., 3"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Estimated days needed for the job
+                            </p>
+                        </div>
+
+                        {/* Scheduling Notes */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Scheduling Notes
+                            </label>
+                            <Input
+                                value={schedulingNotes}
+                                onChange={(e) => setSchedulingNotes(e.target.value)}
+                                placeholder="e.g., Weekend only, After hours"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Special scheduling requirements
+                            </p>
+                        </div>
+
+                        {/* Planned Dates - Full Width */}
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Planned Dates
+                            </label>
+                            <div className="space-y-2">
+                                {plannedDates.map((date, index) => (
+                                    <div key={index} className="flex items-center gap-2">
+                                        <div className="flex-1">
+                                            <Input
+                                                type="date"
+                                                value={date}
+                                                onChange={(e) => updatePlannedDate(index, e.target.value)}
+                                            />
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removePlannedDate(index)}
+                                            className="p-2 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                        >
+                                            <X className="w-4 h-4" />
+                                        </button>
+                                    </div>
+                                ))}
+                                <button
+                                    type="button"
+                                    onClick={addPlannedDate}
+                                    className="flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+                                >
+                                    <Plus className="w-4 h-4" />
+                                    Add Date
+                                </button>
+                            </div>
+                        </div>
+
                         {/* Site Address (Full Width) */}
                         <div className="md:col-span-2">
                             <label className="block text-sm font-medium text-gray-700 mb-1">
@@ -277,8 +375,6 @@ export function WorkOrderReviewModal({
                     </div>
 
                     <div className="flex justify-end pt-4 border-t border-gray-200">
-                        {/* We don't have a 'Cancel' button that goes back to nothing, usually just Close or Submit */}
-                        {/* If they close the modal (X or outside click), onSave is NOT called, so the list doesn't update yet (or updates but shows unverified info) */}
                         <Button
                             onClick={handleSave}
                             loading={saving}

@@ -254,7 +254,7 @@ export async function POST(request: NextRequest) {
         if (analysis.planned_date) {
             const dateMatch = String(analysis.planned_date).match(/^\d{4}-\d{2}-\d{2}/);
             if (dateMatch) {
-                workOrderUpdate.planned_date = dateMatch[0];
+                workOrderUpdate.planned_dates = [dateMatch[0]];  // Store as array
             }
         }
 
