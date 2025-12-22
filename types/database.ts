@@ -40,6 +40,22 @@ export interface OfficeStaff {
     created_at: string;
 }
 
+// User who is a technician (from user_profiles - primary source)
+// Links to legacy technicians table for skills data
+export interface TechnicianUser {
+    id: string;                    // user_profile ID
+    display_name: string;
+    avatar_url: string | null;
+    phone: string | null;
+    email: string | null;
+    is_active: boolean;
+    // Optional: linked technician extension data (skills, timesheets, etc.)
+    technician?: {
+        id: string;
+        skills: string[] | null;
+    }[] | null;
+}
+
 // File Category - for organizing WO files
 export interface FileCategory {
     id: string;

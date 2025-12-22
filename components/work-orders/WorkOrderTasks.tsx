@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { WorkOrderTask, TaskChecklist, WorkOrderAssignment, WorkOrderCategory, TaskTag } from '@/types/database';
+import { WorkOrderTask, TaskChecklist, WorkOrderAssignment, WorkOrderCategory, TaskTag, TechnicianUser } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { Button, Card, Badge, Modal, Input, Textarea } from '@/components/ui';
 import { toast } from '@/components/providers';
@@ -18,7 +18,7 @@ import { TagSelector } from './TagSelector';
 // Helper to get initials
 const getInitials = (name?: string) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
 
-export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { workOrderId: string, availableTechnicians?: WorkOrderAssignment[] }) {
+export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { workOrderId: string, availableTechnicians?: TechnicianUser[] }) {
     const [tasks, setTasks] = useState<WorkOrderTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -102,7 +102,7 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { wor
     );
 }
 
-function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { task: WorkOrderTask, onUpdate: () => void, availableTechnicians: WorkOrderAssignment[], onOpenComments: () => void }) {
+function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { task: WorkOrderTask, onUpdate: () => void, availableTechnicians: TechnicianUser[], onOpenComments: () => void }) {
     const [expanded, setExpanded] = useState(false);
     const [checklists, setChecklists] = useState<TaskChecklist[]>([]);
     const [loadingChecklists, setLoadingChecklists] = useState(false);
@@ -464,16 +464,23 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                         <span className="text-xs text-gray-500">Assigned Techs:</span>
                         <div className="flex gap-1 flex-wrap">
                             {(availableTechnicians || [])
-                                .filter(t => task.assignments?.some(a => a.technician_id === t.technician_id))
-                                .map(assign => (
-                                    <Badge key={assign.id} variant="default" className="text-xs">
-                                        {assign.technician?.name}
-                                        <button className="ml-1 hover:text-red-500" onClick={() => {
-                                            const newIds = task.assignments!.filter(a => a.technician_id !== assign.technician_id).map(a => a.technician_id);
-                                            workOrdersService.assignTask(task.id, newIds).then(onUpdate);
-                                        }}>×</button>
-                                    </Badge>
-                                ))
+                                .filter(t => {
+                                    // Match TechnicianUser with task assignments via linked technician.id
+                                    const techId = t.technician?.[0]?.id;
+                                    return techId && task.assignments?.some(a => a.technician_id === techId);
+                                })
+                                .map(tech => {
+                                    const techId = tech.technician?.[0]?.id;
+                                    return (
+                                        <Badge key={tech.id} variant="default" className="text-xs">
+                                            {tech.display_name}
+                                            <button className="ml-1 hover:text-red-500" onClick={() => {
+                                                const newIds = task.assignments!.filter(a => a.technician_id !== techId).map(a => a.technician_id);
+                                                workOrdersService.assignTask(task.id, newIds).then(onUpdate);
+                                            }}>×</button>
+                                        </Badge>
+                                    );
+                                })
                             }
                             <div className="relative group">
                                 <Button variant="secondary" size="sm" className="h-6 px-2 text-xs">
@@ -481,10 +488,12 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                                 </Button>
                                 {/* Simple Dropdown for assignment */}
                                 <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-gray-200 shadow-lg rounded-md hidden group-hover:block z-10 p-1">
-                                    {availableTechnicians.length === 0 ? <div className="p-2 text-xs text-gray-500">No techs on details page</div> :
+                                    {availableTechnicians.length === 0 ? <div className="p-2 text-xs text-gray-500">No techs available</div> :
                                         availableTechnicians.map(t => {
+                                            const techId = t.technician?.[0]?.id;
+                                            if (!techId) return null; // Skip users without linked technician record
                                             const currentIds = task.assignments?.map(a => a.technician_id) || [];
-                                            const isAssigned = currentIds.includes(t.technician_id);
+                                            const isAssigned = currentIds.includes(techId);
                                             return (
                                                 <button
                                                     key={t.id}
@@ -494,11 +503,11 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                                                         }`}
                                                     onClick={() => {
                                                         if (!isAssigned) {
-                                                            workOrdersService.assignTask(task.id, [...currentIds, t.technician_id]).then(onUpdate);
+                                                            workOrdersService.assignTask(task.id, [...currentIds, techId]).then(onUpdate);
                                                         }
                                                     }}
                                                 >
-                                                    <span>{t.technician?.name}</span>
+                                                    <span>{t.display_name}</span>
                                                     {isAssigned && <span className="text-green-600">✓</span>}
                                                 </button>
                                             );

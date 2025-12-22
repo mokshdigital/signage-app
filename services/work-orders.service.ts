@@ -8,6 +8,7 @@ import {
     ReceiverOption,
     Technician,
     OfficeStaff,
+    TechnicianUser,
     WorkOrderTask,
     TaskAssignment,
     TaskChecklist,
@@ -610,6 +611,38 @@ export const workOrdersService = {
     // =============================================
     // TECHNICIAN ASSIGNMENTS
     // =============================================
+
+    /**
+     * Get all users who are technicians (from user_profiles - primary source)
+     * JOINs to technicians table for skills data
+     */
+    async getTechnicianUsers(): Promise<TechnicianUser[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select(`
+                id,
+                display_name,
+                avatar_url,
+                phone,
+                email,
+                is_active,
+                technician:technicians!user_profile_id (
+                    id,
+                    skills
+                )
+            `)
+            .contains('user_types', ['technician'])
+            .eq('is_active', true)
+            .order('display_name', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching technician users:', error);
+            throw new Error(`Failed to fetch technician users: ${error.message}`);
+        }
+
+        return (data || []) as TechnicianUser[];
+    },
 
     /**
      * Get assignments for a work order

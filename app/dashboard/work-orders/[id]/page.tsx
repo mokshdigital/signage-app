@@ -8,11 +8,10 @@ import {
     JobType,
     WorkOrderAssignment,
     WorkOrderShipment,
-    Technician,
+    TechnicianUser,
     JobStatus
 } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
-import { createClient } from '@/lib/supabase/client';
 import {
     Button,
     Card,
@@ -65,8 +64,8 @@ export default function WorkOrderDetailPage() {
     // Job Types
     const [jobTypes, setJobTypes] = useState<JobType[]>([]);
 
-    // Technicians for assignment
-    const [technicians, setTechnicians] = useState<Technician[]>([]);
+    // Technicians for assignment (from user_profiles)
+    const [technicians, setTechnicians] = useState<TechnicianUser[]>([]);
     const [selectedTechIds, setSelectedTechIds] = useState<string[]>([]);
     const [savingAssignments, setSavingAssignments] = useState(false);
     const [isEditingAssignments, setIsEditingAssignments] = useState(false);
@@ -155,15 +154,8 @@ export default function WorkOrderDetailPage() {
 
     const fetchTechnicians = async () => {
         try {
-            const supabase = createClient();
-            const { data, error } = await supabase
-                .from('technicians')
-                .select('*')
-                .order('name', { ascending: true });
-
-            if (!error && data) {
-                setTechnicians(data as Technician[]);
-            }
+            const data = await workOrdersService.getTechnicianUsers();
+            setTechnicians(data);
         } catch (err) {
             console.error('Failed to fetch technicians:', err);
         }
@@ -639,7 +631,7 @@ export default function WorkOrderDetailPage() {
                     {/* Tasks Section */}
                     <WorkOrderTasks
                         workOrderId={workOrderId}
-                        availableTechnicians={workOrder.assignments || []}
+                        availableTechnicians={technicians}
                     />
 
                     {/* Shipments Section */}
@@ -699,20 +691,23 @@ export default function WorkOrderDetailPage() {
                                 <div className="space-y-2">
                                     {technicians
                                         .filter(t => selectedTechIds.includes(t.id))
-                                        .map(tech => (
-                                            <div key={tech.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-sm">
-                                                        {safeRender(tech.name)}
-                                                    </p>
-                                                    {tech.skills && tech.skills.length > 0 && (
-                                                        <p className="text-xs text-gray-500 truncate">
-                                                            {tech.skills.slice(0, 2).join(', ')}
+                                        .map(tech => {
+                                            const skills = tech.technician?.[0]?.skills || [];
+                                            return (
+                                                <div key={tech.id} className="flex items-center gap-3 p-2 bg-gray-50 rounded-lg">
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-medium text-sm">
+                                                            {safeRender(tech.display_name)}
                                                         </p>
-                                                    )}
+                                                        {skills.length > 0 && (
+                                                            <p className="text-xs text-gray-500 truncate">
+                                                                {skills.slice(0, 2).join(', ')}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                 </div>
                             ) : (
                                 <>
@@ -724,37 +719,41 @@ export default function WorkOrderDetailPage() {
                                     />
                                     <div className="max-h-[250px] overflow-y-auto space-y-2">
                                         {technicians
-                                            .filter(tech =>
-                                                tech.name.toLowerCase().includes(techSearchQuery.toLowerCase()) ||
-                                                (tech.skills || []).some(skill => skill.toLowerCase().includes(techSearchQuery.toLowerCase()))
-                                            )
-                                            .map(tech => (
-                                                <label
-                                                    key={tech.id}
-                                                    className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedTechIds.includes(tech.id)
-                                                        ? 'bg-blue-50 border border-blue-200'
-                                                        : 'hover:bg-gray-50 border border-transparent'
-                                                        }`}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedTechIds.includes(tech.id)}
-                                                        onChange={() => handleTechToggle(tech.id)}
-                                                        className="w-4 h-4 text-blue-600 rounded"
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-medium text-sm truncate">
-                                                            {safeRender(tech.name)}
-                                                        </p>
-                                                        {tech.skills && tech.skills.length > 0 && (
-                                                            <p className="text-xs text-gray-500 truncate">
-                                                                {tech.skills.slice(0, 2).join(', ')}
-                                                                {tech.skills.length > 2 && ` +${tech.skills.length - 2}`}
+                                            .filter(tech => {
+                                                const skills = tech.technician?.[0]?.skills || [];
+                                                return tech.display_name.toLowerCase().includes(techSearchQuery.toLowerCase()) ||
+                                                    skills.some((skill: string) => skill.toLowerCase().includes(techSearchQuery.toLowerCase()));
+                                            })
+                                            .map(tech => {
+                                                const skills = tech.technician?.[0]?.skills || [];
+                                                return (
+                                                    <label
+                                                        key={tech.id}
+                                                        className={`flex items-center gap-3 p-2 rounded-lg cursor-pointer transition-colors ${selectedTechIds.includes(tech.id)
+                                                            ? 'bg-blue-50 border border-blue-200'
+                                                            : 'hover:bg-gray-50 border border-transparent'
+                                                            }`}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedTechIds.includes(tech.id)}
+                                                            onChange={() => handleTechToggle(tech.id)}
+                                                            className="w-4 h-4 text-blue-600 rounded"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-sm truncate">
+                                                                {safeRender(tech.display_name)}
                                                             </p>
-                                                        )}
-                                                    </div>
-                                                </label>
-                                            ))}
+                                                            {skills.length > 0 && (
+                                                                <p className="text-xs text-gray-500 truncate">
+                                                                    {skills.slice(0, 2).join(', ')}
+                                                                    {skills.length > 2 && ` +${skills.length - 2}`}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </label>
+                                                );
+                                            })}
                                     </div>
                                     <div className="flex gap-2">
                                         {selectedTechIds.length > 0 && (
@@ -826,12 +825,13 @@ export default function WorkOrderDetailPage() {
                         </Card>
                     )}
                 </div>
-            </div>
+            </div >
 
             {/* Modals */}
-            <WorkOrderFilesModal
+            < WorkOrderFilesModal
                 isOpen={isFilesOpen}
-                onClose={() => setIsFilesOpen(false)}
+                onClose={() => setIsFilesOpen(false)
+                }
                 files={files}
                 loading={loadingFiles}
             />
@@ -891,6 +891,6 @@ export default function WorkOrderDetailPage() {
                     </div>
                 </div>
             </Modal>
-        </div>
+        </div >
     );
 }

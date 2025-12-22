@@ -6,11 +6,10 @@ import {
     WorkOrder,
     WorkOrderFile,
     JobType,
-    Technician,
+    TechnicianUser,
     JobStatus
 } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
-import { createClient } from '@/lib/supabase/client';
 import {
     Card,
     Badge,
@@ -63,8 +62,8 @@ export default function WorkOrderDetailV2Page() {
     // Edit Modal
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 
-    // Technicians for assignment (in Technicians tab)
-    const [technicians, setTechnicians] = useState<Technician[]>([]);
+    // Technicians for assignment (from user_profiles)
+    const [technicians, setTechnicians] = useState<TechnicianUser[]>([]);
     const [selectedTechIds, setSelectedTechIds] = useState<string[]>([]);
     const [savingAssignments, setSavingAssignments] = useState(false);
     const [isEditingAssignments, setIsEditingAssignments] = useState(false);
@@ -138,15 +137,8 @@ export default function WorkOrderDetailV2Page() {
 
     const fetchTechnicians = async () => {
         try {
-            const supabase = createClient();
-            const { data, error } = await supabase
-                .from('technicians')
-                .select('*')
-                .order('name', { ascending: true });
-
-            if (!error && data) {
-                setTechnicians(data as Technician[]);
-            }
+            const data = await workOrdersService.getTechnicianUsers();
+            setTechnicians(data);
         } catch (err) {
             console.error('Failed to fetch technicians:', err);
         }
@@ -395,7 +387,7 @@ export default function WorkOrderDetailV2Page() {
                 return (
                     <WorkOrderTasks
                         workOrderId={workOrderId}
-                        availableTechnicians={workOrder.assignments || []}
+                        availableTechnicians={technicians}
                     />
                 );
 
@@ -418,21 +410,28 @@ export default function WorkOrderDetailV2Page() {
                                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
                                     {technicians
                                         .filter(t => selectedTechIds.includes(t.id))
-                                        .map(tech => (
-                                            <div key={tech.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                                <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                                                    {tech.name.charAt(0).toUpperCase()}
-                                                </div>
-                                                <div className="flex-1 min-w-0">
-                                                    <p className="font-medium text-sm">{safeRender(tech.name)}</p>
-                                                    {tech.skills && tech.skills.length > 0 && (
-                                                        <p className="text-xs text-gray-500 truncate">
-                                                            {tech.skills.slice(0, 2).join(', ')}
-                                                        </p>
+                                        .map(tech => {
+                                            const skills = tech.technician?.[0]?.skills || [];
+                                            return (
+                                                <div key={tech.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                                    {tech.avatar_url ? (
+                                                        <img src={tech.avatar_url} alt={tech.display_name} className="w-10 h-10 rounded-full object-cover" />
+                                                    ) : (
+                                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                                                            {tech.display_name.charAt(0).toUpperCase()}
+                                                        </div>
                                                     )}
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-medium text-sm">{safeRender(tech.display_name)}</p>
+                                                        {skills.length > 0 && (
+                                                            <p className="text-xs text-gray-500 truncate">
+                                                                {skills.slice(0, 2).join(', ')}
+                                                            </p>
+                                                        )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        ))}
+                                            );
+                                        })}
                                 </div>
                             ) : (
                                 <>
@@ -444,37 +443,41 @@ export default function WorkOrderDetailV2Page() {
                                     />
                                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 max-h-[400px] overflow-y-auto">
                                         {technicians
-                                            .filter(tech =>
-                                                tech.name.toLowerCase().includes(techSearchQuery.toLowerCase()) ||
-                                                (tech.skills || []).some(skill => skill.toLowerCase().includes(techSearchQuery.toLowerCase()))
-                                            )
-                                            .map(tech => (
-                                                <label
-                                                    key={tech.id}
-                                                    className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${selectedTechIds.includes(tech.id)
-                                                        ? 'bg-blue-50 border border-blue-200'
-                                                        : 'hover:bg-gray-50 border border-transparent'
-                                                        }`}
-                                                >
-                                                    <input
-                                                        type="checkbox"
-                                                        checked={selectedTechIds.includes(tech.id)}
-                                                        onChange={() => handleTechToggle(tech.id)}
-                                                        className="w-4 h-4 text-blue-600 rounded"
-                                                    />
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-medium text-sm truncate">
-                                                            {safeRender(tech.name)}
-                                                        </p>
-                                                        {tech.skills && tech.skills.length > 0 && (
-                                                            <p className="text-xs text-gray-500 truncate">
-                                                                {tech.skills.slice(0, 2).join(', ')}
-                                                                {tech.skills.length > 2 && ` +${tech.skills.length - 2}`}
+                                            .filter(tech => {
+                                                const skills = tech.technician?.[0]?.skills || [];
+                                                return tech.display_name.toLowerCase().includes(techSearchQuery.toLowerCase()) ||
+                                                    skills.some((skill: string) => skill.toLowerCase().includes(techSearchQuery.toLowerCase()));
+                                            })
+                                            .map(tech => {
+                                                const skills = tech.technician?.[0]?.skills || [];
+                                                return (
+                                                    <label
+                                                        key={tech.id}
+                                                        className={`flex items-center gap-3 p-3 rounded-lg cursor-pointer transition-colors ${selectedTechIds.includes(tech.id)
+                                                            ? 'bg-blue-50 border border-blue-200'
+                                                            : 'hover:bg-gray-50 border border-transparent'
+                                                            }`}
+                                                    >
+                                                        <input
+                                                            type="checkbox"
+                                                            checked={selectedTechIds.includes(tech.id)}
+                                                            onChange={() => handleTechToggle(tech.id)}
+                                                            className="w-4 h-4 text-blue-600 rounded"
+                                                        />
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-sm truncate">
+                                                                {safeRender(tech.display_name)}
                                                             </p>
-                                                        )}
-                                                    </div>
-                                                </label>
-                                            ))}
+                                                            {skills.length > 0 && (
+                                                                <p className="text-xs text-gray-500 truncate">
+                                                                    {skills.slice(0, 2).join(', ')}
+                                                                    {skills.length > 2 && ` +${skills.length - 2}`}
+                                                                </p>
+                                                            )}
+                                                        </div>
+                                                    </label>
+                                                );
+                                            })}
                                     </div>
                                     <div className="flex gap-2 pt-3 border-t border-gray-100">
                                         {selectedTechIds.length > 0 && (
