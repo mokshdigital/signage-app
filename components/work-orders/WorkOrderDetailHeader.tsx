@@ -4,7 +4,20 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { WorkOrder, JobStatus } from '@/types/database';
 import { Button, Badge, Modal, Textarea } from '@/components/ui';
-import { ChevronDown, FileText, Sparkles, MoreHorizontal, Edit, Trash2, Link, ArrowLeft, MapPin, Calendar, User, Building2 } from 'lucide-react';
+import {
+    ChevronDown,
+    FileText,
+    Sparkles,
+    MoreHorizontal,
+    Edit,
+    Trash2,
+    Link,
+    ArrowLeft,
+    MapPin,
+    Calendar,
+    User,
+    Building2
+} from 'lucide-react';
 import { safeRender } from '@/lib/utils/helpers';
 
 interface WorkOrderDetailHeaderProps {
@@ -21,14 +34,14 @@ interface WorkOrderDetailHeaderProps {
 
 const JOB_STATUSES: JobStatus[] = ['Open', 'Active', 'On Hold', 'Completed', 'Submitted', 'Invoiced', 'Cancelled'];
 
-const statusColors: Record<JobStatus, string> = {
-    'Open': 'bg-blue-100 text-blue-800 border-blue-200',
-    'Active': 'bg-green-100 text-green-800 border-green-200',
-    'On Hold': 'bg-yellow-100 text-yellow-800 border-yellow-200',
-    'Completed': 'bg-purple-100 text-purple-800 border-purple-200',
-    'Submitted': 'bg-indigo-100 text-indigo-800 border-indigo-200',
-    'Invoiced': 'bg-emerald-100 text-emerald-800 border-emerald-200',
-    'Cancelled': 'bg-red-100 text-red-800 border-red-200'
+const statusConfig: Record<JobStatus, { bg: string; text: string; border: string }> = {
+    'Open': { bg: 'bg-blue-500', text: 'text-white', border: 'border-blue-500' },
+    'Active': { bg: 'bg-green-500', text: 'text-white', border: 'border-green-500' },
+    'On Hold': { bg: 'bg-yellow-500', text: 'text-white', border: 'border-yellow-500' },
+    'Completed': { bg: 'bg-purple-500', text: 'text-white', border: 'border-purple-500' },
+    'Submitted': { bg: 'bg-indigo-500', text: 'text-white', border: 'border-indigo-500' },
+    'Invoiced': { bg: 'bg-emerald-500', text: 'text-white', border: 'border-emerald-500' },
+    'Cancelled': { bg: 'bg-red-500', text: 'text-white', border: 'border-red-500' }
 };
 
 export function WorkOrderDetailHeader({
@@ -52,7 +65,7 @@ export function WorkOrderDetailHeader({
     const formatDate = (dateStr: string | null | undefined) => {
         if (!dateStr) return '—';
         return new Date(dateStr).toLocaleDateString('en-US', {
-            day: '2-digit',
+            day: 'numeric',
             month: 'short',
             year: 'numeric'
         });
@@ -88,52 +101,48 @@ export function WorkOrderDetailHeader({
         }
     };
 
+    const currentStatus = workOrder.job_status || 'Open';
+    const statusStyle = statusConfig[currentStatus];
+
     return (
         <>
-            <div className="bg-white sticky top-0 z-20">
-                {/* Main Header Content */}
-                <div className="px-10 pt-8 pb-10">
+            <div className="bg-white sticky top-0 z-20 border-b border-gray-200">
+                <div className="max-w-[1600px] mx-auto px-8 lg:px-12">
 
-                    {/* Row 1: Back Button + Actions */}
-                    <div className="flex items-center justify-between mb-8">
+                    {/* Row 1: Back + Actions */}
+                    <div className="flex items-center justify-between py-6">
                         <button
                             onClick={() => router.push(backUrl)}
-                            className="flex items-center gap-2 text-gray-500 hover:text-gray-700 transition-colors group"
+                            className="flex items-center gap-2 text-gray-500 hover:text-gray-800 transition-colors"
                         >
-                            <ArrowLeft className="w-4 h-4 group-hover:-translate-x-0.5 transition-transform" />
+                            <ArrowLeft className="w-4 h-4" />
                             <span className="text-sm font-medium">Back to Work Orders</span>
                         </button>
 
-                        {/* Action Buttons */}
                         <div className="flex items-center gap-3">
-                            <Button
-                                variant="secondary"
-                                size="sm"
+                            <button
                                 onClick={onViewFiles}
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
                             >
-                                <FileText className="w-4 h-4 mr-2" />
+                                <FileText className="w-4 h-4" />
                                 View WO
-                            </Button>
-                            <Button
-                                variant="secondary"
-                                size="sm"
+                            </button>
+                            <button
                                 onClick={onViewAISummary}
-                                className="bg-gradient-to-r from-purple-50 to-blue-50 border-purple-200 text-purple-700 hover:from-purple-100 hover:to-blue-100"
+                                className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
                             >
-                                <Sparkles className="w-4 h-4 mr-2" />
+                                <Sparkles className="w-4 h-4" />
                                 AI Summary
-                            </Button>
+                            </button>
 
-                            {/* Quick Actions Dropdown */}
+                            {/* More Actions */}
                             <div className="relative">
-                                <Button
-                                    variant="ghost"
-                                    size="sm"
+                                <button
                                     onClick={() => setIsActionsOpen(!isActionsOpen)}
-                                    className="text-gray-400 hover:text-gray-600"
+                                    className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
                                 >
                                     <MoreHorizontal className="w-5 h-5" />
-                                </Button>
+                                </button>
                                 {isActionsOpen && (
                                     <>
                                         <div
@@ -172,40 +181,43 @@ export function WorkOrderDetailHeader({
                         </div>
                     </div>
 
-                    {/* Row 2: Title + Status */}
-                    <div className="mb-8">
-                        <div className="flex items-center gap-4 mb-3">
+                    {/* Row 2: WO Number + Status */}
+                    <div className="pb-5">
+                        <div className="flex items-center gap-4 mb-2">
                             <h1 className="text-3xl font-bold text-gray-900 tracking-tight">
                                 {workOrder.work_order_number
                                     ? safeRender(workOrder.work_order_number)
                                     : 'Work Order'
                                 }
                             </h1>
-                            {/* Status Dropdown */}
+
+                            {/* Status Dropdown Button */}
                             <div className="relative">
                                 <select
-                                    value={workOrder.job_status || 'Open'}
+                                    value={currentStatus}
                                     onChange={(e) => handleStatusChange(e.target.value as JobStatus)}
                                     disabled={savingStatus || saving}
                                     className={`
-                                        ${statusColors[workOrder.job_status || 'Open']} 
-                                        px-4 py-1.5 rounded-full text-sm font-semibold cursor-pointer 
-                                        border appearance-none pr-8
-                                        focus:ring-2 focus:ring-blue-500 focus:outline-none
+                                        ${statusStyle.bg} ${statusStyle.text}
+                                        px-4 py-1.5 rounded-lg text-sm font-semibold cursor-pointer 
+                                        border-0 appearance-none pr-8
+                                        focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 focus:outline-none
                                         disabled:opacity-50 disabled:cursor-not-allowed
                                         transition-colors
                                     `}
                                 >
                                     {JOB_STATUSES.map(status => (
-                                        <option key={status} value={status}>{status}</option>
+                                        <option key={status} value={status} className="bg-white text-gray-900">
+                                            {status}
+                                        </option>
                                     ))}
                                 </select>
-                                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 pointer-events-none opacity-60" />
+                                <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-4 h-4 pointer-events-none text-white/80" />
                             </div>
                         </div>
 
-                        {/* Subtitle info */}
-                        <div className="flex items-center gap-4 text-gray-500">
+                        {/* Job Type + AI Status */}
+                        <div className="flex items-center gap-3">
                             <Badge
                                 variant={workOrder.processed ? 'success' : 'warning'}
                                 dot
@@ -215,7 +227,7 @@ export function WorkOrderDetailHeader({
                             {workOrder.job_type && (
                                 <>
                                     <span className="text-gray-300">•</span>
-                                    <span className="text-sm">{safeRender(workOrder.job_type.name)}</span>
+                                    <span className="text-sm text-gray-600">{safeRender(workOrder.job_type.name)}</span>
                                 </>
                             )}
                             {(workOrder.job_status === 'On Hold' || workOrder.job_status === 'Cancelled') && workOrder.job_status_reason && (
@@ -229,91 +241,88 @@ export function WorkOrderDetailHeader({
                         </div>
                     </div>
 
-                    {/* Row 3: Details - Open Layout */}
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-x-12 gap-y-6">
+                    {/* Row 3: Details Grid - 6 Columns */}
+                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-y-5 py-6 border-t border-gray-100">
                         {/* Client */}
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <Building2 className="w-3.5 h-3.5" />
-                                Client
-                            </p>
-                            <p className="text-base font-semibold text-gray-900">
-                                {workOrder.client ? safeRender(workOrder.client.name) : <span className="text-gray-300 font-normal">Not assigned</span>}
+                        <div className="pr-6">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <Building2 className="w-3.5 h-3.5 text-gray-400" />
+                                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Client</span>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">
+                                {workOrder.client ? safeRender(workOrder.client.name) : <span className="text-gray-400 font-normal">—</span>}
                             </p>
                         </div>
 
                         {/* Project Manager */}
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <User className="w-3.5 h-3.5" />
-                                Project Manager
-                            </p>
-                            <p className="text-base font-semibold text-gray-900">
-                                {workOrder.project_manager ? safeRender(workOrder.project_manager.name) : <span className="text-gray-300 font-normal">—</span>}
+                        <div className="pr-6">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <User className="w-3.5 h-3.5 text-gray-400" />
+                                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Project Manager</span>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">
+                                {workOrder.project_manager ? safeRender(workOrder.project_manager.name) : <span className="text-gray-400 font-normal">—</span>}
                             </p>
                         </div>
 
                         {/* WO Date */}
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5" />
-                                WO Date
-                            </p>
-                            <p className="text-base font-semibold text-gray-900">
+                        <div className="pr-6">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">WO Date</span>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">
                                 {formatDate(workOrder.work_order_date)}
                             </p>
                         </div>
 
                         {/* Planned Date */}
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <Calendar className="w-3.5 h-3.5" />
-                                Planned Date
-                            </p>
-                            <p className="text-base font-semibold text-gray-900">
+                        <div className="pr-6">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <Calendar className="w-3.5 h-3.5 text-gray-400" />
+                                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Planned Date</span>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900">
                                 {formatDate(workOrder.planned_date)}
                             </p>
                         </div>
 
-                        {/* WO Owner */}
-                        <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <User className="w-3.5 h-3.5" />
-                                Owner
-                            </p>
-                            <div className="flex items-center gap-2.5">
+                        {/* Owner */}
+                        <div className="pr-6">
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <User className="w-3.5 h-3.5 text-gray-400" />
+                                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Owner</span>
+                            </div>
+                            <div className="flex items-center gap-2">
                                 {workOrder.owner?.avatar_url ? (
                                     <img
                                         src={workOrder.owner.avatar_url}
                                         alt=""
-                                        className="w-7 h-7 rounded-full object-cover"
+                                        className="w-6 h-6 rounded-full object-cover"
                                     />
                                 ) : workOrder.owner?.display_name ? (
-                                    <div className="w-7 h-7 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-xs font-bold">
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold">
                                         {workOrder.owner.display_name.charAt(0).toUpperCase()}
                                     </div>
                                 ) : null}
-                                <p className="text-base font-semibold text-gray-900">
-                                    {safeRender(workOrder.owner?.display_name) || <span className="text-gray-300 font-normal">—</span>}
+                                <p className="text-sm font-semibold text-gray-900">
+                                    {safeRender(workOrder.owner?.display_name) || <span className="text-gray-400 font-normal">—</span>}
                                 </p>
                             </div>
                         </div>
 
                         {/* Site Address */}
                         <div>
-                            <p className="text-xs font-medium text-gray-400 uppercase tracking-wider mb-2 flex items-center gap-1.5">
-                                <MapPin className="w-3.5 h-3.5" />
-                                Site Address
-                            </p>
-                            <p className="text-base font-semibold text-gray-900 truncate" title={workOrder.site_address || ''}>
-                                {safeRender(workOrder.site_address) || <span className="text-gray-300 font-normal">No address</span>}
+                            <div className="flex items-center gap-1.5 mb-2">
+                                <MapPin className="w-3.5 h-3.5 text-gray-400" />
+                                <span className="text-xs font-medium text-gray-400 uppercase tracking-wider">Site Address</span>
+                            </div>
+                            <p className="text-sm font-semibold text-gray-900 truncate" title={workOrder.site_address || ''}>
+                                {safeRender(workOrder.site_address) || <span className="text-gray-400 font-normal">—</span>}
                             </p>
                         </div>
                     </div>
                 </div>
-
-                {/* Bottom border */}
-                <div className="border-b border-gray-200" />
             </div>
 
             {/* Status Reason Modal */}
