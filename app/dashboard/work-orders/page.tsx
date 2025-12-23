@@ -338,22 +338,21 @@ export default function WorkOrdersPage() {
         }
     };
 
-    const handleReviewComplete = async () => {
+    const handleReviewComplete = () => {
         // Transition from Step 2 (Review) to Step 3 (Team Selection)
         setIsReviewOpen(false);
         setCurrentStep(3);
-
-        // Fetch owner name for display in team selection
-        if (currentWorkOrder?.owner_id) {
-            try {
-                const profiles = await workOrdersService.getUserProfiles([currentWorkOrder.owner_id]);
-                setOwnerName(profiles[currentWorkOrder.owner_id]?.name || null);
-            } catch (e) {
-                console.warn('Failed to fetch owner name', e);
-            }
-        }
-
         setIsTeamSelectionOpen(true);
+
+        // Fetch owner name for display (async, but modal is already open)
+        const ownerId = currentWorkOrder?.owner_id;
+        if (ownerId) {
+            workOrdersService.getUserProfiles([ownerId])
+                .then(profiles => {
+                    setOwnerName(profiles[ownerId]?.name || null);
+                })
+                .catch(e => console.warn('Failed to fetch owner name', e));
+        }
     };
 
     const handleTeamSelectionComplete = async () => {
