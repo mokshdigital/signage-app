@@ -1100,3 +1100,8 @@ Team chat messages for work orders.
 ### Migrations Required
 - `024_work_order_team.sql`
 - `025_work_order_chat.sql`
+
+### People Directory Redesign (Dec 23, 2024)
+- **Unified Table**: Replaced Technician/Office tabs with `PeopleTable`.
+- **Role Filters**: Dynamic chips for active roles (`internal` only).
+- **Security**: Strict client-side filtering to exclude external users (e.g. Clients).

@@ -37,7 +37,6 @@ export interface CreateInvitationData {
     nick_name?: string;
     role_id?: string | null;
     is_technician: boolean;
-    is_office_staff: boolean;
     skills?: string[];
     job_title?: string;
 }
@@ -48,7 +47,6 @@ export interface UpdateUserData {
     phone?: string;
     role_id?: string | null;
     is_technician?: boolean;
-    is_office_staff?: boolean;
     skills?: string[];
     job_title?: string;
     is_active?: boolean;
@@ -133,7 +131,6 @@ export const usersService = {
                 nick_name: data.nick_name || null,
                 role_id: data.role_id || null,
                 is_technician: data.is_technician,
-                is_office_staff: data.is_office_staff,
                 skills: data.skills || null,
                 job_title: data.job_title || null,
                 invited_by: user?.id || null,
@@ -160,7 +157,6 @@ export const usersService = {
         if (data.nick_name !== undefined) updateData.nick_name = data.nick_name;
         if (data.role_id !== undefined) updateData.role_id = data.role_id;
         if (data.is_technician !== undefined) updateData.is_technician = data.is_technician;
-        if (data.is_office_staff !== undefined) updateData.is_office_staff = data.is_office_staff;
         if (data.skills !== undefined) updateData.skills = data.skills;
         if (data.job_title !== undefined) updateData.job_title = data.job_title;
 

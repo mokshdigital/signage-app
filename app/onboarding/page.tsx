@@ -187,6 +187,19 @@ export default function OnboardingPage() {
         setSubmitError(null)
 
         try {
+            // Find invitation for this user
+            const { data: invitation } = await supabase
+                .from('invitations')
+                .select('*, role:roles(user_type)')
+                .ilike('email', user.email || '')
+                .is('claimed_at', null)
+                .maybeSingle()
+
+            // Determine user_type from the role
+            // The role.user_type is the source of truth for internal/external classification
+            // Default to 'internal' if no role is assigned (e.g., uninvited user)
+            const userType = invitation?.role?.user_type || 'internal'
+
             // Use avatarUrl if uploaded, or keep the Google avatar
             const finalAvatarUrl = avatarUrl || avatarPreview
 
@@ -198,11 +211,27 @@ export default function OnboardingPage() {
                     avatar_url: finalAvatarUrl,
                     phone: phone.trim(),
                     alternate_email: alternateEmail.trim() || null,
-                    title: null, // Will be set by admin
+
+                    // Fields from invitation or defaults
+                    user_type: userType,
+                    role_id: invitation?.role_id || null,
+                    title: invitation?.job_title || null,
+
                     onboarding_completed: true,
                 })
 
             if (error) throw error
+
+            // If we used an invitation, mark it as claimed
+            if (invitation) {
+                await supabase
+                    .from('invitations')
+                    .update({
+                        claimed_at: new Date().toISOString(),
+                        claimed_by: user.id
+                    })
+                    .eq('id', invitation.id)
+            }
 
             // Redirect to dashboard
             router.push('/dashboard')
@@ -248,10 +277,10 @@ export default function OnboardingPage() {
                             <div
                                 key={step}
                                 className={`flex items-center justify-center w-10 h-10 rounded-full font-semibold transition-all duration-300 ${step < currentStep
-                                        ? 'bg-green-500 text-white'
-                                        : step === currentStep
-                                            ? 'bg-blue-600 text-white ring-4 ring-blue-600/30'
-                                            : 'bg-slate-700 text-slate-400'
+                                    ? 'bg-green-500 text-white'
+                                    : step === currentStep
+                                        ? 'bg-blue-600 text-white ring-4 ring-blue-600/30'
+                                        : 'bg-slate-700 text-slate-400'
                                     }`}
                             >
                                 {step < currentStep ? (

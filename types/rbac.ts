@@ -36,6 +36,7 @@ export interface RoleInput {
     name: string;
     display_name: string;
     description?: string | null;
+    user_type?: 'internal' | 'external';
 }
 
 // User profile with role

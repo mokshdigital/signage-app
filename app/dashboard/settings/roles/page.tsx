@@ -32,6 +32,7 @@ export default function RolesPage() {
         name: '',
         display_name: '',
         description: '',
+        user_type: 'internal',
     });
     const [selectedPermissions, setSelectedPermissions] = useState<Set<string>>(new Set());
     const [isSaving, setIsSaving] = useState(false);
@@ -90,6 +91,7 @@ export default function RolesPage() {
                     name: roleWithPerms.name,
                     display_name: roleWithPerms.display_name,
                     description: roleWithPerms.description || '',
+                    user_type: roleWithPerms.user_type,
                 });
                 setSelectedPermissions(new Set(roleWithPerms.permissions.map(p => p.id)));
                 setIsEditModalOpen(true);
@@ -109,6 +111,7 @@ export default function RolesPage() {
             const updates: Partial<RoleInput> = {
                 display_name: formData.display_name,
                 description: formData.description,
+                user_type: formData.user_type,
             };
             if (!selectedRole.is_system) {
                 updates.name = formData.name;
@@ -149,7 +152,7 @@ export default function RolesPage() {
     };
 
     const resetForm = () => {
-        setFormData({ name: '', display_name: '', description: '' });
+        setFormData({ name: '', display_name: '', description: '', user_type: 'internal' });
         setSelectedPermissions(new Set());
         setSelectedRole(null);
     };
@@ -237,6 +240,9 @@ export default function RolesPage() {
                                         {role.is_system && (
                                             <Badge variant="info">System</Badge>
                                         )}
+                                        <Badge variant={role.user_type === 'internal' ? 'success' : 'warning'}>
+                                            {role.user_type === 'internal' ? 'Internal' : 'External'}
+                                        </Badge>
                                     </div>
                                     <p className="text-sm text-gray-500">
                                         {role.description || `Slug: ${role.name}`}
@@ -317,6 +323,38 @@ export default function RolesPage() {
                             placeholder="Describe what this role can do..."
                             rows={2}
                         />
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            User Type *
+                        </label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="user_type_create"
+                                    value="internal"
+                                    checked={formData.user_type === 'internal'}
+                                    onChange={() => setFormData({ ...formData, user_type: 'internal' })}
+                                    className="w-4 h-4 text-blue-600 border-gray-300"
+                                />
+                                <span className="text-sm text-gray-700">Internal</span>
+                                <span className="text-xs text-gray-400">(Employees)</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="user_type_create"
+                                    value="external"
+                                    checked={formData.user_type === 'external'}
+                                    onChange={() => setFormData({ ...formData, user_type: 'external' })}
+                                    className="w-4 h-4 text-blue-600 border-gray-300"
+                                />
+                                <span className="text-sm text-gray-700">External</span>
+                                <span className="text-xs text-gray-400">(Clients, Vendors)</span>
+                            </label>
+                        </div>
                     </div>
 
                     {/* Permissions */}
@@ -416,7 +454,37 @@ export default function RolesPage() {
                         />
                     </div>
 
-                    {/* Permissions */}
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            User Type *
+                        </label>
+                        <div className="flex gap-4">
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="user_type_edit"
+                                    value="internal"
+                                    checked={formData.user_type === 'internal'}
+                                    onChange={() => setFormData({ ...formData, user_type: 'internal' })}
+                                    className="w-4 h-4 text-blue-600 border-gray-300"
+                                />
+                                <span className="text-sm text-gray-700">Internal</span>
+                                <span className="text-xs text-gray-400">(Employees)</span>
+                            </label>
+                            <label className="flex items-center gap-2 cursor-pointer">
+                                <input
+                                    type="radio"
+                                    name="user_type_edit"
+                                    value="external"
+                                    checked={formData.user_type === 'external'}
+                                    onChange={() => setFormData({ ...formData, user_type: 'external' })}
+                                    className="w-4 h-4 text-blue-600 border-gray-300"
+                                />
+                                <span className="text-sm text-gray-700">External</span>
+                                <span className="text-xs text-gray-400">(Clients, Vendors)</span>
+                            </label>
+                        </div>
+                    </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                             Permissions ({selectedPermissions.size} selected)

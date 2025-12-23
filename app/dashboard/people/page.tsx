@@ -1,23 +1,8 @@
 'use client';
 
-import { Tabs } from '@/components/ui';
-import { TechniciansTab } from '@/components/people/TechniciansTab';
-import { OfficeStaffTab } from '@/components/people/OfficeStaffTab';
+import { PeopleTable } from '@/components/people/PeopleTable';
 
 export default function PeoplePage() {
-    const tabs = [
-        {
-            id: 'technicians',
-            label: 'Technicians',
-            content: <TechniciansTab />
-        },
-        {
-            id: 'office-staff',
-            label: 'Office Staff',
-            content: <OfficeStaffTab />
-        }
-    ];
-
     return (
         <div className="space-y-6">
             <div>
@@ -27,7 +12,7 @@ export default function PeoplePage() {
                 </p>
             </div>
 
-            <Tabs tabs={tabs} defaultTab="technicians" />
+            <PeopleTable />
         </div>
     );
 }

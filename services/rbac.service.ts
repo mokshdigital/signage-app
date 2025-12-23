@@ -91,6 +91,7 @@ export async function createRole(input: RoleInput): Promise<Role> {
             name: input.name,
             display_name: input.display_name,
             description: input.description || null,
+            user_type: input.user_type || 'internal', // Default to internal
             is_system: false, // User-created roles are never system roles
         }])
         .select()

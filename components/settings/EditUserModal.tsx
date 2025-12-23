@@ -32,8 +32,6 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
     const [nickName, setNickName] = useState('');
     const [phone, setPhone] = useState('');
     const [roleId, setRoleId] = useState<string>('');
-    const [isTechnician, setIsTechnician] = useState(false);
-    const [isOfficeStaff, setIsOfficeStaff] = useState(false);
     const [skills, setSkills] = useState<string[]>([]);
     const [jobTitle, setJobTitle] = useState('');
 
@@ -54,13 +52,18 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
             setNickName(user.nick_name || '');
             setPhone(user.phone || '');
             setRoleId(user.role?.id || '');
-            setIsTechnician(!!user.technician);
-            setIsOfficeStaff(!!user.title);
             setSkills(user.technician?.skills || []);
             setJobTitle(user.title || '');
             setError(null);
         }
     }, [user, isOpen]);
+
+    // Check if selected role is 'technician'
+    const selectedRole = roles.find(r => r.id === roleId);
+    const isTechnicianRole = selectedRole?.name === 'technician';
+
+    // Check if user was previously a technician
+    const wasTechnician = !!user?.technician;
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -75,10 +78,9 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
                 nick_name: nickName || undefined,
                 phone: phone || undefined,
                 role_id: roleId || null,
-                is_technician: isTechnician,
-                is_office_staff: isOfficeStaff,
-                skills: isTechnician ? skills : undefined,
-                job_title: isOfficeStaff ? jobTitle : undefined,
+                is_technician: isTechnicianRole,
+                skills: isTechnicianRole ? skills : undefined,
+                job_title: jobTitle || undefined,
             };
 
             await usersService.updateUser(user.id, updateData);
@@ -98,6 +100,10 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
                 : [...prev, skill]
         );
     };
+
+    // Group roles by user_type for better UX
+    const internalRoles = roles.filter(r => r.user_type === 'internal');
+    const externalRoles = roles.filter(r => r.user_type === 'external');
 
     if (!user) return null;
 
@@ -146,66 +152,66 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
                     </div>
                 </div>
 
-                {/* Phone */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Phone Number
-                    </label>
-                    <Input
-                        value={phone}
-                        onChange={(e) => setPhone(e.target.value)}
-                        placeholder="(555) 555-5555"
-                        type="tel"
-                    />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Phone Number
+                        </label>
+                        <Input
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            placeholder="(555) 555-5555"
+                            type="tel"
+                        />
+                    </div>
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Job Title
+                        </label>
+                        <Input
+                            value={jobTitle}
+                            onChange={(e) => setJobTitle(e.target.value)}
+                            placeholder="e.g. Project Manager"
+                        />
+                    </div>
                 </div>
 
-                {/* Role */}
+                {/* Role Selection - Grouped by user_type */}
                 <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                        RBAC Role
+                        Role
                     </label>
                     <Select
                         value={roleId}
                         onChange={(e) => setRoleId(e.target.value)}
                         options={[
                             { value: '', label: 'No Role' },
-                            ...roles.map(r => ({
+                            ...(internalRoles.length > 0 ? [{ value: '', label: '── Internal Users ──', disabled: true }] : []),
+                            ...internalRoles.map(r => ({
                                 value: r.id,
                                 label: r.display_name + (r.is_system ? ' (System)' : '')
-                            }))
+                            })),
+                            ...(externalRoles.length > 0 ? [{ value: '', label: '── External Users ──', disabled: true }] : []),
+                            ...externalRoles.map(r => ({
+                                value: r.id,
+                                label: r.display_name + (r.is_system ? ' (System)' : '')
+                            })),
                         ]}
                     />
+                    <p className="text-xs text-gray-500 mt-1">
+                        The role determines access level and internal/external classification.
+                    </p>
                 </div>
 
-                {/* Functional Types */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                        User Types
-                    </label>
-                    <div className="flex gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={isTechnician}
-                                onChange={(e) => setIsTechnician(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700">Technician</span>
-                        </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={isOfficeStaff}
-                                onChange={(e) => setIsOfficeStaff(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700">Office Staff</span>
-                        </label>
-                    </div>
-                </div>
+                {/* Warning when changing away from Technician role */}
+                {wasTechnician && !isTechnicianRole && (
+                    <Alert variant="warning">
+                        Changing this user away from the Technician role will remove their technician record and skills.
+                    </Alert>
+                )}
 
-                {/* Technician Fields */}
-                {isTechnician && (
+                {/* Technician Skills - Only shown when Technician role is selected */}
+                {isTechnicianRole && (
                     <div className="p-4 bg-blue-50 rounded-lg space-y-3">
                         <label className="block text-sm font-medium text-blue-900">
                             Technician Skills
@@ -225,21 +231,6 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
                                 </button>
                             ))}
                         </div>
-                    </div>
-                )}
-
-                {/* Office Staff Fields */}
-                {isOfficeStaff && (
-                    <div className="p-4 bg-purple-50 rounded-lg space-y-3">
-                        <label className="block text-sm font-medium text-purple-900">
-                            Job Title
-                        </label>
-                        <Input
-                            value={jobTitle}
-                            onChange={(e) => setJobTitle(e.target.value)}
-                            placeholder="e.g., Project Manager, Accountant"
-                            className="bg-white"
-                        />
                     </div>
                 )}
 

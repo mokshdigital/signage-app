@@ -1212,3 +1212,35 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
     *   Verified UI for user invitation and directory listings.
 
 **Git Commit**: `refactor: Complete user type migration, UI updates, and build fixes`
+
+# December 23, 2024 (Session 2)
+
+## Redesign People Directory
+
+### Objectives
+- Unify the "Technicians" and "Office Staff" tabs into a single **People** directory table.
+- Implement **Role-Based Filtering** using dynamic chips from the `roles` table.
+- Ensure only **Internal** users and roles are displayed (security/privacy).
+
+### Actions Taken
+1.  **UI Redesign**
+    - Created `components/people/PeopleTable.tsx`: A unified data table component fetching all users and roles.
+    - Replaced `app/dashboard/people/page.tsx` content to use the new `PeopleTable` instead of the tabbed layout.
+    - Removed deprecated components: `TechniciansTab.tsx` and `OfficeStaffTab.tsx`.
+
+2.  **Filtering Logic**
+    - Implemented client-side filtering to strictly show users where `user_type === 'internal'`.
+    - Implemented role chip filtering to strictly show roles where `user_type === 'internal'` (filtering out Client, Vendor, Sub-contractor roles).
+    - Added text search functionality for name/email.
+    - Added dynamic role chips (All, Admin, Technician, etc.) that filter the table view instantly.
+
+3.  **Refactoring & Cleanup**
+    - Fixed linting errors in `PeopleTable.tsx`.
+    - Updated `useAsync` hook usage to correctly trigger data fetching via `useEffect`.
+
+### Outcome
+- The `/dashboard/people` page now displays a clean, single list of all internal staff.
+- Users can easily filter by role without navigating between tabs.
+- External users (Clients) are securely hidden from this view.
+
+**Git Commit**: `feat: Redesign People page with unified table and role-based filters`

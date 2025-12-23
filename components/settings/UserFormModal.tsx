@@ -31,8 +31,6 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
     const [nickName, setNickName] = useState('');
     const [email, setEmail] = useState('');
     const [roleId, setRoleId] = useState<string>('');
-    const [isTechnician, setIsTechnician] = useState(false);
-    const [isOfficeStaff, setIsOfficeStaff] = useState(false);
     const [skills, setSkills] = useState<string[]>([]);
     const [jobTitle, setJobTitle] = useState('');
 
@@ -53,13 +51,15 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
             setNickName('');
             setEmail('');
             setRoleId('');
-            setIsTechnician(false);
-            setIsOfficeStaff(false);
             setSkills([]);
             setJobTitle('');
             setError(null);
         }
     }, [isOpen]);
+
+    // Check if selected role is 'technician'
+    const selectedRole = roles.find(r => r.id === roleId);
+    const isTechnicianRole = selectedRole?.name === 'technician';
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -72,6 +72,10 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
         }
         if (!email.trim()) {
             setError('Email is required');
+            return;
+        }
+        if (!roleId) {
+            setError('Please select a role');
             return;
         }
 
@@ -89,11 +93,10 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                 display_name: displayName,
                 nick_name: nickName || undefined,
                 email,
-                role_id: roleId || null,
-                is_technician: isTechnician,
-                is_office_staff: isOfficeStaff,
-                skills: isTechnician ? skills : undefined,
-                job_title: isOfficeStaff ? jobTitle : undefined,
+                role_id: roleId,
+                is_technician: isTechnicianRole,
+                skills: isTechnicianRole ? skills : undefined,
+                job_title: jobTitle || undefined,
             };
 
             await usersService.createInvitation(invitationData);
@@ -113,6 +116,10 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                 : [...prev, skill]
         );
     };
+
+    // Group roles by user_type for better UX
+    const internalRoles = roles.filter(r => r.user_type === 'internal');
+    const externalRoles = roles.filter(r => r.user_type === 'external');
 
     return (
         <Modal
@@ -176,59 +183,45 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                     </div>
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">
-                            RBAC Role
-                        </label>
-                        <Select
-                            value={roleId}
-                            onChange={(e) => setRoleId(e.target.value)}
-                            options={[
-                                { value: '', label: 'No Role' },
-                                ...roles.map(r => ({
-                                    value: r.id,
-                                    label: r.display_name + (r.is_system ? ' (System)' : '')
-                                }))
-                            ]}
-                        />
-                    </div>
-                </div>
-
-                {/* Functional Types */}
-                <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            User Type <span className="text-red-500">*</span>
-                        </label>
-                        <Select
-                            value={isTechnician ? 'technician' : 'office_staff'}
-                            onChange={(e) => {
-                                const val = e.target.value;
-                                setIsTechnician(val === 'technician');
-                                setIsOfficeStaff(val === 'office_staff');
-                            }}
-                            options={[
-                                { value: 'office_staff', label: 'Office Staff (Internal)' },
-                                { value: 'technician', label: 'Technician (Field Staff)' }
-                            ]}
-                        />
-                        <p className="text-xs text-gray-500 mt-1">
-                            Determines if user appears in field staff lists. Both are internal users.
-                        </p>
-                    </div>
-
-                    <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
-                            Job Title
+                            Job Title <span className="text-gray-400 text-xs">(optional)</span>
                         </label>
                         <Input
                             value={jobTitle}
                             onChange={(e) => setJobTitle(e.target.value)}
-                            placeholder={isTechnician ? "e.g. Senior Technician" : "e.g. Project Manager"}
+                            placeholder="e.g. Project Manager"
                         />
                     </div>
                 </div>
 
-                {/* Technician Fields */}
-                {isTechnician && (
+                {/* Role Selection - Grouped by user_type */}
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                        Role <span className="text-red-500">*</span>
+                    </label>
+                    <Select
+                        value={roleId}
+                        onChange={(e) => setRoleId(e.target.value)}
+                        options={[
+                            { value: '', label: '-- Select a Role --', disabled: true },
+                            ...(internalRoles.length > 0 ? [{ value: '', label: '── Internal Users ──', disabled: true }] : []),
+                            ...internalRoles.map(r => ({
+                                value: r.id,
+                                label: r.display_name + (r.is_system ? ' (System)' : '')
+                            })),
+                            ...(externalRoles.length > 0 ? [{ value: '', label: '── External Users ──', disabled: true }] : []),
+                            ...externalRoles.map(r => ({
+                                value: r.id,
+                                label: r.display_name + (r.is_system ? ' (System)' : '')
+                            })),
+                        ]}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">
+                        The role determines the user&apos;s access level and whether they are internal or external.
+                    </p>
+                </div>
+
+                {/* Technician Skills - Only shown when Technician role is selected */}
+                {isTechnicianRole && (
                     <div className="p-4 bg-blue-50 rounded-lg space-y-3">
                         <label className="block text-sm font-medium text-blue-900">
                             Technician Skills
@@ -250,8 +243,6 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                         </div>
                     </div>
                 )}
-
-
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-4 border-t">
