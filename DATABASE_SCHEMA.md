@@ -285,16 +285,16 @@ Stores extended user profile information collected during onboarding.
 
 #### Columns
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+|--------|------|-------------|-----------|
 | `id` | UUID | PRIMARY KEY, REFERENCES auth.users(id) ON DELETE CASCADE | User's auth ID |
 | `display_name` | TEXT | NOT NULL | User's display name |
 | `nick_name` | TEXT | | Short display name for compact UIs |
 | `email` | TEXT | | User's email address |
 | `avatar_url` | TEXT | | Profile picture URL |
 | `phone` | TEXT | | Phone number |
-| `alternate_email` | TEXT | | Secondary email address |
+| `title` | TEXT | | Job title |
 | `role_id` | UUID | FK -> roles(id) ON DELETE SET NULL | RBAC role assignment |
-| `user_types` | TEXT[] | DEFAULT '{}' | Array: 'technician', 'office_staff' |
+| `user_type` | TEXT | NOT NULL, CHECK IN ('internal', 'external') | Derived from role.user_type |
 | `is_active` | BOOLEAN | DEFAULT TRUE | Soft delete flag |
 | `onboarding_completed` | BOOLEAN | DEFAULT FALSE | Whether onboarding is complete |
 | `created_at` | TIMESTAMP | DEFAULT NOW() | Record creation timestamp |
@@ -304,6 +304,7 @@ Stores extended user profile information collected during onboarding.
 - `idx_user_profiles_onboarding` on `onboarding_completed`
 - `idx_user_profiles_phone` on `phone`
 - `idx_user_profiles_email` on `email`
+- `idx_user_profiles_user_type` on `user_type`
 
 #### Row Level Security (RLS)
 - **Enabled**: Yes
@@ -311,11 +312,13 @@ Stores extended user profile information collected during onboarding.
   - `Authenticated users can read profiles`: SELECT where auth.uid() IS NOT NULL
   - `Users can manage own profile`: ALL where auth.uid() = id
   - `Allow profile insert`: INSERT where auth.uid() IS NOT NULL
+  - `is_internal()` helper function checks `user_type = 'internal'`
 
 #### Notes
 - `onboarding_completed` must be true for users to access the dashboard
 - `is_active` = false effectively archives the user without deleting data
-- `user_types` determines which extension tables (technicians, office_staff) link to this profile
+- `user_type` is set during auth callback based on the invitation's role.user_type
+- Old `user_types` array and `alternate_email` columns are deprecated
 
 ---
 
@@ -324,16 +327,15 @@ Pre-registration table for users who haven't signed in yet. Claimed on first Goo
 
 #### Columns
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+|--------|------|-------------|-----------|
 | `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
 | `email` | TEXT | UNIQUE, NOT NULL | Invited email (must match Google sign-in) |
 | `display_name` | TEXT | NOT NULL | User's full name |
 | `nick_name` | TEXT | | Optional short name |
-| `role_id` | UUID | FK -> roles(id) ON DELETE SET NULL | Pre-assigned RBAC role |
+| `role_id` | UUID | FK -> roles(id) ON DELETE SET NULL | Pre-assigned RBAC role (determines user_type) |
 | `is_technician` | BOOLEAN | DEFAULT FALSE | Create technician record on claim |
-| `is_office_staff` | BOOLEAN | DEFAULT FALSE | Create office_staff record on claim |
 | `skills` | TEXT[] | | Technician skills (if is_technician) |
-| `job_title` | TEXT | | Office staff title (if is_office_staff) |
+| `job_title` | TEXT | | User's job title |
 | `invited_by` | UUID | FK -> auth.users(id) ON DELETE SET NULL | Admin who created invitation |
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Invitation creation time |
 | `claimed_at` | TIMESTAMPTZ | | When user signed in and claimed |
@@ -348,30 +350,19 @@ Pre-registration table for users who haven't signed in yet. Claimed on first Goo
   - Authenticated users can read/insert/update/delete invitations
 
 #### Claim Flow
-1. Admin creates invitation via Settings > Users > Invite User
+1. Admin creates invitation via Settings > Users > Invite User (role required)
 2. User signs in with Google using invited email
-3. Auth callback finds invitation, creates user_profile + extension records
-4. Invitation marked as claimed (claimed_at, claimed_by set)
-5. User redirected to onboarding
+3. Auth callback finds invitation, fetches `role.user_type`
+4. Creates user_profile with `user_type` from role, + technician record if `is_technician`
+5. Invitation marked as claimed (claimed_at, claimed_by set)
+6. User redirected to 2-step onboarding (edit avatar, nick name, phone)
 
 ---
 
-### 7. `office_staff`
-Directory of office staff members.
+### 7. `office_staff` ⚠️ DEPRECATED
+> **Note**: This table has been deprecated as of Migration 027. User titles are now stored in `user_profiles.title`. Internal users are identified by `user_profiles.user_type = 'internal'`.
 
-#### Columns
-| Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
-| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
-| `name` | TEXT | NOT NULL | Staff member name |
-| `email` | TEXT | | Email address |
-| `phone` | TEXT | | Contact number |
-| `title` | TEXT | | Job title |
-| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
-
-#### Row Level Security (RLS)
-- **Enabled**: Yes
-- **Policies**: Allow all authenticated users to read/manage (permissive for now).
+**Replaced by**: Query `user_profiles WHERE user_type = 'internal'` for office staff.
 
 
 ---
@@ -431,16 +422,22 @@ External client contacts (Project Managers). Distinct from internal `office_staf
 ---
 
 ### 10. `roles`
-Defines available user roles in the system.
+Defines available user roles in the system. Each role specifies whether it's for internal or external users.
 
 #### Columns
 | Column | Type | Constraints | Description |
-|--------|------|-------------|-------------|
+|--------|------|-------------|-----------|
 | `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
 | `name` | TEXT | UNIQUE, NOT NULL | Machine-readable name (e.g., 'super_admin') |
 | `display_name` | TEXT | NOT NULL | Human-readable name (e.g., 'Super Admin') |
 | `description` | TEXT | | Role description |
+| `user_type` | TEXT | NOT NULL, CHECK IN ('internal', 'external') | Determines user access level |
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Record creation timestamp |
+
+#### Notes
+- `user_type` propagates to `user_profiles.user_type` when a user is assigned this role
+- Internal roles: Super Admin, Admin, Technician, Project Coordinator, etc.
+- External roles: Client, Vendor, Sub-contractor
 
 ---
 
