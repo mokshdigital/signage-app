@@ -627,7 +627,7 @@ Categorizes work orders.
 Junction table for assigning multiple technicians to a work order.
 - `id` (UUID, PK)
 - `work_order_id` (UUID, FK -> work_orders)
-- `technician_id` (UUID, FK -> technicians)
+- `user_profile_id` (UUID, FK -> user_profiles)
 - `assigned_at` (TIMESTAMPTZ)
 - `notes` (TEXT)
 
@@ -699,15 +699,15 @@ Junction table for @mentions in task comments (for future notifications).
 | `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
 | `comment_id` | UUID | NOT NULL, FK -> work_order_task_comments (ON DELETE CASCADE) | Parent comment |
 | `mentioned_user_id` | UUID | FK -> user_profiles (ON DELETE CASCADE) | Mentioned user (office staff/WO owner) |
-| `mentioned_technician_id` | UUID | FK -> technicians (ON DELETE CASCADE) | Mentioned technician |
+
 | `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
 
-**Constraint**: `chk_mention_target` ensures exactly one of `mentioned_user_id` or `mentioned_technician_id` is set per row.
+
 
 ##### Indexes
 - `idx_task_comment_mentions_comment_id` on `comment_id`
 - `idx_task_comment_mentions_user_id` on `mentioned_user_id`
-- `idx_task_comment_mentions_technician_id` on `mentioned_technician_id`
+
 
 ##### Row Level Security (RLS)
 - **Enabled**: Yes

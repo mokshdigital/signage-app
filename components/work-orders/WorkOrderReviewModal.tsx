@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal, Button, Select, Input, Textarea, LoadingSpinner, Alert } from '@/components/ui';
+import { Modal, Button, Select, Input, Textarea, LoadingSpinner, Alert, StepProgress } from '@/components/ui';
 import { WorkOrder, Client, ProjectManager, JobType } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { clientsService } from '@/services/clients.service';
@@ -226,6 +226,16 @@ export function WorkOrderReviewModal({
                 </div>
             ) : (
                 <div className="space-y-6">
+                    {/* Step Progress */}
+                    <StepProgress
+                        currentStep={2}
+                        steps={[
+                            { label: 'Upload' },
+                            { label: 'Details' },
+                            { label: 'Team' }
+                        ]}
+                    />
+
                     <Alert variant="info" title="AI Extraction Complete">
                         Please review the extracted details and fill in any missing information below.
                     </Alert>
@@ -379,7 +389,7 @@ export function WorkOrderReviewModal({
                             onClick={handleSave}
                             loading={saving}
                         >
-                            Confirm & Save
+                            Next: Select Team
                         </Button>
                     </div>
                 </div>

@@ -1117,6 +1117,40 @@ export interface Database {
                         referencedColumns: ["id"]
                     }
                 ]
+            },
+            work_order_team: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    user_profile_id: string
+                    added_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    user_profile_id: string
+                    added_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    user_profile_id?: string
+                    added_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_team_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_team_user_profile_id_fkey"
+                        columns: ["user_profile_id"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
         }
         Views: {

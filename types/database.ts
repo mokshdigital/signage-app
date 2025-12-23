@@ -335,7 +335,7 @@ export interface TaskCommentMention {
     created_at: string;
     // Joined data
     user?: { id: string; display_name: string };
-    technician?: { id: string; name: string };
+
 }
 
 // Mentionable User - combined type for @mention dropdown

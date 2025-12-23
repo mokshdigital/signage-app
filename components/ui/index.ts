@@ -14,3 +14,4 @@ export * from './Textarea';
 export * from './Icons';
 export { default as TagInput } from './TagInput';
 export * from './ComingSoon';
+export { StepProgress } from './StepProgress';

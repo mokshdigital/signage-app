@@ -1927,4 +1927,84 @@ export const workOrdersService = {
             throw new Error(`Failed to set task category: ${error.message}`);
         }
     },
+
+    // =============================================
+    // WORK ORDER TEAM (Office Staff)
+    // =============================================
+
+    /**
+     * Get all active office staff users for team selection
+     * Uses user_profiles with user_types containing 'office_staff'
+     */
+    async getOfficeStaffUsers(): Promise<{ id: string; display_name: string; avatar_url: string | null }[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('user_profiles')
+            .select('id, display_name, avatar_url')
+            .contains('user_types', ['office_staff'])
+            .eq('is_active', true)
+            .order('display_name', { ascending: true });
+
+        if (error) {
+            console.error('Error fetching office staff users:', error);
+            throw new Error(`Failed to fetch office staff users: ${error.message}`);
+        }
+
+        return (data || []);
+    },
+
+    /**
+     * Get team members for a work order
+     */
+    async getTeamMembers(workOrderId: string): Promise<{ id: string; user_profile_id: string; user_profile: { id: string; display_name: string; avatar_url: string | null } }[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_team')
+            .select('id, user_profile_id, user_profile:user_profiles(id, display_name, avatar_url)')
+            .eq('work_order_id', workOrderId);
+
+        if (error) {
+            console.error('Error fetching team members:', error);
+            throw new Error(`Failed to fetch team members: ${error.message}`);
+        }
+
+        return (data || []) as any;
+    },
+
+    /**
+     * Add team members to a work order
+     */
+    async addTeamMembers(workOrderId: string, userProfileIds: string[]): Promise<void> {
+        if (userProfileIds.length === 0) return;
+
+        const supabase = createClient();
+        const members = userProfileIds.map(userId => ({
+            work_order_id: workOrderId,
+            user_profile_id: userId
+        }));
+
+        const { error } = await supabase
+            .from('work_order_team')
+            .upsert(members, { onConflict: 'work_order_id,user_profile_id' });
+
+        if (error) {
+            throw new Error(`Failed to add team members: ${error.message}`);
+        }
+    },
+
+    /**
+     * Remove a team member from a work order
+     */
+    async removeTeamMember(workOrderId: string, userProfileId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_team')
+            .delete()
+            .eq('work_order_id', workOrderId)
+            .eq('user_profile_id', userProfileId);
+
+        if (error) {
+            throw new Error(`Failed to remove team member: ${error.message}`);
+        }
+    },
 };
