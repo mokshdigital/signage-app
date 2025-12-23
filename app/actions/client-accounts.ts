@@ -87,7 +87,14 @@ export async function createClientAccount(input: CreateClientInput): Promise<Cre
 
         const userId = authData.user.id
 
-        // Create user_profile with 'client' type
+        // Create user_profile with 'external' type and client role
+        // First get the client role ID
+        const { data: clientRole } = await adminClient
+            .from('roles')
+            .select('id')
+            .eq('name', 'client')
+            .single()
+
         const { error: profileError } = await adminClient
             .from('user_profiles')
             .insert({
@@ -95,7 +102,8 @@ export async function createClientAccount(input: CreateClientInput): Promise<Cre
                 display_name: input.displayName,
                 nick_name: input.nickName || null,
                 email: normalizedEmail,
-                user_types: ['client'],
+                user_type: 'external',
+                role_id: clientRole?.id || null,
                 is_active: true,
                 onboarding_completed: true, // Clients skip onboarding
             })

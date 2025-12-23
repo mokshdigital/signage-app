@@ -422,7 +422,7 @@ export interface Database {
                     role_id: string | null
                     onboarding_completed: boolean
                     nick_name: string | null
-                    user_types: string[] | null
+                    user_type: 'internal' | 'external'
                     is_active: boolean
                     email: string | null
                     created_at: string
@@ -438,7 +438,7 @@ export interface Database {
                     role_id?: string | null
                     onboarding_completed?: boolean
                     nick_name?: string | null
-                    user_types?: string[] | null
+                    user_type?: 'internal' | 'external'
                     is_active?: boolean
                     email?: string | null
                     created_at?: string
@@ -454,7 +454,7 @@ export interface Database {
                     role_id?: string | null
                     onboarding_completed?: boolean
                     nick_name?: string | null
-                    user_types?: string[] | null
+                    user_type?: 'internal' | 'external'
                     is_active?: boolean
                     email?: string | null
                     created_at?: string
@@ -482,6 +482,7 @@ export interface Database {
                     display_name: string
                     description: string | null
                     is_system: boolean
+                    user_type: 'internal' | 'external'
                     created_at: string
                     updated_at: string
                 }
@@ -491,6 +492,7 @@ export interface Database {
                     display_name: string
                     description?: string | null
                     is_system?: boolean
+                    user_type?: 'internal' | 'external'
                     created_at?: string
                     updated_at?: string
                 }
@@ -500,6 +502,7 @@ export interface Database {
                     display_name?: string
                     description?: string | null
                     is_system?: boolean
+                    user_type?: 'internal' | 'external'
                     created_at?: string
                     updated_at?: string
                 }

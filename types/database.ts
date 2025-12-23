@@ -30,15 +30,7 @@ export interface Vehicle {
     created_at: string;
 }
 
-export interface OfficeStaff {
-    id: string;
-    name: string;
-    email: string | null;
-    phone: string | null;
-    title: string | null;
-    user_profile_id: string | null; // Optional link to user_profiles
-    created_at: string;
-}
+
 
 // User who is a technician (from user_profiles - primary source)
 // Links to legacy technicians table for skills data

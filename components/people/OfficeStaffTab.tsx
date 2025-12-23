@@ -57,8 +57,8 @@ export function OfficeStaffTab() {
             header: 'Title',
             sortable: true,
             render: (person) => (
-                person.office_staff?.title ? (
-                    <Badge variant="info" size="sm">{person.office_staff.title}</Badge>
+                person.title ? (
+                    <Badge variant="info" size="sm">{person.title}</Badge>
                 ) : (
                     <span className="text-gray-400 text-sm">Staff</span>
                 )

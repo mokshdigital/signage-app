@@ -6,10 +6,6 @@ export interface UnifiedUser extends UserProfile {
         id: string;
         skills: string[] | null;
     } | null;
-    office_staff?: {
-        id: string;
-        title: string | null;
-    } | null;
     role?: {
         id: string;
         name: string;
@@ -90,19 +86,11 @@ export const usersService = {
             .select('id, skills, user_profile_id')
             .in('user_profile_id', userIds);
 
-        // Get office_staff links  
-        const { data: staffLinks } = await supabase
-            .from('office_staff')
-            .select('id, title, user_profile_id')
-            .in('user_profile_id', userIds);
-
         const techMap = new Map(techLinks?.map(t => [t.user_profile_id, t]) || []);
-        const staffMap = new Map(staffLinks?.map(s => [s.user_profile_id, s]) || []);
 
         return users.map(user => ({
             ...user,
             technician: techMap.get(user.id) || null,
-            office_staff: staffMap.get(user.id) || null,
         })) as UnifiedUser[];
     },
 
@@ -217,16 +205,10 @@ export const usersService = {
         if (data.display_name !== undefined) updateData.display_name = data.display_name;
         if (data.nick_name !== undefined) updateData.nick_name = data.nick_name;
         if (data.phone !== undefined) updateData.phone = data.phone;
-        if (data.role_id !== undefined) updateData.role_id = data.role_id;
-        if (data.is_active !== undefined) updateData.is_active = data.is_active;
+        if (data.job_title !== undefined) updateData.title = data.job_title;
 
-        // Build user_types array
-        if (data.is_technician !== undefined || data.is_office_staff !== undefined) {
-            const userTypes: string[] = [];
-            if (data.is_technician) userTypes.push('technician');
-            if (data.is_office_staff) userTypes.push('office_staff');
-            updateData.user_types = userTypes;
-        }
+        // Note: is_technician and is_office_staff now only affect the extension tables,
+        // not user_profiles (since we now use user_type: 'internal' | 'external')
 
         const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
@@ -261,27 +243,7 @@ export const usersService = {
             }
         }
 
-        // Handle office_staff record
-        if (data.is_office_staff !== undefined) {
-            const { data: existingStaff } = await supabase
-                .from('office_staff')
-                .select('id')
-                .eq('user_profile_id', id)
-                .maybeSingle();
-
-            if (data.is_office_staff && !existingStaff) {
-                await supabase.from('office_staff').insert({
-                    name: profile.display_name,
-                    email: profile.email,
-                    title: data.job_title || null,
-                    user_profile_id: id,
-                });
-            } else if (!data.is_office_staff && existingStaff) {
-                await supabase.from('office_staff').delete().eq('id', existingStaff.id);
-            } else if (data.is_office_staff && existingStaff && data.job_title !== undefined) {
-                await supabase.from('office_staff').update({ title: data.job_title }).eq('id', existingStaff.id);
-            }
-        }
+        // Removed office_staff logic as the table is deprecated
 
         return this.getUserById(id);
     },
@@ -308,16 +270,9 @@ export const usersService = {
             .eq('user_profile_id', id)
             .maybeSingle();
 
-        const { data: staff } = await supabase
-            .from('office_staff')
-            .select('id, title')
-            .eq('user_profile_id', id)
-            .maybeSingle();
-
         return {
             ...profile,
             technician: tech || null,
-            office_staff: staff || null,
         } as UnifiedUser;
     },
 
@@ -405,7 +360,6 @@ export const usersService = {
             .map((t: any) => ({
                 ...t.user_profile,
                 technician: { id: t.id, skills: t.skills },
-                office_staff: null,
             })) as UnifiedUser[];
     },
 
@@ -415,26 +369,24 @@ export const usersService = {
     async getOfficeStaff(): Promise<UnifiedUser[]> {
         const supabase = createClient();
 
-        const { data: staffLinks, error } = await supabase
-            .from('office_staff')
+        const { data: users, error } = await supabase
+            .from('user_profiles')
             .select(`
-                id,
-                title,
-                user_profile_id,
-                user_profile:user_profiles(*, role:roles(id, name, display_name))
+                *,
+                role:roles(id, name, display_name)
             `)
-            .not('user_profile_id', 'is', null);
+            .eq('user_type', 'internal')
+            .eq('is_active', true)
+            .order('display_name', { ascending: true });
 
         if (error) {
             throw new Error(`Failed to fetch office staff: ${error.message}`);
         }
 
-        return (staffLinks || [])
-            .filter((s: any) => s.user_profile?.is_active !== false)
-            .map((s: any) => ({
-                ...s.user_profile,
-                technician: null,
-                office_staff: { id: s.id, title: s.title },
-            })) as UnifiedUser[];
+        return (users || []).map((u: any) => ({
+            ...u,
+            technician: null,
+            // office_staff property removed
+        })) as UnifiedUser[];
     },
 };

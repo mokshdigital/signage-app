@@ -6,6 +6,7 @@ export interface Role {
     display_name: string;
     description: string | null;
     is_system: boolean;
+    user_type: 'internal' | 'external'; // Which user type can have this role
     created_at: string;
     updated_at: string;
 }

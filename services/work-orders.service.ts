@@ -618,6 +618,8 @@ export const workOrdersService = {
      */
     async getTechnicianUsers(): Promise<TechnicianUser[]> {
         const supabase = createClient();
+
+        // Get users who have a linked technician record (identified as technicians)
         const { data, error } = await supabase
             .from('user_profiles')
             .select(`
@@ -632,8 +634,8 @@ export const workOrdersService = {
                     skills
                 )
             `)
-            .contains('user_types', ['technician'])
             .eq('is_active', true)
+            .not('technician', 'is', null) // Only users with linked technician record
             .order('display_name', { ascending: true });
 
         if (error) {
@@ -1933,15 +1935,15 @@ export const workOrdersService = {
     // =============================================
 
     /**
-     * Get all active office staff users for team selection
-     * Uses user_profiles with user_types containing 'office_staff'
+     * Get all active internal users for team selection (office staff, admins, supervisors, etc.)
+     * Uses user_profiles with user_type = 'internal'
      */
     async getOfficeStaffUsers(): Promise<{ id: string; display_name: string; avatar_url: string | null }[]> {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('user_profiles')
             .select('id, display_name, avatar_url')
-            .contains('user_types', ['office_staff'])
+            .eq('user_type', 'internal')
             .eq('is_active', true)
             .order('display_name', { ascending: true });
 

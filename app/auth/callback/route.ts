@@ -76,10 +76,7 @@ export async function GET(request: Request) {
                 // Claim invitation: Create user profile
                 console.log(`Claiming invitation for ${userEmail}`)
 
-                const userTypes: string[] = []
-                if (invitation.is_technician) userTypes.push('technician')
-                if (invitation.is_office_staff) userTypes.push('office_staff')
-
+                // All invited users are internal (external users use email/password via client-accounts)
                 // Create user_profile
                 const { error: profileError } = await adminClient
                     .from('user_profiles')
@@ -90,7 +87,8 @@ export async function GET(request: Request) {
                         email: userEmail,
                         avatar_url: user.user_metadata?.avatar_url || null,
                         role_id: invitation.role_id,
-                        user_types: userTypes,
+                        user_type: 'internal', // OAuth users are always internal
+                        title: invitation.job_title || null, // Map job_title to title
                         is_active: true,
                         onboarding_completed: false, // Will complete onboarding
                     })
@@ -106,16 +104,6 @@ export async function GET(request: Request) {
                         name: invitation.display_name,
                         email: userEmail,
                         skills: invitation.skills || [],
-                        user_profile_id: user.id,
-                    })
-                }
-
-                // Create office_staff record if needed
-                if (invitation.is_office_staff) {
-                    await adminClient.from('office_staff').insert({
-                        name: invitation.display_name,
-                        email: userEmail,
-                        title: invitation.job_title || null,
                         user_profile_id: user.id,
                     })
                 }

@@ -53,15 +53,15 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // For authenticated users accessing client dashboard, verify they are a client
+    // For authenticated users accessing client dashboard, verify they are external
     if (user && isClientDashboardPage) {
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('user_types, is_active')
+            .select('user_type, is_active')
             .eq('id', user.id)
             .single()
 
-        // If no profile, not active, or not a client - redirect to client-login
+        // If no profile, not active, or not external - redirect to client-login
         if (!profile || !profile.is_active) {
             await supabase.auth.signOut()
             const url = request.nextUrl.clone()
@@ -69,9 +69,8 @@ export async function updateSession(request: NextRequest) {
             return NextResponse.redirect(url)
         }
 
-        const userTypes = profile.user_types || []
-        if (!userTypes.includes('client')) {
-            // Not a client - sign out and redirect
+        if (profile.user_type !== 'external') {
+            // Not an external user - sign out and redirect
             await supabase.auth.signOut()
             const url = request.nextUrl.clone()
             url.pathname = '/client-login'
@@ -126,16 +125,15 @@ export async function updateSession(request: NextRequest) {
         return NextResponse.redirect(url)
     }
 
-    // Redirect authenticated client users away from client-login page
+    // Redirect authenticated external users away from client-login page
     if (user && isClientLoginPage) {
         const { data: profile } = await supabase
             .from('user_profiles')
-            .select('user_types')
+            .select('user_type')
             .eq('id', user.id)
             .single()
 
-        const userTypes = profile?.user_types || []
-        if (userTypes.includes('client')) {
+        if (profile?.user_type === 'external') {
             const url = request.nextUrl.clone()
             url.pathname = '/client-dashboard'
             return NextResponse.redirect(url)

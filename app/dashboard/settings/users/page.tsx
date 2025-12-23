@@ -165,8 +165,7 @@ export default function UsersPage() {
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             <div className="flex gap-1">
                                                 {user.technician && <Badge variant="info" size="sm">Tech</Badge>}
-                                                {user.office_staff && <Badge variant="success" size="sm">Office</Badge>}
-                                                {!user.technician && !user.office_staff && <span className="text-gray-400 text-sm">-</span>}
+                                                {!user.technician && <span className="text-gray-400 text-sm">-</span>}
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap">

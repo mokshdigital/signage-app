@@ -1,5 +1,8 @@
 // User Profile types for onboarding and profile management
 
+// User type enum - simplified to internal vs external
+export type UserType = 'internal' | 'external';
+
 export interface UserProfile {
     id: string;
     display_name: string;
@@ -8,11 +11,13 @@ export interface UserProfile {
     alternate_email: string | null;
     title: string | null; // Set by administrator
     onboarding_completed: boolean;
-    // New Identity Fields
+    // Identity Fields
     nick_name: string | null;
-    user_types: string[] | null;
+    user_type: UserType; // Simplified: 'internal' | 'external'
     is_active: boolean;
     email: string | null;
+    // Role
+    role_id: string | null;
 
     created_at: string;
     updated_at: string;
@@ -35,5 +40,6 @@ export interface UserProfileUpdate {
     title?: string; // Admin only
     onboarding_completed?: boolean;
     is_active?: boolean;
-    user_types?: string[];
+    user_type?: UserType;
+    role_id?: string;
 }

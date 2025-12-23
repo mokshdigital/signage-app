@@ -38,10 +38,10 @@ export default function ClientLoginPage() {
             return
         }
 
-        // Verify user is a client
+        // Verify user is external
         const { data: profile, error: profileError } = await supabase
             .from('user_profiles')
-            .select('user_types, is_active')
+            .select('user_type, is_active')
             .eq('id', data.user.id)
             .single()
 
@@ -60,9 +60,8 @@ export default function ClientLoginPage() {
             return
         }
 
-        // Check if user has 'client' type
-        const userTypes = profile.user_types || []
-        if (!userTypes.includes('client')) {
+        // Check if user is external
+        if (profile.user_type !== 'external') {
             await supabase.auth.signOut()
             setError('Unauthorized access. This portal is for clients only.')
             setLoading(false)

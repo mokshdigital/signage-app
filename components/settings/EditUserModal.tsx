@@ -55,9 +55,9 @@ export function EditUserModal({ isOpen, onClose, user, onSuccess }: EditUserModa
             setPhone(user.phone || '');
             setRoleId(user.role?.id || '');
             setIsTechnician(!!user.technician);
-            setIsOfficeStaff(!!user.office_staff);
+            setIsOfficeStaff(!!user.title);
             setSkills(user.technician?.skills || []);
-            setJobTitle(user.office_staff?.title || '');
+            setJobTitle(user.title || '');
             setError(null);
         }
     }, [user, isOpen]);

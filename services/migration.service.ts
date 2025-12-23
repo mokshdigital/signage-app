@@ -120,7 +120,8 @@ export const migrationService = {
 
     /**
      * Find existing profile by email or create a new one
-     * Also updates user_types array if profile exists
+     * LEGACY: This method is from before the user_type simplification.
+     * Now all technicians/office_staff are implicitly 'internal' users.
      */
     async findOrCreateProfile(params: {
         email: string | null;
@@ -139,7 +140,7 @@ export const migrationService = {
         // Try to find existing profile by email
         const { data: existingProfile, error: findError } = await supabase
             .from('user_profiles')
-            .select('id, user_types')
+            .select('id, user_type')
             .eq('email', params.email)
             .maybeSingle();
 
@@ -148,19 +149,18 @@ export const migrationService = {
         }
 
         if (existingProfile) {
-            // Profile exists - add user type if not already present
-            const currentTypes = existingProfile.user_types || [];
-            if (!currentTypes.includes(params.userType)) {
+            // Profile exists - ensure it's marked as internal
+            if (existingProfile.user_type !== 'internal') {
                 const { error: updateError } = await supabase
                     .from('user_profiles')
                     .update({
-                        user_types: [...currentTypes, params.userType],
+                        user_type: 'internal',
                         is_active: true
                     })
                     .eq('id', existingProfile.id);
 
                 if (updateError) {
-                    throw new Error(`Failed to update user_types: ${updateError.message}`);
+                    throw new Error(`Failed to update user_type: ${updateError.message}`);
                 }
             }
             return existingProfile.id;
