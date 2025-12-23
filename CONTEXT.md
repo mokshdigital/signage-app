@@ -204,9 +204,9 @@ Admins pre-register users by creating invitations with email, name, role, and us
 
 ### Onboarding Flow
 New users are required to complete their profile before accessing the dashboard:
-- **Pre-filled from invitation**: Display Name, Nick Name
-- **User enters**: Phone Number
-- **Admin pre-set**: RBAC Role, User Types (Technician/Office Staff)
+- **Step 1**: Avatar (editable), Nick Name (editable), Phone (required), Name (read-only from invitation)
+- **Step 2**: Review card showing all info including assigned **RBAC Role**
+- User type (`internal`/`external`) is **derived from the assigned role**, not manually set
 
 ### Protected Routes
 - All `/dashboard/*` routes require authentication AND completed onboarding

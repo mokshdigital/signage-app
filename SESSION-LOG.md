@@ -1244,3 +1244,57 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - External users (Clients) are securely hidden from this view.
 
 **Git Commit**: `feat: Redesign People page with unified table and role-based filters`
+
+---
+
+### Session 14 - December 23, 2024 (11:30 AM - 12:40 PM PST)
+
+**Objective**: Role-Based User Type Simplification & Onboarding Improvements
+
+**Changes Made**:
+
+#### 1. User Type Now Derived from Role
+- **Core Change**: `user_type` (`internal`/`external`) is now solely determined by the `roles.user_type` column.
+- **Removed Legacy UI**:
+  - Removed "User Type" dropdown from `InviteUserModal` (was technician/office_staff).
+  - Removed "User Types" checkboxes from `EditUserModal`.
+  - Removed "TYPES" column from Settings Users table.
+  - Skills section now only shows when RBAC role is "Technician".
+
+#### 2. Roles Management Updates
+- Added **User Type** (Internal/External) radio buttons to Role Create/Edit modals.
+- Role cards now display a badge showing Internal or External.
+- Updated `RoleInput` type and `createRole`/`updateRole` service functions.
+
+#### 3. Auth Callback Fix
+- **Bug**: `user_type` was hardcoded to `'internal'` when creating profiles during OAuth callback.
+- **Fix**: Auth callback now fetches `role.user_type` from the invitation and uses it.
+
+#### 4. Onboarding Simplification
+- **Reduced from 3 steps to 2 steps**:
+  - Step 1: Avatar (editable), Nick Name (editable), Phone (editable), Name (read-only)
+  - Step 2: Review showing all info including assigned RBAC Role
+- **Removed editable name** - Now locked to what admin set in invitation.
+- **Shows assigned role** - No more "Your role will be assigned by an administrator" message.
+
+#### 5. User Role Update Bug Fix
+- **Bug**: Editing a user's role didn't persist (`role_id` was missing from update query).
+- **Fix**: Added `role_id` to `updateData` in `users.service.ts`.
+
+**Files Modified**:
+- `types/rbac.ts` - Added `user_type` to `RoleInput`
+- `services/rbac.service.ts` - `createRole` includes `user_type`
+- `services/users.service.ts` - Fixed `role_id` in `updateUser`, removed `is_office_staff`
+- `components/settings/UserFormModal.tsx` - Role required, grouped by user_type
+- `components/settings/EditUserModal.tsx` - Removed user type checkboxes
+- `app/dashboard/settings/roles/page.tsx` - User Type selector and badge
+- `app/dashboard/settings/users/page.tsx` - Removed TYPES column
+- `app/auth/callback/route.ts` - Derives user_type from role
+- `app/onboarding/page.tsx` - Complete rewrite for 2-step flow
+
+**Git Commits**:
+- `refactor: simplify user type to role-based system`
+- `fix: auth callback derives user_type from role`
+- `feat: simplify onboarding to 2-step flow`
+- `fix: user role updates now save correctly`
+

@@ -1105,3 +1105,58 @@ Team chat messages for work orders.
 - **Unified Table**: Replaced Technician/Office tabs with `PeopleTable`.
 - **Role Filters**: Dynamic chips for active roles (`internal` only).
 - **Security**: Strict client-side filtering to exclude external users (e.g. Clients).
+
+---
+
+## Phase 26: Role-Based User Type System
+**Date**: December 23, 2024
+
+### Overview
+Simplified the user type system by making `user_type` (`internal`/`external`) solely determined by the assigned RBAC role, rather than legacy `is_technician`/`is_office_staff` flags.
+
+### Key Changes
+
+#### A. Database & Architecture
+- `user_type` now derived from `roles.user_type` column
+- Legacy `is_office_staff` and `is_technician` user type toggles removed from UI
+- `technicians` table retained for work order assignments (field staff capability)
+
+#### B. Roles Management
+- Added `user_type` field to Role Create/Edit modals (Internal/External radio buttons)
+- Role cards display Internal/External badge
+- `RoleInput` type updated to include `user_type`
+
+#### C. Onboarding Flow
+- **Reduced to 2 steps** (was 3):
+  - Step 1: Avatar, Nick Name, Phone (editable) + Name (read-only)
+  - Step 2: Review card showing assigned Role
+- Shows actual RBAC role instead of "role will be assigned later"
+- Name locked to invitation value (admin-set)
+
+#### D. Auth Callback
+- Now fetches `role.user_type` when creating user profiles
+- Uses role's `user_type` instead of hardcoding `'internal'`
+
+#### E. Bug Fixes
+- Fixed user role updates not saving (`role_id` missing from update query)
+- Removed TYPES column from Settings Users table
+
+### Key Files Modified
+| File | Change |
+|------|--------|
+| `types/rbac.ts` | Added `user_type` to `RoleInput` |
+| `services/rbac.service.ts` | `createRole` includes `user_type` |
+| `services/users.service.ts` | Fixed `role_id` in `updateUser` |
+| `components/settings/UserFormModal.tsx` | Role required, grouped by type |
+| `components/settings/EditUserModal.tsx` | Removed user type checkboxes |
+| `app/dashboard/settings/roles/page.tsx` | User Type selector and badge |
+| `app/dashboard/settings/users/page.tsx` | Removed TYPES column |
+| `app/auth/callback/route.ts` | Derives user_type from role |
+| `app/onboarding/page.tsx` | Complete rewrite for 2-step flow |
+
+### Current Status
+- ✅ User type determined solely by role
+- ✅ Onboarding simplified and role-aware
+- ✅ Auth callback properly sets user_type
+- ✅ Role editing in Settings works correctly
+
