@@ -1372,3 +1372,20 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - `feat: integrate Client Hub tab into Work Order detail page`
 - `feat: add Client Hub tab to Work Orders v2 beta page`
 
+
+## Session 16: Client Portal Implementation
+- **Objective**: Implement the client-side portal and internal management tools.
+- **Key Changes**:
+  - Created /client-dashboard with WO selector, Chat, Files, and Reports tabs.
+  - Implemented services/client-portal.service.ts for handling client data access.
+  - Added is_client_visible column to work_order_files table (Migration 031).
+  - Created ClientFilesManager component for internal users to toggle file visibility.
+  - Implemented PDF export for chat history.
+- **Files Modified**:
+  - database_migrations/031_client_portal_files.sql
+  - types/database.ts
+  - services/work-orders.service.ts
+  - components/work-orders/client-hub/ClientFilesManager.tsx
+  - components/work-orders/client-hub/ClientHubTab.tsx
+  - app/client-dashboard/page.tsx
+

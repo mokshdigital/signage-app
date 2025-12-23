@@ -1270,3 +1270,12 @@ Added 10+ methods:
 | `app/dashboard/work-orders/[id]/page.tsx` | Integration (legacy) |
 | `app/dashboard/work-orders-v2/[id]/page.tsx` | Integration (v2 beta) |
 
+
+## Phase 29: Client Portal
+- [x] Client Portal Base View (/client-dashboard)
+- [x] Client Access Control Logic (PM & Additional Contacts)
+- [x] Client Portal Service Layer
+- [x] File Visibility Management (is_client_visible flag)
+- [x] Chat Export to PDF functionality
+- [x] Internal UI for File Visibility (ClientHubTab)
+

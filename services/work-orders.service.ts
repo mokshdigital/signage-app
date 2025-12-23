@@ -2598,4 +2598,63 @@ export const workOrdersService = {
 
         return false;
     },
+
+    /**
+     * Get all files for a work order with visibility status
+     */
+    async getFilesWithVisibility(workOrderId: string): Promise<{
+        clientVisible: WorkOrderFile[];
+        notClientVisible: WorkOrderFile[];
+    }> {
+        const supabase = createClient();
+
+        const { data, error } = await supabase
+            .from('work_order_files')
+            .select(`
+                id,
+                work_order_id,
+                file_url,
+                file_name,
+                file_size,
+                mime_type,
+                category_id,
+                uploaded_by,
+                is_client_visible,
+                created_at,
+                category:work_order_file_categories(id, name)
+            `)
+            .eq('work_order_id', workOrderId)
+            .order('created_at', { ascending: false });
+
+        if (error) {
+            throw new Error(`Failed to fetch files: ${error.message}`);
+        }
+
+        const files = (data || []).map((f: any) => ({
+            ...f,
+            is_client_visible: f.is_client_visible ?? false,
+            category: f.category as any
+        })) as WorkOrderFile[];
+
+        return {
+            clientVisible: files.filter(f => f.is_client_visible),
+            notClientVisible: files.filter(f => !f.is_client_visible)
+        };
+    },
+
+    /**
+     * Toggle file client visibility
+     */
+    async toggleFileClientVisibility(fileId: string, isVisible: boolean): Promise<void> {
+        const supabase = createClient();
+
+        const { error } = await supabase
+            .from('work_order_files')
+            .update({ is_client_visible: isVisible } as any)
+            .eq('id', fileId);
+
+        if (error) {
+            throw new Error(`Failed to update file visibility: ${error.message}`);
+        }
+    },
 };

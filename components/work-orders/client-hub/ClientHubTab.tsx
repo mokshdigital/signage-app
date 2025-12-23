@@ -5,6 +5,7 @@ import { workOrdersService } from '@/services';
 import { LoadingSpinner } from '@/components/ui';
 import { ContactHierarchy } from './ContactHierarchy';
 import { ClientChat } from './ClientChat';
+import { ClientFilesManager } from './ClientFilesManager';
 
 interface ClientHubTabProps {
     workOrderId: string;
@@ -82,6 +83,9 @@ export function ClientHubTab({ workOrderId, clientId, pmId }: ClientHubTabProps)
                 clientId={clientId}
                 primaryPmId={pmId}
             />
+
+            {/* Shared Files Section */}
+            <ClientFilesManager workOrderId={workOrderId} />
 
             {/* Client Chat Section */}
             <ClientChat workOrderId={workOrderId} />
