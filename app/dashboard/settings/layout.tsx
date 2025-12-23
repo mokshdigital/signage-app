@@ -13,6 +13,7 @@ export default function SettingsLayout({
     const { hasPermission } = usePermissions();
 
     const tabs = [
+        { name: 'Company Info', href: '/dashboard/settings/company', permission: 'settings:manage_company' },
         { name: 'Roles', href: '/dashboard/settings/roles', permission: 'roles:manage' },
         { name: 'Users', href: '/dashboard/settings/users', permission: 'users:manage' },
         { name: 'Job Types', href: '/dashboard/settings/job-types', permission: 'settings:manage' },

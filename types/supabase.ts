@@ -566,6 +566,60 @@ export interface Database {
                     }
                 ]
             }
+            company_settings: {
+                Row: {
+                    id: number
+                    name: string
+                    logo_url: string | null
+                    phone: string | null
+                    email: string | null
+                    website: string | null
+                    address_line1: string | null
+                    address_line2: string | null
+                    city: string | null
+                    state: string | null
+                    postal_code: string | null
+                    country: string | null
+                    tax_id: string | null
+                    created_at: string
+                    updated_at: string
+                }
+                Insert: {
+                    id?: number
+                    name?: string
+                    logo_url?: string | null
+                    phone?: string | null
+                    email?: string | null
+                    website?: string | null
+                    address_line1?: string | null
+                    address_line2?: string | null
+                    city?: string | null
+                    state?: string | null
+                    postal_code?: string | null
+                    country?: string | null
+                    tax_id?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Update: {
+                    id?: number
+                    name?: string
+                    logo_url?: string | null
+                    phone?: string | null
+                    email?: string | null
+                    website?: string | null
+                    address_line1?: string | null
+                    address_line2?: string | null
+                    city?: string | null
+                    state?: string | null
+                    postal_code?: string | null
+                    country?: string | null
+                    tax_id?: string | null
+                    created_at?: string
+                    updated_at?: string
+                }
+                Relationships: []
+            }
             clients: {
                 Row: {
                     id: string
