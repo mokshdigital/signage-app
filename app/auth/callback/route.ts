@@ -61,7 +61,7 @@ export async function GET(request: Request) {
                 // Check for invitation by email
                 const { data: invitation } = await adminClient
                     .from('invitations')
-                    .select('*')
+                    .select('*, role:roles(user_type)')
                     .ilike('email', userEmail || '')
                     .is('claimed_at', null)
                     .maybeSingle()
@@ -76,7 +76,9 @@ export async function GET(request: Request) {
                 // Claim invitation: Create user profile
                 console.log(`Claiming invitation for ${userEmail}`)
 
-                // All invited users are internal (external users use email/password via client-accounts)
+                // Determine user_type from the assigned role (default to 'internal' if no role)
+                const userType = invitation.role?.user_type || 'internal'
+
                 // Create user_profile
                 const { error: profileError } = await adminClient
                     .from('user_profiles')
@@ -87,8 +89,8 @@ export async function GET(request: Request) {
                         email: userEmail,
                         avatar_url: user.user_metadata?.avatar_url || null,
                         role_id: invitation.role_id,
-                        user_type: 'internal', // OAuth users are always internal
-                        title: invitation.job_title || null, // Map job_title to title
+                        user_type: userType,
+                        title: invitation.job_title || null,
                         is_active: true,
                         onboarding_completed: false, // Will complete onboarding
                     })
@@ -98,7 +100,7 @@ export async function GET(request: Request) {
                     return redirectTo(request, origin, `/login?error=Failed to create profile`)
                 }
 
-                // Create technician record if needed
+                // Create technician record if the role is 'technician'
                 if (invitation.is_technician) {
                     await adminClient.from('technicians').insert({
                         name: invitation.display_name,
