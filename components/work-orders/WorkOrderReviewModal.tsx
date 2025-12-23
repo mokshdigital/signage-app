@@ -201,9 +201,8 @@ export function WorkOrderReviewModal({
                 await workOrdersService.addShippingComment(workOrder.id, shippingComment.trim());
             }
 
-            toast.success('Work Order Review Complete');
+            // Transition to Step 3 - parent handles opening team selection
             onSave();
-            onClose();
         } catch (error: any) {
             toast.error('Failed to save changes', { description: error.message });
         } finally {
