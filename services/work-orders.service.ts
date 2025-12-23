@@ -7,9 +7,6 @@ import {
     WorkOrderShipment,
     ReceiverOption,
     Technician,
-    Technician,
-    // OfficeStaff removed
-    TechnicianUser,
     TechnicianUser,
     WorkOrderTask,
     TaskAssignment,
