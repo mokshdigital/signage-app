@@ -30,12 +30,14 @@ import {
     TabNavigation,
     WorkOrderDetailHeader,
     AISummaryPanel,
-    WorkOrderEditModal
+    WorkOrderEditModal,
+    WorkOrderTeamTab
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { useConfirmDialog } from '@/hooks';
 import { Button, ConfirmDialog } from '@/components/ui';
 import { safeRender } from '@/lib/utils/helpers';
+import { createClient } from '@/lib/supabase/client';
 
 export default function WorkOrderDetailV2Page() {
     const params = useParams();
@@ -83,6 +85,10 @@ export default function WorkOrderDetailV2Page() {
     // For delete confirmation
     const { confirm, dialogProps } = useConfirmDialog();
 
+    // Team Tab state
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [teamFiles, setTeamFiles] = useState<{ id: string; filename: string; category: string; url: string; mime_type: string }[]>([]);
+
     // Tab configuration with badge counts
     const tabs = useMemo(() => {
         if (!workOrder) return [];
@@ -91,6 +97,7 @@ export default function WorkOrderDetailV2Page() {
             { id: 'requirements', label: 'Requirements' },
             { id: 'tasks', label: 'Tasks', badge: workOrder.tasks?.length || 0 },
             { id: 'technicians', label: 'Technicians', badge: workOrder.assignments?.length || 0 },
+            { id: 'team', label: 'Team' },
             { id: 'files', label: 'Files', badge: workOrder.files?.length || 0 },
             { id: 'shipments', label: 'Shipments', badge: workOrder.shipments?.length || 0 },
             { id: 'schedule', label: 'Schedule', disabled: true },
@@ -98,11 +105,34 @@ export default function WorkOrderDetailV2Page() {
         ];
     }, [workOrder]);
 
-    // Fetch work order on mount
+    // Fetch work order data
     useEffect(() => {
         fetchWorkOrder();
         fetchTechnicians();
+        fetchCurrentUser();
+        fetchTeamFiles();
     }, [workOrderId]);
+
+    const fetchCurrentUser = async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUserId(user?.id || null);
+    };
+
+    const fetchTeamFiles = async () => {
+        try {
+            const data = await workOrdersService.getFiles(workOrderId);
+            setTeamFiles(data.map(f => ({
+                id: f.id,
+                filename: f.file_name || 'Unnamed file',
+                category: f.category?.name || 'Uncategorized',
+                url: f.file_url,
+                mime_type: f.mime_type || 'application/octet-stream'
+            })));
+        } catch (err) {
+            console.error('Failed to load team files', err);
+        }
+    };
 
     const fetchWorkOrder = async () => {
         setLoading(true);
@@ -536,6 +566,19 @@ export default function WorkOrderDetailV2Page() {
 
             case 'post-completion':
                 return <ComingSoon title="Post-completion" description="Post-completion workflows coming soon" />;
+
+            case 'team':
+                return currentUserId ? (
+                    <WorkOrderTeamTab
+                        workOrderId={workOrderId}
+                        currentUserId={currentUserId}
+                        workOrderFiles={teamFiles}
+                    />
+                ) : (
+                    <div className="flex items-center justify-center py-8">
+                        <LoadingSpinner />
+                    </div>
+                );
 
             default:
                 return null;
