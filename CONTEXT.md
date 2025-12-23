@@ -345,3 +345,43 @@ Development sessions are tracked in `SESSION-LOG.md`. This file contains:
 | `TeamChat` | Real-time chat panel |
 | `ChatMessage` | Single message with hover actions |
 | `ChatInput` | Message input with file picker |
+
+### 7. Company Settings (Phase 27)
+- **Company Info Page**: `/dashboard/settings/company`
+- **Single-row settings table**: Enforced via database constraint
+- **Fields**: Name, logo, phone, email, website, full address, tax ID
+- **Logo Upload**: Upload to `company-assets` storage bucket with preview
+- **Permission**: `settings:manage_company` required
+
+### 8. Client Hub (Phase 28)
+- **Purpose**: Client-facing communication channel (separate from Team Chat)
+- **Visual Differentiation**: Purple accent color
+
+#### Access Control
+- WO owners, internal team (non-technicians), Primary PM, additional authorized PMs
+- Technicians see "Access Restricted" message
+- No client assigned shows empty state
+
+#### Features
+- **Contact Hierarchy**: Primary PM (purple badge) + additional contacts
+- **Portal Badges**: "No Portal Access" badge for PMs without user accounts
+- **Add/Remove Contacts**: Limited to PMs from the same client
+- **Real-time Chat**: Supabase Realtime enabled
+- **Sender Display**: "(Company Name)" for internal, "(Client Name)" for external
+- **File Uploads**: PDF/images via chat (requires message)
+
+#### Database Tables
+- `work_order_client_access`: Additional client contacts junction table
+- `work_order_client_chat`: Client-facing messages with `sender_company_name`
+
+#### SQL Function
+```sql
+can_access_client_hub(wo_id UUID) RETURNS BOOLEAN
+```
+
+#### UI Components
+| Component | Purpose |
+|-----------|---------|
+| `ClientHubTab` | Main container with access control |
+| `ContactHierarchy` | Primary PM + additional contacts |
+| `ClientChat` | Real-time chat with purple theme |

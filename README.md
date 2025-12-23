@@ -46,6 +46,11 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
     - **Task Tags**: Global tags with multi-select and colors.
     - **Team Tab**: View/manage WO team (Owner, Office Staff, Technicians).
     - **Team Chat**: Real-time chat for team coordination with file attachments.
+    - **Client Hub**: Dedicated client-facing chat (separate from Team Chat).
+      - Purple accent for visual differentiation.
+      - Shows Primary PM + additional contacts.
+      - Real-time messaging with file attachments.
+      - Access control: Technicians restricted.
   - **Shipping Comments**: Threaded conversation system for tracking shipments.
 - **Client Management**:
   - Client directory with project manager contacts.
@@ -53,6 +58,10 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   - **Client Portal**: External access for client contacts (Project Managers).
     - Email/password authentication (separate from internal Google OAuth).
     - Admin UI to create portal accounts with auto-generated passwords.
+- **Company Settings**:
+  - Company Info page for branding and contact details.
+  - Logo upload with preview.
+  - All company details: name, phone, email, website, address, tax ID.
 - **Resource Management**:
   - Technicians, Equipment, and Vehicle tracking.
 

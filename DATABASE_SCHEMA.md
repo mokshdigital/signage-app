@@ -838,3 +838,107 @@ Returns true if user is WO owner, in work_order_team, or in work_order_assignmen
 
 #### Real-time
 - Enabled via `ALTER PUBLICATION supabase_realtime ADD TABLE work_order_chat_messages`
+
+---
+
+### 19. `company_settings`
+Stores company branding and contact information. Enforced as a single row.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | INTEGER | PRIMARY KEY, DEFAULT 1, CHECK (id = 1) | Single-row constraint |
+| `name` | TEXT | NOT NULL, DEFAULT 'Tops Lighting' | Company name |
+| `logo_url` | TEXT | | Company logo URL |
+| `phone` | TEXT | | Company phone number |
+| `email` | TEXT | | Company email address |
+| `website` | TEXT | | Company website |
+| `address_line1` | TEXT | | Street address line 1 |
+| `address_line2` | TEXT | | Street address line 2 |
+| `city` | TEXT | | City |
+| `state` | TEXT | | State/Province |
+| `postal_code` | TEXT | | Postal/ZIP code |
+| `country` | TEXT | DEFAULT 'USA' | Country |
+| `tax_id` | TEXT | | Tax ID / EIN |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**:
+  - `Allow authenticated read`: SELECT for authenticated users
+  - `Allow authenticated update`: UPDATE for authenticated users (UI enforces permission)
+
+#### Trigger
+- `trigger_company_settings_updated_at` - Auto-updates `updated_at` on changes
+
+---
+
+### 20. `work_order_client_access`
+Junction table for additional client contacts with access to work order Client Hub.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
+| `work_order_id` | UUID | NOT NULL, FK → work_orders (ON DELETE CASCADE) | Work order reference |
+| `project_manager_id` | UUID | NOT NULL, FK → project_managers (ON DELETE CASCADE) | Project manager reference |
+| `added_by` | UUID | FK → user_profiles | User who added this contact |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+
+#### Indexes
+- `idx_client_access_work_order` on `work_order_id`
+- `idx_client_access_pm` on `project_manager_id`
+
+#### Constraints
+- Unique constraint on `(work_order_id, project_manager_id)`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: All use `can_access_client_hub(work_order_id)` function
+  - `client_access_select`: SELECT for users with Client Hub access
+  - `client_access_insert`: INSERT for users with Client Hub access
+  - `client_access_delete`: DELETE for users with Client Hub access
+
+---
+
+### 21. `work_order_client_chat`
+Client-facing chat messages for work orders (separate from internal Team Chat).
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT gen_random_uuid() | Unique identifier |
+| `work_order_id` | UUID | NOT NULL, FK → work_orders (ON DELETE CASCADE) | Work order reference |
+| `sender_id` | UUID | NOT NULL, FK → user_profiles | Message sender |
+| `message` | TEXT | NOT NULL, CHECK (LENGTH > 0 AND LENGTH <= 2000) | Message content |
+| `file_references` | UUID[] | DEFAULT '{}' | References to work_order_files |
+| `sender_company_name` | TEXT | | Denormalized for display (company name or client name) |
+| `is_deleted` | BOOLEAN | DEFAULT FALSE | Soft delete flag |
+| `edited_at` | TIMESTAMPTZ | | Set when message is edited |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Message timestamp |
+
+#### Indexes
+- `idx_client_chat_work_order` on `work_order_id`
+- `idx_client_chat_sender` on `sender_id`
+- `idx_client_chat_created` on `(work_order_id, created_at)`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**: All use `can_access_client_hub(work_order_id)` function
+  - `client_chat_select`: SELECT for users with access (excludes deleted)
+  - `client_chat_insert`: INSERT for users with access (sender must be self)
+  - `client_chat_update`: UPDATE for message author only
+
+#### Helper Function
+```sql
+can_access_client_hub(wo_id UUID) RETURNS BOOLEAN
+```
+Returns true if current user is:
+- WO owner
+- Internal team member (non-technician) in `work_order_team`
+- Primary PM (via `work_orders.pm_id` → `project_managers.user_profile_id`)
+- Additional authorized PM (via `work_order_client_access`)
+
+#### Real-time
+- Enabled via `ALTER PUBLICATION supabase_realtime ADD TABLE work_order_client_chat`

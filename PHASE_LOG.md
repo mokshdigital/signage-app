@@ -1160,3 +1160,113 @@ Simplified the user type system by making `user_type` (`internal`/`external`) so
 - ✅ Auth callback properly sets user_type
 - ✅ Role editing in Settings works correctly
 
+---
+
+## Phase 27: Company Settings
+**Date**: December 23, 2024
+
+### Overview
+Implemented the Company Info settings page for managing company branding and contact information.
+
+### Database Changes
+- **`company_settings`** table with:
+  - Single-row constraint (`id = 1`)
+  - Fields: `name`, `logo_url`, `phone`, `email`, `website`, `address_line1`, `address_line2`, `city`, `state`, `postal_code`, `country`, `tax_id`
+  - Timestamps: `created_at`, `updated_at`
+- **New Permission**: `settings:manage_company` (granted to `super_admin`)
+- **Storage Bucket**: `company-assets` for logo uploads
+
+### Files Created
+| File | Purpose |
+|------|---------|
+| `database_migrations/029_company_settings.sql` | Migration for table, RLS, permission |
+| `services/company-settings.service.ts` | CRUD + logo upload/delete |
+| `app/dashboard/settings/company/page.tsx` | Company Info form UI |
+
+### Key Features
+- Single-row company settings (enforced via constraint)
+- Logo upload with preview and delete
+- All contact and address fields
+- Permission-controlled editing
+
+---
+
+## Phase 28: Client Hub
+**Date**: December 23, 2024
+
+### Overview
+Implemented the Client Hub feature for client-facing communication on work orders. This enables authorized internal staff and external client contacts to communicate via a dedicated chat, separate from the internal Team Chat.
+
+### Design Decisions
+1. **Two separate chats**: Team Chat (internal) + Client Hub Chat (client-facing)
+2. **Visual differentiation**: Purple accent color for Client Hub
+3. **Access control**: Technicians cannot access Client Hub
+4. **Sender display**: Shows "(Company Name)" for internal, "(Client Name)" for external
+5. **File uploads**: Clients can upload via chat with required message
+6. **Additional contacts**: Only PMs from the WO's assigned client can be added
+
+### Database Changes (Migration `030_client_hub_schema.sql`)
+
+#### New SQL Function
+```sql
+can_access_client_hub(wo_id UUID) RETURNS BOOLEAN
+```
+Checks if current user can access Client Hub:
+- WO owner
+- Internal team member (non-technician)
+- Primary PM (via `work_orders.pm_id`)
+- Additional authorized PM (via `work_order_client_access`)
+
+#### New Tables
+1. **`work_order_client_access`** - Junction table for additional client contacts
+   - `id`, `work_order_id`, `project_manager_id`, `added_by`, `created_at`
+   - Unique constraint on `(work_order_id, project_manager_id)`
+
+2. **`work_order_client_chat`** - Client-facing chat messages
+   - `id`, `work_order_id`, `sender_id`, `message`, `file_references[]`
+   - `sender_company_name` (denormalized for display performance)
+   - `is_deleted`, `edited_at`, `created_at`
+   - Real-time enabled
+
+#### New Permission
+- `client_hub:manage_contacts` - Add/remove additional client contacts (granted to `super_admin`, `admin`)
+
+### Service Layer (`work-orders.service.ts`)
+Added 10+ methods:
+| Method | Description |
+|--------|-------------|
+| `getClientHubContacts()` | Returns primary PM + additional contacts |
+| `addClientContact()` | Add PM from same client |
+| `removeClientContact()` | Remove additional contact |
+| `getAvailableClientContacts()` | PMs available to add |
+| `getClientChatMessages()` | Fetch chat history |
+| `sendClientChatMessage()` | Auto-sets sender_company_name |
+| `editClientChatMessage()` | Edit own messages |
+| `deleteClientChatMessage()` | Soft delete |
+| `uploadClientChatAttachment()` | File upload (PDF/images, 25MB limit) |
+| `canAccessClientHub()` | Client-side access check |
+
+### UI Components (`components/work-orders/client-hub/`)
+| Component | Purpose |
+|-----------|---------|
+| `ClientHubTab.tsx` | Main tab with access control, empty states |
+| `ContactHierarchy.tsx` | Primary PM + additional contacts with badges |
+| `ClientChat.tsx` | Real-time chat with file uploads, purple theme |
+
+### Integration
+- Added to Work Order detail page (legacy) as separate section
+- Added as tab to Work Orders v2 (beta) page with purple styling
+- Shows "Access Restricted" for technicians
+- Shows "Assign a client..." when no client assigned
+
+### Key Files
+| File | Change |
+|------|--------|
+| `database_migrations/030_client_hub_schema.sql` | Full migration |
+| `types/supabase.ts` | Added table types + `user_profile_id` to `project_managers` |
+| `services/work-orders.service.ts` | 10+ new methods |
+| `components/work-orders/client-hub/*` | 3 new components |
+| `components/work-orders/index.ts` | Export ClientHubTab |
+| `app/dashboard/work-orders/[id]/page.tsx` | Integration (legacy) |
+| `app/dashboard/work-orders-v2/[id]/page.tsx` | Integration (v2 beta) |
+

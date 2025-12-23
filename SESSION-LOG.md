@@ -1298,3 +1298,77 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - `feat: simplify onboarding to 2-step flow`
 - `fix: user role updates now save correctly`
 
+---
+
+### Session 15 - December 23, 2024 (1:30 PM - 2:25 PM PST)
+
+**Objective**: Implement Company Settings and Client Hub Features
+
+**Changes Made**:
+
+#### 1. Company Settings (Phase A)
+- **Database**: Created `company_settings` table with single-row constraint
+  - Fields: name, logo_url, phone, email, website, full address, tax_id
+  - Added `settings:manage_company` permission
+- **Storage**: `company-assets` bucket for logo uploads
+- **Service**: `company-settings.service.ts` with CRUD + logo management
+- **UI**: Company Info settings page at `/dashboard/settings/company`
+  - Logo upload with preview and delete
+  - All company fields editable
+  - Permission-controlled
+
+#### 2. Client Hub (Phase B)
+- **Database Migration** (`030_client_hub_schema.sql`):
+  - `can_access_client_hub()` SQL function for unified access control
+  - `work_order_client_access` table (additional client contacts)
+  - `work_order_client_chat` table (client-facing chat with real-time)
+  - RLS policies using the helper function
+  - `client_hub:manage_contacts` permission
+
+- **Service Layer** (`work-orders.service.ts`):
+  - `getClientHubContacts()` - Primary PM + additional contacts
+  - `addClientContact()` / `removeClientContact()` - Manage contacts
+  - `getClientChatMessages()` - Chat history
+  - `sendClientChatMessage()` - Auto-detects sender company name
+  - `editClientChatMessage()` / `deleteClientChatMessage()`
+  - `uploadClientChatAttachment()` - File uploads to `client-uploads/`
+  - `canAccessClientHub()` - Client-side access check
+
+- **UI Components** (`components/work-orders/client-hub/`):
+  - `ClientHubTab.tsx` - Main tab with access control states
+  - `ContactHierarchy.tsx` - Primary PM + additional contacts display
+  - `ClientChat.tsx` - Real-time chat with purple accent theme
+
+- **Integration**:
+  - Added Client Hub section to Work Order detail page (legacy)
+  - Added Client Hub tab to Work Orders v2 (beta) page
+  - Purple styling for visual differentiation from Team Chat
+
+**Design Decisions**:
+- Separate chats: Team Chat (internal blue) vs Client Hub (external purple)
+- Technicians cannot access Client Hub
+- Sender shows "(Company Name)" for internal, "(Client Name)" for external
+- PMs without portal accounts show "No Portal Access" badge
+- Additional contacts limited to PMs from same client
+
+**Files Created/Modified**:
+| File | Change |
+|------|--------|
+| `database_migrations/029_company_settings.sql` | Company settings table |
+| `database_migrations/030_client_hub_schema.sql` | Client Hub tables |
+| `services/company-settings.service.ts` | Company settings CRUD |
+| `services/work-orders.service.ts` | 10+ Client Hub methods |
+| `types/supabase.ts` | New table types |
+| `components/work-orders/client-hub/*` | 3 new components |
+| `app/dashboard/settings/company/page.tsx` | Company Info page |
+| `app/dashboard/work-orders/[id]/page.tsx` | Client Hub integration |
+| `app/dashboard/work-orders-v2/[id]/page.tsx` | Client Hub tab |
+
+**Git Commits**:
+- `feat: add company settings table and service`
+- `feat: create Company Info settings page`
+- `fix: correct permissions column names in company settings migration`
+- `feat: implement Client Hub - database migration, service layer, and UI components`
+- `feat: integrate Client Hub tab into Work Order detail page`
+- `feat: add Client Hub tab to Work Orders v2 beta page`
+
