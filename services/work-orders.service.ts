@@ -1941,13 +1941,13 @@ export const workOrdersService = {
 
     /**
      * Get all active internal users for team selection (office staff, admins, supervisors, etc.)
-     * Uses user_profiles with user_type = 'internal'
+     * Uses user_profiles with user_type = 'internal' and excludes technicians
      */
     async getOfficeStaffUsers(): Promise<{ id: string; display_name: string; avatar_url: string | null }[]> {
         const supabase = createClient();
         const { data, error } = await supabase
             .from('user_profiles')
-            .select('id, display_name, avatar_url')
+            .select('id, display_name, avatar_url, role:roles(name)')
             .eq('user_type', 'internal')
             .eq('is_active', true)
             .order('display_name', { ascending: true });
@@ -1957,7 +1957,17 @@ export const workOrdersService = {
             throw new Error(`Failed to fetch office staff users: ${error.message}`);
         }
 
-        return (data || []);
+        // Filter out users with 'technician' role
+        const filtered = (data || []).filter((user: any) => {
+            const roleName = user.role?.name?.toLowerCase();
+            return roleName !== 'technician';
+        });
+
+        return filtered.map((user: any) => ({
+            id: user.id,
+            display_name: user.display_name,
+            avatar_url: user.avatar_url
+        }));
     },
 
     /**
