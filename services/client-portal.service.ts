@@ -217,7 +217,7 @@ export const clientPortalService = {
                 file_size,
                 mime_type,
                 created_at,
-                category:work_order_file_categories(name)
+                category:file_categories(name)
             `)
             .eq('work_order_id', workOrderId)
             .eq('is_client_visible', true)

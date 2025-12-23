@@ -2621,7 +2621,7 @@ export const workOrdersService = {
                 uploaded_by,
                 is_client_visible,
                 created_at,
-                category:work_order_file_categories(id, name)
+                category:file_categories(id, name)
             `)
             .eq('work_order_id', workOrderId)
             .order('created_at', { ascending: false });
