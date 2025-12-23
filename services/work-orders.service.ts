@@ -7,7 +7,9 @@ import {
     WorkOrderShipment,
     ReceiverOption,
     Technician,
-    OfficeStaff,
+    Technician,
+    // OfficeStaff removed
+    TechnicianUser,
     TechnicianUser,
     WorkOrderTask,
     TaskAssignment,
@@ -762,16 +764,17 @@ export const workOrdersService = {
             }), {});
         }
 
-        // Fetch office staff with optional user_profile join
+        // Fetch internal staff from user_profiles
         let staffMap: Record<string, string> = {};
         if (staffIds.length > 0) {
             const { data: staff } = await supabase
-                .from('office_staff')
-                .select('id, name, user_profile:user_profiles(display_name)')
+                .from('user_profiles')
+                .select('id, display_name')
                 .in('id', staffIds);
+
             staffMap = (staff || []).reduce((acc: Record<string, string>, s: any) => ({
                 ...acc,
-                [s.id]: s.user_profile?.display_name || s.name
+                [s.id]: s.display_name
             }), {});
         }
 
@@ -903,11 +906,14 @@ export const workOrdersService = {
             console.error('Error fetching technicians:', techError);
         }
 
-        // Fetch office staff with optional user_profile join
+        const techProfileIds = new Set((techs || []).map(t => t.user_profile_id).filter(Boolean));
+
+        // Fetch other internal staff
         const { data: staff, error: staffError } = await supabase
-            .from('office_staff')
-            .select('id, name, title, user_profile_id, user_profile:user_profiles(display_name)')
-            .order('name', { ascending: true });
+            .from('user_profiles')
+            .select('id, display_name, title')
+            .eq('user_type', 'internal')
+            .order('display_name', { ascending: true });
 
         if (staffError) {
             console.error('Error fetching office staff:', staffError);
@@ -927,15 +933,16 @@ export const workOrdersService = {
             });
         });
 
-        // Add office staff - prefer user_profile.display_name if linked
+        // Add non-technician internal staff
         (staff || []).forEach((s: any) => {
-            const displayName = s.user_profile?.display_name || s.name;
-            options.push({
-                id: s.id,
-                name: displayName,
-                type: 'office_staff',
-                title: s.title
-            });
+            if (!techProfileIds.has(s.id)) {
+                options.push({
+                    id: s.id,
+                    name: s.display_name,
+                    type: 'office_staff',
+                    title: s.title || 'Staff'
+                });
+            }
         });
 
         return options;
@@ -1593,18 +1600,19 @@ export const workOrdersService = {
         const supabase = createClient();
         const mentionableUsers: MentionableUser[] = [];
 
-        // 1. Get all office staff
+        // 1. Get all internal staff
         const { data: officeStaff } = await supabase
-            .from('office_staff')
-            .select('id, name')
-            .order('name');
+            .from('user_profiles')
+            .select('id, display_name, avatar_url')
+            .eq('user_type', 'internal')
+            .order('display_name');
 
-        (officeStaff || []).forEach((staff: { id: string; name: string }) => {
+        (officeStaff || []).forEach((staff: any) => {
             mentionableUsers.push({
                 id: staff.id,
-                name: staff.name,
+                name: staff.display_name,
                 type: 'user',
-                avatar_url: null
+                avatar_url: staff.avatar_url
             });
         });
 
