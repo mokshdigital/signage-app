@@ -16,3 +16,4 @@ export { AISummaryPanel } from './AISummaryPanel';
 export { WorkOrderEditModal } from './WorkOrderEditModal';
 export { TeamSelectionStep } from './TeamSelectionStep';
 export { WorkOrderTeamTab } from './team';
+export { ClientHubTab } from './client-hub';

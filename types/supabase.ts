@@ -651,6 +651,7 @@ export interface Database {
                     name: string
                     email: string | null
                     phone: string | null
+                    user_profile_id: string | null
                     created_at: string
                 }
                 Insert: {
@@ -659,6 +660,7 @@ export interface Database {
                     name: string
                     email?: string | null
                     phone?: string | null
+                    user_profile_id?: string | null
                     created_at?: string
                 }
                 Update: {
@@ -667,6 +669,7 @@ export interface Database {
                     name?: string
                     email?: string | null
                     phone?: string | null
+                    user_profile_id?: string | null
                     created_at?: string
                 }
                 Relationships: [
@@ -674,6 +677,104 @@ export interface Database {
                         foreignKeyName: "project_managers_client_id_fkey"
                         columns: ["client_id"]
                         referencedRelation: "clients"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "project_managers_user_profile_id_fkey"
+                        columns: ["user_profile_id"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            work_order_client_access: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    project_manager_id: string
+                    added_by: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    project_manager_id: string
+                    added_by?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    project_manager_id?: string
+                    added_by?: string | null
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_client_access_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_client_access_project_manager_id_fkey"
+                        columns: ["project_manager_id"]
+                        referencedRelation: "project_managers"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_client_access_added_by_fkey"
+                        columns: ["added_by"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
+            }
+            work_order_client_chat: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    sender_id: string
+                    message: string
+                    file_references: string[]
+                    sender_company_name: string | null
+                    is_deleted: boolean
+                    edited_at: string | null
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    sender_id: string
+                    message: string
+                    file_references?: string[]
+                    sender_company_name?: string | null
+                    is_deleted?: boolean
+                    edited_at?: string | null
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    sender_id?: string
+                    message?: string
+                    file_references?: string[]
+                    sender_company_name?: string | null
+                    is_deleted?: boolean
+                    edited_at?: string | null
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_client_chat_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_client_chat_sender_id_fkey"
+                        columns: ["sender_id"]
+                        referencedRelation: "user_profiles"
                         referencedColumns: ["id"]
                     }
                 ]

@@ -2203,4 +2203,399 @@ export const workOrdersService = {
 
         return !!assignment;
     },
+
+    // =============================================
+    // CLIENT HUB
+    // =============================================
+
+    /**
+     * Get client hub contacts for a work order
+     * Returns Primary PM and additional authorized contacts
+     */
+    async getClientHubContacts(workOrderId: string): Promise<{
+        primaryPM: { id: string; name: string; email: string | null; phone: string | null; user_profile_id: string | null; client_name: string } | null;
+        additionalContacts: { id: string; pm_id: string; name: string; email: string | null; phone: string | null; user_profile_id: string | null; client_name: string }[];
+    }> {
+        const supabase = createClient();
+
+        // Get work order with primary PM and client
+        const { data: workOrder, error: woError } = await supabase
+            .from('work_orders')
+            .select(`
+                pm_id,
+                client:clients(id, name),
+                primary_pm:project_managers!work_orders_pm_id_fkey(
+                    id, name, email, phone, user_profile_id,
+                    client:clients(name)
+                )
+            `)
+            .eq('id', workOrderId)
+            .single();
+
+        if (woError) {
+            throw new Error(`Failed to fetch work order: ${woError.message}`);
+        }
+
+        let primaryPM = null;
+        if (workOrder?.primary_pm) {
+            const pm = workOrder.primary_pm as any;
+            primaryPM = {
+                id: pm.id,
+                name: pm.name,
+                email: pm.email,
+                phone: pm.phone,
+                user_profile_id: pm.user_profile_id,
+                client_name: pm.client?.name || 'Unknown Client'
+            };
+        }
+
+        // Get additional contacts
+        const { data: additionalAccess, error: accessError } = await supabase
+            .from('work_order_client_access')
+            .select(`
+                id,
+                project_manager:project_managers(
+                    id, name, email, phone, user_profile_id,
+                    client:clients(name)
+                )
+            `)
+            .eq('work_order_id', workOrderId);
+
+        if (accessError) {
+            console.error('Error fetching additional contacts:', accessError);
+        }
+
+        const additionalContacts = (additionalAccess || []).map((access: any) => ({
+            id: access.id,
+            pm_id: access.project_manager.id,
+            name: access.project_manager.name,
+            email: access.project_manager.email,
+            phone: access.project_manager.phone,
+            user_profile_id: access.project_manager.user_profile_id,
+            client_name: access.project_manager.client?.name || 'Unknown Client'
+        }));
+
+        return { primaryPM, additionalContacts };
+    },
+
+    /**
+     * Add an additional client contact to a work order
+     * Limited to PMs from the same client as the work order
+     */
+    async addClientContact(workOrderId: string, projectManagerId: string): Promise<void> {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) throw new Error('User not authenticated');
+
+        // Verify PM is from the same client as the WO
+        const { data: workOrder } = await supabase
+            .from('work_orders')
+            .select('client_id')
+            .eq('id', workOrderId)
+            .single();
+
+        const { data: pm } = await supabase
+            .from('project_managers')
+            .select('client_id')
+            .eq('id', projectManagerId)
+            .single();
+
+        if (!workOrder?.client_id || !pm || pm.client_id !== workOrder.client_id) {
+            throw new Error('Can only add contacts from the same client');
+        }
+
+        const { error } = await supabase
+            .from('work_order_client_access')
+            .insert({
+                work_order_id: workOrderId,
+                project_manager_id: projectManagerId,
+                added_by: user.id
+            });
+
+        if (error) {
+            if (error.code === '23505') { // Unique violation
+                throw new Error('This contact is already added');
+            }
+            throw new Error(`Failed to add contact: ${error.message}`);
+        }
+    },
+
+    /**
+     * Remove an additional client contact from a work order
+     */
+    async removeClientContact(accessId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_client_access')
+            .delete()
+            .eq('id', accessId);
+
+        if (error) {
+            throw new Error(`Failed to remove contact: ${error.message}`);
+        }
+    },
+
+    /**
+     * Get available PMs to add (from the same client, not already added)
+     */
+    async getAvailableClientContacts(workOrderId: string): Promise<{ id: string; name: string; email: string | null }[]> {
+        const supabase = createClient();
+
+        // Get WO's client_id and current pm_id
+        const { data: workOrder } = await supabase
+            .from('work_orders')
+            .select('client_id, pm_id')
+            .eq('id', workOrderId)
+            .single();
+
+        if (!workOrder?.client_id) return [];
+
+        // Get already added PMs
+        const { data: existingAccess } = await supabase
+            .from('work_order_client_access')
+            .select('project_manager_id')
+            .eq('work_order_id', workOrderId);
+
+        const existingPmIds = new Set((existingAccess || []).map(a => a.project_manager_id));
+        if (workOrder.pm_id) existingPmIds.add(workOrder.pm_id); // Exclude primary PM
+
+        // Get all PMs from the same client
+        const { data: allPms } = await supabase
+            .from('project_managers')
+            .select('id, name, email')
+            .eq('client_id', workOrder.client_id);
+
+        return (allPms || []).filter(pm => !existingPmIds.has(pm.id));
+    },
+
+    /**
+     * Get client chat messages for a work order
+     */
+    async getClientChatMessages(workOrderId: string): Promise<{
+        id: string;
+        message: string;
+        file_references: string[];
+        sender_company_name: string | null;
+        edited_at: string | null;
+        is_deleted: boolean;
+        created_at: string;
+        sender: { id: string; display_name: string; avatar_url: string | null };
+    }[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_client_chat')
+            .select('id, message, file_references, sender_company_name, edited_at, is_deleted, created_at, sender:user_profiles(id, display_name, avatar_url)')
+            .eq('work_order_id', workOrderId)
+            .eq('is_deleted', false)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            throw new Error(`Failed to fetch client chat messages: ${error.message}`);
+        }
+
+        return (data || []) as any;
+    },
+
+    /**
+     * Send a message in the client chat
+     * Automatically determines sender_company_name based on user type
+     */
+    async sendClientChatMessage(
+        workOrderId: string,
+        message: string,
+        fileReferences: string[] = []
+    ): Promise<string> {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) throw new Error('User not authenticated');
+
+        // Determine sender company name
+        let senderCompanyName: string | null = null;
+
+        // Get user profile with role
+        const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('user_type')
+            .eq('id', user.id)
+            .single();
+
+        if (userProfile?.user_type === 'internal') {
+            // Get company name from settings
+            const { data: settings } = await supabase
+                .from('company_settings')
+                .select('name')
+                .eq('id', 1)
+                .single();
+            senderCompanyName = settings?.name || 'Tops Lighting';
+        } else {
+            // External user - get their client's company name via project_managers
+            const { data: pm } = await supabase
+                .from('project_managers')
+                .select('client:clients(name)')
+                .eq('user_profile_id', user.id)
+                .single();
+            senderCompanyName = (pm?.client as any)?.name || 'Client';
+        }
+
+        const { data, error } = await supabase
+            .from('work_order_client_chat')
+            .insert({
+                work_order_id: workOrderId,
+                sender_id: user.id,
+                message: message.trim(),
+                file_references: fileReferences,
+                sender_company_name: senderCompanyName
+            })
+            .select('id')
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to send message: ${error.message}`);
+        }
+
+        return data.id;
+    },
+
+    /**
+     * Edit a client chat message
+     */
+    async editClientChatMessage(messageId: string, newMessage: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_client_chat')
+            .update({
+                message: newMessage.trim(),
+                edited_at: new Date().toISOString()
+            })
+            .eq('id', messageId);
+
+        if (error) {
+            throw new Error(`Failed to edit message: ${error.message}`);
+        }
+    },
+
+    /**
+     * Delete a client chat message (soft delete)
+     */
+    async deleteClientChatMessage(messageId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_client_chat')
+            .update({ is_deleted: true })
+            .eq('id', messageId);
+
+        if (error) {
+            throw new Error(`Failed to delete message: ${error.message}`);
+        }
+    },
+
+    /**
+     * Upload a file attachment for client chat
+     * Path: work-orders/{workOrderId}/client-uploads/{timestamp}_{filename}
+     */
+    async uploadClientChatAttachment(workOrderId: string, file: File): Promise<string> {
+        const supabase = createClient();
+
+        // Validate file size (25MB max)
+        const maxSize = 25 * 1024 * 1024;
+        if (file.size > maxSize) {
+            throw new Error('File size exceeds 25MB limit');
+        }
+
+        // Validate file type
+        const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        if (!allowedTypes.includes(file.type)) {
+            throw new Error('File type not allowed. Only PDF and images are supported.');
+        }
+
+        // Generate unique file name
+        const fileExt = file.name.split('.').pop();
+        const timestamp = Date.now();
+        const randomStr = Math.random().toString(36).substring(7);
+        const fileName = `${workOrderId}/client-uploads/${timestamp}_${randomStr}.${fileExt}`;
+
+        // Upload to work-orders bucket
+        const { error: uploadError } = await supabase.storage
+            .from('work-orders')
+            .upload(fileName, file);
+
+        if (uploadError) {
+            throw new Error(`Failed to upload attachment: ${uploadError.message}`);
+        }
+
+        // Get public URL
+        const { data: urlData } = supabase.storage
+            .from('work-orders')
+            .getPublicUrl(fileName);
+
+        return urlData.publicUrl;
+    },
+
+    /**
+     * Check if current user can access the Client Hub for a work order
+     */
+    async canAccessClientHub(workOrderId: string): Promise<boolean> {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return false;
+
+        // Get user profile with role
+        const { data: userProfile } = await supabase
+            .from('user_profiles')
+            .select('user_type, role:roles(name)')
+            .eq('id', user.id)
+            .single();
+
+        // If technician, deny access
+        if ((userProfile?.role as any)?.name?.toLowerCase() === 'technician') {
+            return false;
+        }
+
+        // Check WO owner
+        const { data: wo } = await supabase
+            .from('work_orders')
+            .select('owner_id, pm_id')
+            .eq('id', workOrderId)
+            .single();
+
+        if (wo?.owner_id === user.id) return true;
+
+        // Check if internal team member (non-technician)
+        if (userProfile?.user_type === 'internal') {
+            const { data: teamMember } = await supabase
+                .from('work_order_team')
+                .select('id')
+                .eq('work_order_id', workOrderId)
+                .eq('user_profile_id', user.id)
+                .maybeSingle();
+
+            if (teamMember) return true;
+        }
+
+        // Check if primary PM
+        if (wo?.pm_id) {
+            const { data: primaryPm } = await supabase
+                .from('project_managers')
+                .select('user_profile_id')
+                .eq('id', wo.pm_id)
+                .single();
+
+            if (primaryPm?.user_profile_id === user.id) return true;
+        }
+
+        // Check if additional contact
+        const { data: additionalAccess } = await supabase
+            .from('work_order_client_access')
+            .select('project_manager:project_managers(user_profile_id)')
+            .eq('work_order_id', workOrderId);
+
+        if (additionalAccess?.some((a: any) => a.project_manager?.user_profile_id === user.id)) {
+            return true;
+        }
+
+        return false;
+    },
 };
