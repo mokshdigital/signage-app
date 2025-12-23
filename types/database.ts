@@ -73,6 +73,7 @@ export interface WorkOrderFile {
     mime_type: string | null;
     category_id: string | null;
     uploaded_by: string | null;
+    is_client_visible: boolean;
     created_at: string;
     // Optional: populated when category is joined
     category?: FileCategory;
