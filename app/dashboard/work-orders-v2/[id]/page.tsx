@@ -31,7 +31,8 @@ import {
     WorkOrderDetailHeader,
     AISummaryPanel,
     WorkOrderEditModal,
-    WorkOrderTeamTab
+    WorkOrderTeamTab,
+    ClientHubTab
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { useConfirmDialog } from '@/hooks';
@@ -98,6 +99,7 @@ export default function WorkOrderDetailV2Page() {
             { id: 'tasks', label: 'Tasks', badge: workOrder.tasks?.length || 0 },
             { id: 'technicians', label: 'Technicians', badge: workOrder.assignments?.length || 0 },
             { id: 'team', label: 'Team' },
+            { id: 'client-hub', label: 'Client Hub', className: 'text-purple-600' },
             { id: 'files', label: 'Files', badge: workOrder.files?.length || 0 },
             { id: 'shipments', label: 'Shipments', badge: workOrder.shipments?.length || 0 },
             { id: 'schedule', label: 'Schedule', disabled: true },
@@ -578,6 +580,15 @@ export default function WorkOrderDetailV2Page() {
                     <div className="flex items-center justify-center py-8">
                         <LoadingSpinner />
                     </div>
+                );
+
+            case 'client-hub':
+                return (
+                    <ClientHubTab
+                        workOrderId={workOrderId}
+                        clientId={workOrder.client_id}
+                        pmId={workOrder.pm_id}
+                    />
                 );
 
             default:
