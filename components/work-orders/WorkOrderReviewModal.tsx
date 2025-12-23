@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Modal, Button, Select, Input, Textarea, LoadingSpinner, Alert, StepProgress } from '@/components/ui';
+import { Modal, Button, Select, Input, Textarea, LoadingSpinner, Alert } from '@/components/ui';
 import { WorkOrder, Client, ProjectManager, JobType } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
 import { clientsService } from '@/services/clients.service';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
-import { Plus, X, Calendar } from 'lucide-react';
+import { Plus, X, Calendar, User, Check } from 'lucide-react';
 
 interface WorkOrderReviewModalProps {
     isOpen: boolean;
@@ -46,6 +46,11 @@ export function WorkOrderReviewModal({
     const [projectManagers, setProjectManagers] = useState<ProjectManager[]>([]);
     const [loadingPMs, setLoadingPMs] = useState(false);
 
+    // Team Selection State
+    const [officeStaff, setOfficeStaff] = useState<{ id: string; display_name: string; avatar_url: string | null }[]>([]);
+    const [selectedTeam, setSelectedTeam] = useState<string[]>([]);
+    const [loadingStaff, setLoadingStaff] = useState(false);
+
     // AI Suggestions
     const [suggestions, setSuggestions] = useState<{ client?: string; jobType?: string }>({});
 
@@ -69,6 +74,9 @@ export function WorkOrderReviewModal({
             setUsers(usersData);
             setClients(clientsData);
             setJobTypes(jobTypesData);
+
+            // 2. Fetch Office Staff for team selection
+            fetchOfficeStaff();
 
             // 2. Set Initial Values from Work Order / AI
             setOwnerId(workOrder?.owner_id || workOrder?.uploaded_by || '');
@@ -132,6 +140,28 @@ export function WorkOrderReviewModal({
         const supabase = createClient();
         const { data } = await supabase.from('user_profiles').select('id, display_name').order('display_name');
         return data || [];
+    };
+
+    const fetchOfficeStaff = async () => {
+        setLoadingStaff(true);
+        try {
+            const staff = await workOrdersService.getOfficeStaffUsers();
+            // Filter out the WO owner from selectable staff
+            const filteredStaff = staff.filter(s => s.id !== (workOrder?.owner_id || workOrder?.uploaded_by));
+            setOfficeStaff(filteredStaff);
+        } catch (error) {
+            console.error('Failed to fetch office staff', error);
+        } finally {
+            setLoadingStaff(false);
+        }
+    };
+
+    const toggleTeamMember = (id: string) => {
+        setSelectedTeam(prev =>
+            prev.includes(id)
+                ? prev.filter(i => i !== id)
+                : [...prev, id]
+        );
     };
 
     const fetchProjectManagers = async (cId: string) => {
@@ -201,8 +231,14 @@ export function WorkOrderReviewModal({
                 await workOrdersService.addShippingComment(workOrder.id, shippingComment.trim());
             }
 
-            // Transition to Step 3 - parent handles opening team selection
+            // 3. Add Team Members if selected
+            if (selectedTeam.length > 0) {
+                await workOrdersService.addTeamMembers(workOrder.id, selectedTeam);
+            }
+
+            toast.success('Work Order created successfully!');
             onSave();
+            onClose();
         } catch (error: any) {
             toast.error('Failed to save changes', { description: error.message });
         } finally {
@@ -225,16 +261,6 @@ export function WorkOrderReviewModal({
                 </div>
             ) : (
                 <div className="space-y-6">
-                    {/* Step Progress */}
-                    <StepProgress
-                        currentStep={2}
-                        steps={[
-                            { label: 'Upload' },
-                            { label: 'Details' },
-                            { label: 'Team' }
-                        ]}
-                    />
-
                     <Alert variant="info" title="AI Extraction Complete">
                         Please review the extracted details and fill in any missing information below.
                     </Alert>
@@ -381,6 +407,54 @@ export function WorkOrderReviewModal({
                                 rows={3}
                             />
                         </div>
+
+                        {/* Team Selection */}
+                        <div className="md:col-span-2">
+                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                                Team Members (Optional)
+                            </label>
+                            <p className="text-xs text-gray-500 mb-3">
+                                Select office staff to help manage this work order
+                            </p>
+                            {loadingStaff ? (
+                                <div className="flex items-center gap-2 py-2">
+                                    <LoadingSpinner />
+                                    <span className="text-sm text-gray-500">Loading team...</span>
+                                </div>
+                            ) : officeStaff.length === 0 ? (
+                                <p className="text-sm text-gray-500">No additional office staff available.</p>
+                            ) : (
+                                <div className="flex flex-wrap gap-2">
+                                    {officeStaff.map(staff => {
+                                        const isSelected = selectedTeam.includes(staff.id);
+                                        return (
+                                            <button
+                                                key={staff.id}
+                                                type="button"
+                                                onClick={() => toggleTeamMember(staff.id)}
+                                                className={`
+                                                    inline-flex items-center gap-2 px-3 py-2 rounded-full border text-sm font-medium transition-all
+                                                    ${isSelected
+                                                        ? 'bg-blue-100 border-blue-400 text-blue-800'
+                                                        : 'bg-white border-gray-300 text-gray-700 hover:border-blue-300 hover:bg-blue-50'
+                                                    }
+                                                `}
+                                            >
+                                                {staff.avatar_url ? (
+                                                    <img src={staff.avatar_url} alt="" className="w-6 h-6 rounded-full object-cover" />
+                                                ) : (
+                                                    <div className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold ${isSelected ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+                                                        {staff.display_name.charAt(0).toUpperCase()}
+                                                    </div>
+                                                )}
+                                                <span>{staff.display_name}</span>
+                                                {isSelected && <X className="w-4 h-4 text-blue-600" />}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </div>
                     </div>
 
                     <div className="flex justify-end pt-4 border-t border-gray-200">
@@ -388,7 +462,7 @@ export function WorkOrderReviewModal({
                             onClick={handleSave}
                             loading={saving}
                         >
-                            Next: Select Team
+                            Confirm & Save
                         </Button>
                     </div>
                 </div>

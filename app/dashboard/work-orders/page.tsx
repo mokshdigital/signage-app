@@ -7,15 +7,14 @@ import { WorkOrder, WorkOrderFile, Client, ProjectManager, JobType, JobStatus } 
 import { workOrdersService } from '@/services/work-orders.service';
 import { clientsService } from '@/services/clients.service';
 import { useCrud, useModal, useConfirmDialog } from '@/hooks';
-import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay, Modal, LoadingSpinner, Input, UploadIcon, StepProgress } from '@/components/ui';
+import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay, Modal, LoadingSpinner, Input, UploadIcon } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
 import { Search, Filter, X } from 'lucide-react';
 import {
     WorkOrderUploadForm,
     WorkOrderFilesModal,
     WorkOrderAnalysisModal,
-    WorkOrderReviewModal,
-    TeamSelectionStep
+    WorkOrderReviewModal
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
@@ -81,11 +80,6 @@ export default function WorkOrdersPage() {
     // Review Modal State
     const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [currentWorkOrder, setCurrentWorkOrder] = useState<WorkOrder | null>(null);
-
-    // Team Selection State (Step 3)
-    const [isTeamSelectionOpen, setIsTeamSelectionOpen] = useState(false);
-    const [currentStep, setCurrentStep] = useState(1);
-    const [ownerName, setOwnerName] = useState<string | null>(null);
 
     // Map of user IDs to profiles for "Uploaded By" column
     const [uploaders, setUploaders] = useState<Record<string, { name: string }>>({});
@@ -338,38 +332,9 @@ export default function WorkOrdersPage() {
         }
     };
 
-    const handleReviewComplete = () => {
-        // Transition from Step 2 (Review) to Step 3 (Team Selection)
+    const handleReviewComplete = async () => {
         setIsReviewOpen(false);
-        setCurrentStep(3);
-        setIsTeamSelectionOpen(true);
-
-        // Fetch owner name for display (async, but modal is already open)
-        const ownerId = currentWorkOrder?.owner_id;
-        if (ownerId) {
-            workOrdersService.getUserProfiles([ownerId])
-                .then(profiles => {
-                    setOwnerName(profiles[ownerId]?.name || null);
-                })
-                .catch(e => console.warn('Failed to fetch owner name', e));
-        }
-    };
-
-    const handleTeamSelectionComplete = async () => {
-        setIsTeamSelectionOpen(false);
-        setCurrentStep(1); // Reset for next upload
         setCurrentWorkOrder(null);
-        setOwnerName(null);
-        toast.success('Work order created successfully!');
-        await refresh();
-    };
-
-    const handleTeamSelectionSkip = async () => {
-        setIsTeamSelectionOpen(false);
-        setCurrentStep(1);
-        setCurrentWorkOrder(null);
-        setOwnerName(null);
-        toast.success('Work order created!');
         await refresh();
     };
 
@@ -696,35 +661,6 @@ export default function WorkOrdersPage() {
                 workOrder={currentWorkOrder}
                 onSave={handleReviewComplete}
             />
-
-            {/* Step 3: Team Selection Modal */}
-            <Modal
-                isOpen={isTeamSelectionOpen}
-                onClose={handleTeamSelectionSkip}
-                title="Select Team Members"
-                size="md"
-                showCloseButton={false}
-            >
-                <div className="mb-4">
-                    <StepProgress
-                        currentStep={3}
-                        steps={[
-                            { label: 'Upload' },
-                            { label: 'Details' },
-                            { label: 'Team' }
-                        ]}
-                    />
-                </div>
-                {currentWorkOrder && (
-                    <TeamSelectionStep
-                        workOrderId={currentWorkOrder.id}
-                        ownerId={currentWorkOrder.owner_id}
-                        ownerName={ownerName}
-                        onComplete={handleTeamSelectionComplete}
-                        onSkip={handleTeamSelectionSkip}
-                    />
-                )}
-            </Modal>
 
             {/* Client Assignment Modal */}
             <Modal
