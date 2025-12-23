@@ -31,7 +31,8 @@ import {
     FileViewerModal,
     ShippingComments,
     WorkOrderFilesCard,
-    WorkOrderTeamTab
+    WorkOrderTeamTab,
+    ClientHubTab
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
@@ -872,6 +873,15 @@ export default function WorkOrderDetailPage() {
                     />
                 </Card>
             )}
+
+            {/* Client Hub Section - Full Width */}
+            <Card title="Client Hub" className="border-purple-200 bg-purple-50/30">
+                <ClientHubTab
+                    workOrderId={workOrderId}
+                    clientId={workOrder.client_id}
+                    pmId={workOrder.pm_id}
+                />
+            </Card>
 
             {/* Modals */}
             < WorkOrderFilesModal
