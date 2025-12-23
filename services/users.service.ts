@@ -202,9 +202,10 @@ export const usersService = {
         if (data.nick_name !== undefined) updateData.nick_name = data.nick_name;
         if (data.phone !== undefined) updateData.phone = data.phone;
         if (data.job_title !== undefined) updateData.title = data.job_title;
+        if (data.role_id !== undefined) updateData.role_id = data.role_id;
 
-        // Note: is_technician and is_office_staff now only affect the extension tables,
-        // not user_profiles (since we now use user_type: 'internal' | 'external')
+        // Note: is_technician only affects the technicians table,
+        // not user_profiles (since we now use role-based user_type)
 
         const { data: profile, error: profileError } = await supabase
             .from('user_profiles')

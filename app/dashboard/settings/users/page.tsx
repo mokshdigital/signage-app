@@ -143,7 +143,6 @@ export default function UsersPage() {
                                 <tr>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">User</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Email</th>
-                                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Types</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Role</th>
                                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                                     <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Actions</th>
@@ -162,12 +161,6 @@ export default function UsersPage() {
                                             </div>
                                         </td>
                                         <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{user.email || '-'}</td>
-                                        <td className="px-6 py-4 whitespace-nowrap">
-                                            <div className="flex gap-1">
-                                                {user.technician && <Badge variant="info" size="sm">Tech</Badge>}
-                                                {!user.technician && <span className="text-gray-400 text-sm">-</span>}
-                                            </div>
-                                        </td>
                                         <td className="px-6 py-4 whitespace-nowrap">
                                             {user.role ? (
                                                 <Badge variant={user.role.name === 'super_admin' ? 'warning' : 'info'}>{user.role.display_name}</Badge>
