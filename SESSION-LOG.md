@@ -1121,3 +1121,60 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - [ ] Run `023_assignment_user_profile_fk.sql` migration in Supabase Dashboard.
 
 **Git Commit**: `feat: migrate assignments and mentions to unified user identity (user_profile_id)`
+
+---
+
+### Session 27 - December 23, 2024 (8:00 AM PST)
+
+**Objective**: Implement Team Tab with roster and real-time chat for Work Order detail pages.
+
+**Changes Made**:
+
+1.  **Database Migration** (`database_migrations/024_work_order_team.sql`):
+    -   Created `work_order_team` table for office staff assignments
+    -   Links `work_order_id` to `user_profile_id`
+    -   RLS policies for authenticated CRUD
+
+2.  **Database Migration** (`database_migrations/025_work_order_chat.sql`):
+    -   Created `work_order_chat_messages` table for team chat
+    -   Fields: `id`, `work_order_id`, `user_profile_id`, `message` (2000 char max), `file_references` (UUID[]), `edited_at`, `is_deleted`, `created_at`
+    -   RLS policies: only team members (owner, office staff, technicians) can view/send messages
+    -   Enabled Supabase Realtime for live updates
+    -   Helper function `is_work_order_team_member()` for access checks
+
+3.  **Service Layer** (`services/work-orders.service.ts`):
+    -   Added `getOfficeStaffUsers()`: Fetches active office staff
+    -   Added `addTeamMembers()`: Adds office staff to WO team
+    -   Added `removeTeamMember()`: Removes office staff from team
+    -   Added `getTeamMembers()`: Gets team members for a WO
+    -   Added `getFullTeamRoster()`: Gets owner, office staff, technicians
+    -   Added `getChatMessages()`: Fetches chat messages
+    -   Added `sendChatMessage()`: Sends new message with file refs
+    -   Added `editChatMessage()`: Edits own message (sets edited_at)
+    -   Added `deleteChatMessage()`: Soft deletes message
+    -   Added `isTeamMember()`: Checks if user is on the team
+
+4.  **UI Components** (`components/work-orders/team/`):
+    -   `WorkOrderTeamTab.tsx`: Main container with access control
+    -   `TeamRoster.tsx`: Shows WO Owner, Office Staff (editable), Technicians
+    -   `TeamChat.tsx`: Real-time chat with Supabase Realtime subscription
+    -   `ChatMessage.tsx`: Message display with hover edit/delete menu
+    -   `ChatInput.tsx`: Message input with file attachment modal (grouped by category)
+
+5.  **Work Order Review Modal** (`components/work-orders/WorkOrderReviewModal.tsx`):
+    -   Added inline team selection during WO creation
+    -   Chip selector for office staff
+    -   Saves team members on "Confirm & Save"
+
+6.  **WO Detail Pages**:
+    -   Added Team section to v1 page (`app/dashboard/work-orders/[id]/page.tsx`)
+    -   Added "Team" tab to v2 beta page (`app/dashboard/work-orders-v2/[id]/page.tsx`)
+
+**Pending Actions**:
+- [ ] Run `024_work_order_team.sql` migration in Supabase Dashboard
+- [ ] Run `025_work_order_chat.sql` migration in Supabase Dashboard
+
+**Git Commits**:
+- `feat: integrate team selection into review modal, remove Step 3`
+- `feat: add Team tab with roster and real-time chat for WO detail page`
+- `feat: add Team tab to work-orders-v2 detail page`

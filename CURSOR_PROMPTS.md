@@ -497,6 +497,79 @@ Add real-time updates using Supabase subscriptions for:
 
 ---
 
+## Team Tab & Chat Patterns
+
+### Real-time Chat with Supabase Realtime
+```tsx
+// Subscribe to chat messages for a work order
+useEffect(() => {
+    const supabase = createClient();
+    const channel = supabase
+        .channel(`chat:${workOrderId}`)
+        .on('postgres_changes', {
+            event: '*',
+            schema: 'public',
+            table: 'work_order_chat_messages',
+            filter: `work_order_id=eq.${workOrderId}`
+        }, (payload) => {
+            if (payload.eventType === 'INSERT') {
+                setMessages(prev => [...prev, payload.new as ChatMessage]);
+            } else if (payload.eventType === 'UPDATE') {
+                setMessages(prev => prev.map(m => 
+                    m.id === payload.new.id ? payload.new as ChatMessage : m
+                ));
+            }
+        })
+        .subscribe();
+    
+    return () => {
+        supabase.removeChannel(channel);
+    };
+}, [workOrderId]);
+```
+
+### Team Roster Component Pattern
+```
+Create a TeamRoster component that:
+- Displays WO Owner (read-only, avatar + name)
+- Office Staff section with add/remove capability
+- Technicians section with link to Technicians tab
+- Uses chip selector for adding office staff
+- Confirmation prompt before removing team members
+```
+
+### Chat Message with Hover Actions
+```tsx
+// Message with hover-revealed action menu
+<div className="group relative">
+    <div className="message-content">...</div>
+    {isOwnMessage && (
+        <div className="absolute right-2 top-2 opacity-0 group-hover:opacity-100">
+            <button onClick={() => setIsMenuOpen(!isMenuOpen)}>...</button>
+            {isMenuOpen && (
+                <div className="dropdown-menu">
+                    <button onClick={handleEdit}>Edit</button>
+                    <button onClick={handleDelete}>Delete</button>
+                </div>
+            )}
+        </div>
+    )}
+</div>
+```
+
+### File Picker Modal (Grouped by Category)
+```
+Create a file picker modal that:
+- Groups WO files by category
+- Shows expandable category sections
+- Displays thumbnails for images/PDFs
+- Shows chip-style items for other files
+- Allows multi-select
+- Returns array of selected file IDs
+```
+
+---
+
 ## Troubleshooting Prompts
 
 ### When Something Doesn't Work

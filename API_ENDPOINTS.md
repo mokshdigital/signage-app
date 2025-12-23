@@ -332,6 +332,55 @@ DELETE /api/work-orders/:id
 
 ---
 
+### 7. Work Order Team & Chat (Service Methods)
+
+> **Note**: These are client-side service methods via `workOrdersService` (not API routes).
+
+#### Team Management
+
+| Method | Description |
+|--------|-------------|
+| `getOfficeStaffUsers()` | Fetch all active office staff |
+| `addTeamMembers(woId, userIds[])` | Add office staff to WO team |
+| `removeTeamMember(woId, userId)` | Remove office staff from team |
+| `getTeamMembers(woId)` | Get team members for a WO |
+| `getFullTeamRoster(woId)` | Get owner, office staff, technicians |
+| `isTeamMember(woId)` | Check if current user is on the team |
+
+#### Chat
+
+| Method | Description |
+|--------|-------------|
+| `getChatMessages(woId)` | Fetch chat messages (non-deleted) |
+| `sendChatMessage(woId, message, fileRefs[])` | Send new message with optional file references |
+| `editChatMessage(msgId, newMessage)` | Edit own message (sets `edited_at`) |
+| `deleteChatMessage(msgId)` | Soft delete message (sets `is_deleted: true`) |
+
+**Chat Message Fields:**
+- `id` - UUID
+- `message` - Text (max 2000 chars)
+- `file_references` - UUID[] (work_order_files.id)
+- `edited_at` - Timestamp (null if never edited)
+- `is_deleted` - Boolean (soft delete)
+- `created_at` - Timestamp
+- `user_profile` - Author info (id, display_name, avatar_url)
+
+**Real-time Subscription:**
+```typescript
+// Supabase Realtime channel for live chat updates
+supabase
+  .channel(`chat:${workOrderId}`)
+  .on('postgres_changes', { 
+    event: '*', 
+    schema: 'public', 
+    table: 'work_order_chat_messages',
+    filter: `work_order_id=eq.${workOrderId}` 
+  }, callback)
+  .subscribe();
+```
+
+---
+
 ## Error Handling
 
 ### Standard Error Response Format

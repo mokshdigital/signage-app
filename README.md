@@ -44,6 +44,8 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
     - **Task Comments**: Threaded comments with @mentions and file attachments.
     - **Task Categories**: WO-scoped categories with colors.
     - **Task Tags**: Global tags with multi-select and colors.
+    - **Team Tab**: View/manage WO team (Owner, Office Staff, Technicians).
+    - **Team Chat**: Real-time chat for team coordination with file attachments.
   - **Shipping Comments**: Threaded conversation system for tracking shipments.
 - **Client Management**:
   - Client directory with project manager contacts.

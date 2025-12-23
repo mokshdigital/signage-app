@@ -777,3 +777,67 @@ Junction table connecting tasks to tags (many-to-many).
 
 ### Updates to `work_order_tasks` table
 - Added `category_id` (UUID, FK -> work_order_categories, ON DELETE SET NULL)
+
+---
+
+### 17. `work_order_team`
+Office staff team assignments for work orders.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
+| `work_order_id` | UUID | NOT NULL, FK → work_orders (ON DELETE CASCADE) | Work order reference |
+| `user_profile_id` | UUID | NOT NULL, FK → user_profiles (ON DELETE CASCADE) | Office staff user |
+| `added_at` | TIMESTAMPTZ | DEFAULT NOW() | Assignment timestamp |
+
+#### Indexes
+- `idx_work_order_team_work_order_id` on `work_order_id`
+- `idx_work_order_team_user_profile_id` on `user_profile_id`
+
+#### Constraints
+- Unique constraint on `(work_order_id, user_profile_id)`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**:
+  - `Allow authenticated reads`: SELECT for authenticated users
+  - `Allow authenticated inserts`: INSERT for authenticated users
+
+---
+
+### 18. `work_order_chat_messages`
+Team chat messages for work orders with real-time support.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY, DEFAULT uuid_generate_v4() | Unique identifier |
+| `work_order_id` | UUID | NOT NULL, FK → work_orders (ON DELETE CASCADE) | Work order reference |
+| `user_profile_id` | UUID | NOT NULL, FK → user_profiles (ON DELETE CASCADE) | Message author |
+| `message` | TEXT | NOT NULL, CHECK (char_length <= 2000) | Message content |
+| `file_references` | UUID[] | DEFAULT '{}' | Array of work_order_files.id |
+| `edited_at` | TIMESTAMPTZ | NULL | Set when message is edited |
+| `is_deleted` | BOOLEAN | DEFAULT FALSE | Soft delete flag |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Message timestamp |
+
+#### Indexes
+- `idx_chat_messages_work_order_id` on `work_order_id`
+- `idx_chat_messages_created_at` on `(work_order_id, created_at)`
+
+#### Row Level Security (RLS)
+- **Enabled**: Yes
+- **Policies**:
+  - `Team members can view chat messages`: SELECT for authenticated users who are WO team members
+  - `Team members can send chat messages`: INSERT for authenticated team members (author must be self)
+  - `Message author can edit their messages`: UPDATE for message author only
+  - `Message author can delete their messages`: DELETE for message author only
+
+#### Helper Function
+```sql
+is_work_order_team_member(wo_id UUID, user_id UUID) RETURNS BOOLEAN
+```
+Returns true if user is WO owner, in work_order_team, or in work_order_assignments.
+
+#### Real-time
+- Enabled via `ALTER PUBLICATION supabase_realtime ADD TABLE work_order_chat_messages`

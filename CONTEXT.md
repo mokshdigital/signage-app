@@ -325,3 +325,23 @@ Development sessions are tracked in `SESSION-LOG.md`. This file contains:
 - Equipment maintenance tracking
 - Vehicle GPS tracking integration
 
+### 6. Team Tab & Chat (Phase 18)
+- **Team Roster**: View WO Owner, Office Staff (add/remove), Technicians
+- **Office Staff Assignment**: Manage team members during WO creation or via Team tab
+- **Real-time Team Chat**: Supabase Realtime powered chat for team coordination
+- **File References**: Attach WO files to chat messages (grouped by category)
+- **Edit/Delete Messages**: Hover to reveal action menu on own messages
+- **Access Control**: RLS + UI check for team-only visibility
+
+#### Database Tables
+- `work_order_team`: Office staff assignments to work orders
+- `work_order_chat_messages`: Team chat with file references, edit tracking, soft delete
+
+#### UI Components
+| Component | Purpose |
+|-----------|---------|
+| `WorkOrderTeamTab` | Main container with roster and chat |
+| `TeamRoster` | WO Owner, Office Staff (editable), Technicians |
+| `TeamChat` | Real-time chat panel |
+| `ChatMessage` | Single message with hover actions |
+| `ChatInput` | Message input with file picker |

@@ -1027,3 +1027,76 @@ ADD COLUMN user_profile_id UUID REFERENCES user_profiles(id);
 - "Clients" tab on WO detail page to grant access
 - Client dashboard shows only accessible WOs
 
+---
+
+## Phase 18: Team Tab & Real-Time Chat
+**Date**: December 23, 2024
+
+### Overview
+Added a Team tab to Work Order detail pages that displays the complete WO team (owner, office staff, technicians) and provides a real-time team chat feature.
+
+### Database Schema
+
+#### 1. `work_order_team`
+Office staff assignments to work orders.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `work_order_id` | UUID | FK → work_orders (CASCADE) | Work order reference |
+| `user_profile_id` | UUID | FK → user_profiles (CASCADE) | Office staff user |
+| `added_at` | TIMESTAMPTZ | DEFAULT NOW() | Assignment timestamp |
+
+**Unique constraint**: `(work_order_id, user_profile_id)`
+
+#### 2. `work_order_chat_messages`
+Team chat messages for work orders.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `work_order_id` | UUID | FK → work_orders (CASCADE) | Work order reference |
+| `user_profile_id` | UUID | FK → user_profiles (CASCADE) | Message author |
+| `message` | TEXT | NOT NULL, max 2000 chars | Message content |
+| `file_references` | UUID[] | DEFAULT '{}' | Array of work_order_files.id |
+| `edited_at` | TIMESTAMPTZ | NULL | Set when message is edited |
+| `is_deleted` | BOOLEAN | DEFAULT FALSE | Soft delete flag |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Message timestamp |
+
+**RLS Policies**: Only team members (WO owner, office staff, assigned technicians) can read/write.
+**Realtime**: Enabled for live chat updates.
+
+### Service Layer Methods
+| Method | Purpose |
+|--------|---------|
+| `getOfficeStaffUsers()` | Fetch all active office staff |
+| `addTeamMembers(woId, userIds)` | Add office staff to team |
+| `removeTeamMember(woId, userId)` | Remove office staff from team |
+| `getTeamMembers(woId)` | Get team members for WO |
+| `getFullTeamRoster(woId)` | Get owner, office staff, technicians |
+| `getChatMessages(woId)` | Get chat messages |
+| `sendChatMessage(woId, msg, files)` | Send new message |
+| `editChatMessage(msgId, newMsg)` | Edit own message |
+| `deleteChatMessage(msgId)` | Soft delete message |
+| `isTeamMember(woId)` | Check team membership |
+
+### UI Components
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| `WorkOrderTeamTab` | `components/work-orders/team/` | Main container with access check |
+| `TeamRoster` | `components/work-orders/team/` | WO Owner, Office Staff (add/remove), Technicians |
+| `TeamChat` | `components/work-orders/team/` | Real-time chat with Supabase Realtime |
+| `ChatMessage` | `components/work-orders/team/` | Single message with hover edit/delete |
+| `ChatInput` | `components/work-orders/team/` | Input with file picker modal |
+
+### Features
+- **Team Roster**: View WO Owner (read-only), Office Staff (add/remove), Technicians (link to tab)
+- **Team Chat**: Real-time messaging with Supabase Realtime subscription
+- **File References**: Attach WO files to messages (grouped by category in picker)
+- **Edit/Delete**: Hover to reveal action menu on own messages
+- **Timestamps**: Relative for recent, absolute for older messages
+- **Access Control**: RLS + UI check for team-only access
+
+### Migrations Required
+- `024_work_order_team.sql`
+- `025_work_order_chat.sql`
