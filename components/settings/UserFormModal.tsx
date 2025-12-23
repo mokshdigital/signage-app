@@ -193,29 +193,37 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                 </div>
 
                 {/* Functional Types */}
-                <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-3">
-                        User Types
-                    </label>
-                    <div className="flex gap-6">
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={isTechnician}
-                                onChange={(e) => setIsTechnician(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700">Technician</span>
+                <div className="space-y-4">
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            User Type <span className="text-red-500">*</span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
-                            <input
-                                type="checkbox"
-                                checked={isOfficeStaff}
-                                onChange={(e) => setIsOfficeStaff(e.target.checked)}
-                                className="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500"
-                            />
-                            <span className="text-sm text-gray-700">Office Staff</span>
+                        <Select
+                            value={isTechnician ? 'technician' : 'office_staff'}
+                            onChange={(e) => {
+                                const val = e.target.value;
+                                setIsTechnician(val === 'technician');
+                                setIsOfficeStaff(val === 'office_staff');
+                            }}
+                            options={[
+                                { value: 'office_staff', label: 'Office Staff (Internal)' },
+                                { value: 'technician', label: 'Technician (Field Staff)' }
+                            ]}
+                        />
+                        <p className="text-xs text-gray-500 mt-1">
+                            Determines if user appears in field staff lists. Both are internal users.
+                        </p>
+                    </div>
+
+                    <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                            Job Title
                         </label>
+                        <Input
+                            value={jobTitle}
+                            onChange={(e) => setJobTitle(e.target.value)}
+                            placeholder={isTechnician ? "e.g. Senior Technician" : "e.g. Project Manager"}
+                        />
                     </div>
                 </div>
 
@@ -232,8 +240,8 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                                     type="button"
                                     onClick={() => toggleSkill(skill)}
                                     className={`px-3 py-1.5 text-sm rounded-full border transition-colors ${skills.includes(skill)
-                                            ? 'bg-blue-600 text-white border-blue-600'
-                                            : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
+                                        ? 'bg-blue-600 text-white border-blue-600'
+                                        : 'bg-white text-gray-700 border-gray-300 hover:border-blue-400'
                                         }`}
                                 >
                                     {skill}
@@ -243,20 +251,7 @@ export function InviteUserModal({ isOpen, onClose, onSuccess }: InviteUserModalP
                     </div>
                 )}
 
-                {/* Office Staff Fields */}
-                {isOfficeStaff && (
-                    <div className="p-4 bg-purple-50 rounded-lg space-y-3">
-                        <label className="block text-sm font-medium text-purple-900">
-                            Job Title
-                        </label>
-                        <Input
-                            value={jobTitle}
-                            onChange={(e) => setJobTitle(e.target.value)}
-                            placeholder="e.g., Project Manager, Accountant"
-                            className="bg-white"
-                        />
-                    </div>
-                )}
+
 
                 {/* Actions */}
                 <div className="flex justify-end gap-3 pt-4 border-t">

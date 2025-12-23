@@ -1178,3 +1178,37 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - `feat: integrate team selection into review modal, remove Step 3`
 - `feat: add Team tab with roster and real-time chat for WO detail page`
 - `feat: add Team tab to work-orders-v2 detail page`
+
+---
+
+### Session 13 - December 23, 2024 (10:00 AM - 11:30 AM PST)
+
+**Objective**: User Type Simplification & Legacy Code Removal
+
+**Changes Made**:
+
+1.  **User Type Migration**
+    *   Simplified data model: Replaced array-based `user_types` with single `user_type` column (`'internal' | 'external'`).
+    *   **Migrations**:
+        *   `026_user_type_simplification.sql`: Schema changes and data migration.
+        *   `027_migrate_office_staff_data.sql`: Migrated titles and dropped `office_staff` table.
+        *   `028_secure_rls_with_user_type.sql`: Updated RLS to use `is_internal()` check.
+    *   **Cleanup**: Removed `office_staff` table and related legacy code.
+
+2.  **Code Refactoring**
+    *   **Service Layer**:
+        *   Updated `users.service.ts` to filter technicians from office staff queries.
+        *   Refactored `work-orders.service.ts` to remove all `OfficeStaff` type references and queries.
+    *   **UI Components**:
+        *   Refactored `UserFormModal` (Invite User) to use a **User Type Dropdown** instead of checkboxes.
+        *   Updated `OfficeStaffTab` to correctly display internal staff without technician duplicates.
+
+3.  **Build Fixes**
+    *   Resolved Vercel build errors caused by linger references to the deleted `OfficeStaff` type in `work-orders.service.ts`.
+    *   Fixed duplicate import syntax errors.
+
+4.  **Verification**
+    *   Performed global codebase scan to ensure 0 remaining broken `OfficeStaff` imports.
+    *   Verified UI for user invitation and directory listings.
+
+**Git Commit**: `refactor: Complete user type migration, UI updates, and build fixes`

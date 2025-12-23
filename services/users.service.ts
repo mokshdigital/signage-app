@@ -383,10 +383,20 @@ export const usersService = {
             throw new Error(`Failed to fetch office staff: ${error.message}`);
         }
 
-        return (users || []).map((u: any) => ({
-            ...u,
-            technician: null,
-            // office_staff property removed
-        })) as UnifiedUser[];
+        // Filter out those who are technicians
+        const userIds = (users || []).map((u: any) => u.id);
+        const { data: techLinks } = await supabase
+            .from('technicians')
+            .select('user_profile_id')
+            .in('user_profile_id', userIds);
+
+        const techUserIds = new Set(techLinks?.map((t: any) => t.user_profile_id) || []);
+
+        return (users || [])
+            .filter((u: any) => !techUserIds.has(u.id))
+            .map((u: any) => ({
+                ...u,
+                technician: null,
+            })) as UnifiedUser[];
     },
 };
