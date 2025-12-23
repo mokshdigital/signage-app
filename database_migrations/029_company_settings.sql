@@ -68,8 +68,8 @@ WITH CHECK (true);
 -- NEW PERMISSION
 -- =============================================
 
-INSERT INTO permissions (name, description, module)
-VALUES ('settings:manage_company', 'Manage company information and branding', 'settings')
+INSERT INTO permissions (name, description, resource, action)
+VALUES ('settings:manage_company', 'Manage company information and branding', 'settings', 'manage_company')
 ON CONFLICT (name) DO NOTHING;
 
 -- =============================================
