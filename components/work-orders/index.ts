@@ -15,3 +15,4 @@ export { WorkOrderDetailHeader } from './WorkOrderDetailHeader';
 export { AISummaryPanel } from './AISummaryPanel';
 export { WorkOrderEditModal } from './WorkOrderEditModal';
 export { TeamSelectionStep } from './TeamSelectionStep';
+export { WorkOrderTeamTab } from './team';

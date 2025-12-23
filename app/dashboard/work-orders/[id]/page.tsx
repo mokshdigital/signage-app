@@ -30,10 +30,12 @@ import {
     WorkOrderTasks,
     FileViewerModal,
     ShippingComments,
-    WorkOrderFilesCard
+    WorkOrderFilesCard,
+    WorkOrderTeamTab
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
+import { createClient } from '@/lib/supabase/client';
 
 export default function WorkOrderDetailPage() {
     const params = useParams();
@@ -88,6 +90,10 @@ export default function WorkOrderDetailPage() {
     const [jobStatusReason, setJobStatusReason] = useState('');
     const [savingJobStatus, setSavingJobStatus] = useState(false);
 
+    // Team Tab state
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+    const [teamFiles, setTeamFiles] = useState<{ id: string; filename: string; category: string; url: string; mime_type: string }[]>([]);
+
     // Job Status helper
     const JOB_STATUSES: JobStatus[] = ['Open', 'Active', 'On Hold', 'Completed', 'Submitted', 'Invoiced', 'Cancelled'];
     const statusColors: Record<JobStatus, string> = {
@@ -105,7 +111,14 @@ export default function WorkOrderDetailPage() {
         fetchWorkOrder();
         fetchJobTypes();
         fetchTechnicians();
+        fetchCurrentUser();
     }, [workOrderId]);
+
+    const fetchCurrentUser = async () => {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+        setCurrentUserId(user?.id || null);
+    };
 
     const fetchWorkOrder = async () => {
         setLoading(true);
@@ -173,6 +186,28 @@ export default function WorkOrderDetailPage() {
             setLoadingFiles(false);
         }
     };
+
+    const fetchTeamFiles = async () => {
+        try {
+            const data = await workOrdersService.getFiles(workOrderId);
+            setTeamFiles(data.map(f => ({
+                id: f.id,
+                filename: f.file_name || 'Unnamed file',
+                category: f.category?.name || 'Uncategorized',
+                url: f.file_url,
+                mime_type: f.mime_type || 'application/octet-stream'
+            })));
+        } catch (err) {
+            console.error('Failed to load team files', err);
+        }
+    };
+
+    // Fetch team files when work order loads
+    useEffect(() => {
+        if (workOrderId) {
+            fetchTeamFiles();
+        }
+    }, [workOrderId]);
 
     const handleSaveDetails = async () => {
         if (!workOrder) return;
@@ -825,7 +860,18 @@ export default function WorkOrderDetailPage() {
                         </Card>
                     )}
                 </div>
-            </div >
+            </div>
+
+            {/* Team & Chat Section - Full Width */}
+            {currentUserId && (
+                <Card title="Team & Chat">
+                    <WorkOrderTeamTab
+                        workOrderId={workOrderId}
+                        currentUserId={currentUserId}
+                        workOrderFiles={teamFiles}
+                    />
+                </Card>
+            )}
 
             {/* Modals */}
             < WorkOrderFilesModal

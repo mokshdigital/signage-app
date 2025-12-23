@@ -2007,4 +2007,183 @@ export const workOrdersService = {
             throw new Error(`Failed to remove team member: ${error.message}`);
         }
     },
+
+    // =============================================
+    // TEAM CHAT
+    // =============================================
+
+    /**
+     * Get full team roster for a work order
+     * Returns: WO Owner, Office Staff (from work_order_team), and Technicians (from work_order_assignments)
+     */
+    async getFullTeamRoster(workOrderId: string): Promise<{
+        owner: { id: string; display_name: string; avatar_url: string | null } | null;
+        officeStaff: { id: string; user_profile_id: string; user_profile: { id: string; display_name: string; avatar_url: string | null } }[];
+        technicians: { id: string; user_profile_id: string; user_profile: { id: string; display_name: string; avatar_url: string | null } }[];
+    }> {
+        const supabase = createClient();
+
+        // Get work order with owner
+        const { data: workOrder, error: woError } = await supabase
+            .from('work_orders')
+            .select('owner_id, owner:user_profiles!work_orders_owner_id_fkey(id, display_name, avatar_url)')
+            .eq('id', workOrderId)
+            .single();
+
+        if (woError) {
+            throw new Error(`Failed to fetch work order: ${woError.message}`);
+        }
+
+        // Get office staff from work_order_team
+        const { data: officeStaff, error: staffError } = await supabase
+            .from('work_order_team')
+            .select('id, user_profile_id, user_profile:user_profiles(id, display_name, avatar_url)')
+            .eq('work_order_id', workOrderId);
+
+        if (staffError) {
+            throw new Error(`Failed to fetch office staff: ${staffError.message}`);
+        }
+
+        // Get technicians from work_order_assignments
+        const { data: technicians, error: techError } = await supabase
+            .from('work_order_assignments')
+            .select('id, user_profile_id, user_profile:user_profiles(id, display_name, avatar_url)')
+            .eq('work_order_id', workOrderId);
+
+        if (techError) {
+            throw new Error(`Failed to fetch technicians: ${techError.message}`);
+        }
+
+        return {
+            owner: (workOrder?.owner as any) || null,
+            officeStaff: (officeStaff || []) as any,
+            technicians: (technicians || []) as any,
+        };
+    },
+
+    /**
+     * Get chat messages for a work order
+     */
+    async getChatMessages(workOrderId: string): Promise<{
+        id: string;
+        message: string;
+        file_references: string[];
+        edited_at: string | null;
+        is_deleted: boolean;
+        created_at: string;
+        user_profile: { id: string; display_name: string; avatar_url: string | null };
+    }[]> {
+        const supabase = createClient();
+        const { data, error } = await supabase
+            .from('work_order_chat_messages')
+            .select('id, message, file_references, edited_at, is_deleted, created_at, user_profile:user_profiles(id, display_name, avatar_url)')
+            .eq('work_order_id', workOrderId)
+            .eq('is_deleted', false)
+            .order('created_at', { ascending: true });
+
+        if (error) {
+            throw new Error(`Failed to fetch chat messages: ${error.message}`);
+        }
+
+        return (data || []) as any;
+    },
+
+    /**
+     * Send a chat message
+     */
+    async sendChatMessage(workOrderId: string, message: string, fileReferences: string[] = []): Promise<string> {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) throw new Error('User not authenticated');
+
+        const { data, error } = await supabase
+            .from('work_order_chat_messages')
+            .insert({
+                work_order_id: workOrderId,
+                user_profile_id: user.id,
+                message: message.trim(),
+                file_references: fileReferences,
+            })
+            .select('id')
+            .single();
+
+        if (error) {
+            throw new Error(`Failed to send message: ${error.message}`);
+        }
+
+        return data.id;
+    },
+
+    /**
+     * Edit a chat message
+     */
+    async editChatMessage(messageId: string, newMessage: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_chat_messages')
+            .update({
+                message: newMessage.trim(),
+                edited_at: new Date().toISOString(),
+            })
+            .eq('id', messageId);
+
+        if (error) {
+            throw new Error(`Failed to edit message: ${error.message}`);
+        }
+    },
+
+    /**
+     * Delete a chat message (soft delete)
+     */
+    async deleteChatMessage(messageId: string): Promise<void> {
+        const supabase = createClient();
+        const { error } = await supabase
+            .from('work_order_chat_messages')
+            .update({ is_deleted: true })
+            .eq('id', messageId);
+
+        if (error) {
+            throw new Error(`Failed to delete message: ${error.message}`);
+        }
+    },
+
+    /**
+     * Check if current user is a team member for a work order
+     */
+    async isTeamMember(workOrderId: string): Promise<boolean> {
+        const supabase = createClient();
+        const { data: { user } } = await supabase.auth.getUser();
+
+        if (!user) return false;
+
+        // Check if owner
+        const { data: wo } = await supabase
+            .from('work_orders')
+            .select('owner_id')
+            .eq('id', workOrderId)
+            .single();
+
+        if (wo?.owner_id === user.id) return true;
+
+        // Check if in work_order_team
+        const { data: teamMember } = await supabase
+            .from('work_order_team')
+            .select('id')
+            .eq('work_order_id', workOrderId)
+            .eq('user_profile_id', user.id)
+            .maybeSingle();
+
+        if (teamMember) return true;
+
+        // Check if assigned technician
+        const { data: assignment } = await supabase
+            .from('work_order_assignments')
+            .select('id')
+            .eq('work_order_id', workOrderId)
+            .eq('user_profile_id', user.id)
+            .maybeSingle();
+
+        return !!assignment;
+    },
 };

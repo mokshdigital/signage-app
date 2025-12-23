@@ -1151,6 +1151,52 @@ export interface Database {
                         referencedColumns: ["id"]
                     }
                 ]
+            },
+            work_order_chat_messages: {
+                Row: {
+                    id: string
+                    work_order_id: string
+                    user_profile_id: string
+                    message: string
+                    file_references: string[]
+                    edited_at: string | null
+                    is_deleted: boolean
+                    created_at: string
+                }
+                Insert: {
+                    id?: string
+                    work_order_id: string
+                    user_profile_id: string
+                    message: string
+                    file_references?: string[]
+                    edited_at?: string | null
+                    is_deleted?: boolean
+                    created_at?: string
+                }
+                Update: {
+                    id?: string
+                    work_order_id?: string
+                    user_profile_id?: string
+                    message?: string
+                    file_references?: string[]
+                    edited_at?: string | null
+                    is_deleted?: boolean
+                    created_at?: string
+                }
+                Relationships: [
+                    {
+                        foreignKeyName: "work_order_chat_messages_work_order_id_fkey"
+                        columns: ["work_order_id"]
+                        referencedRelation: "work_orders"
+                        referencedColumns: ["id"]
+                    },
+                    {
+                        foreignKeyName: "work_order_chat_messages_user_profile_id_fkey"
+                        columns: ["user_profile_id"]
+                        referencedRelation: "user_profiles"
+                        referencedColumns: ["id"]
+                    }
+                ]
             }
         }
         Views: {
