@@ -58,6 +58,10 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
   - **Client Portal**: External access for client contacts (Project Managers).
     - Email/password authentication (separate from internal Google OAuth).
     - Admin UI to create portal accounts with auto-generated passwords.
+    - Work order selector with accessible WOs.
+    - Real-time chat with PDF export.
+    - Shared files download.
+    - Company branding with logo.
 - **Company Settings**:
   - Company Info page for branding and contact details.
   - Logo upload with preview.

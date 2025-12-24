@@ -942,3 +942,40 @@ Returns true if current user is:
 
 #### Real-time
 - Enabled via `ALTER PUBLICATION supabase_realtime ADD TABLE work_order_client_chat`
+
+---
+
+### 22. `work_order_files` Updates (Phase 29)
+Added column for client portal file visibility control.
+
+#### New Column
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `is_client_visible` | BOOLEAN | DEFAULT FALSE | When TRUE, file is visible in Client Portal |
+
+#### New Index
+- `idx_work_order_files_client_visible` - Partial index on `(work_order_id, is_client_visible)` WHERE `is_client_visible = TRUE`
+
+---
+
+## Service Layer Methods
+
+### Client Portal Service (`services/client-portal.service.ts`)
+
+| Method | Description |
+|--------|-------------|
+| `getCurrentProjectManager()` | Get PM record for logged-in user via `user_profile_id` |
+| `getAccessibleWorkOrders()` | WOs where user is primary PM or in `work_order_client_access` |
+| `getWorkOrderForClient(woId)` | WO details with owner, client, and PM info |
+| `getClientVisibleFiles(woId)` | Files where `is_client_visible = TRUE` |
+| `getChatMessagesForExport(woId)` | Chat messages formatted for PDF export |
+| `getCompanySettings()` | Company branding (name, logo, contact) |
+| `canAccessWorkOrder(woId)` | Check if current PM has access |
+
+### Work Orders Service Additions
+
+| Method | Description |
+|--------|-------------|
+| `getFilesWithVisibility(woId)` | Returns `{clientVisible[], notClientVisible[]}` |
+| `toggleFileClientVisibility(fileId, isVisible)` | Toggle the `is_client_visible` flag |
+

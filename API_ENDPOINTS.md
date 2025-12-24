@@ -491,3 +491,40 @@ Triggered when AI completes work order analysis.
 ```
 API-Version: 1.0
 ```
+
+---
+
+## 8. Client Portal (Service Methods)
+
+> **Note**: These are client-side service methods via `clientPortalService` (not API routes).
+
+### Client Portal Service (`services/client-portal.service.ts`)
+
+| Method | Description |
+|--------|-------------|
+| `getCurrentProjectManager()` | Get current user's PM record (if linked via `user_profile_id`) |
+| `getAccessibleWorkOrders()` | WOs where user is primary PM or has additional access |
+| `getWorkOrderForClient(woId)` | WO details with owner contact info |
+| `getClientVisibleFiles(woId)` | Files where `is_client_visible = TRUE` |
+| `getChatMessagesForExport(woId)` | Chat messages formatted for PDF |
+| `getCompanySettings()` | Company branding (name, logo, contact) |
+| `canAccessWorkOrder(woId)` | Validate PM access to specific WO |
+
+### File Visibility Methods (`workOrdersService`)
+
+| Method | Description |
+|--------|-------------|
+| `getFilesWithVisibility(woId)` | Returns split lists: `{clientVisible[], notClientVisible[]}` |
+| `toggleFileClientVisibility(fileId, isVisible)` | Toggle the `is_client_visible` flag |
+
+### PDF Export
+The client portal includes an "Export Chat" button that generates a PDF containing:
+- Company name and logo
+- Work Order number
+- Client name
+- Primary PM contact details
+- WO Owner contact details
+- Export timestamp
+- Full chat history with sender, company name, and timestamps
+
+**Library Used**: `jspdf` (client-side)

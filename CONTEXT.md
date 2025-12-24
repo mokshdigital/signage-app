@@ -385,3 +385,31 @@ can_access_client_hub(wo_id UUID) RETURNS BOOLEAN
 | `ClientHubTab` | Main container with access control |
 | `ContactHierarchy` | Primary PM + additional contacts |
 | `ClientChat` | Real-time chat with purple theme |
+
+
+### 9. Client Portal (Phase 29)
+- **Purpose**: External client-facing portal for Project Managers
+- **URL**: `/client-dashboard`
+- **Authentication**: Email/password (separate from internal OAuth)
+
+#### Features
+- **Work Order Selector**: Access WOs where PM is primary or additional contact
+- **Real-time Chat**: Supabase Realtime subscription (same as Client Hub)
+- **PDF Export**: Chat history with company branding, WO details, contact info
+- **File Downloads**: Only files marked `is_client_visible = true`
+
+#### File Visibility Management
+- Per-file `is_client_visible` boolean flag
+- Managed from Client Hub tab via `ClientFilesManager` component
+- Thumbnails with one-click share/unshare toggle
+
+#### UI Components
+| Component | Purpose |
+|-----------|---------|-|
+| `app/client-dashboard/page.tsx` | Main portal page with tabs |
+| `ClientFilesManager` | Internal file visibility toggle UI |
+
+#### Service Layer
+- `services/client-portal.service.ts` - 7 methods for portal operations
+- `services/work-orders.service.ts` - 2 new file visibility methods
+

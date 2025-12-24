@@ -1374,18 +1374,89 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 
 ## Session 16: Client Portal Implementation
-- **Objective**: Implement the client-side portal and internal management tools.
-- **Key Changes**:
-  - Created /client-dashboard with WO selector, Chat, Files, and Reports tabs.
-  - Implemented services/client-portal.service.ts for handling client data access.
-  - Added is_client_visible column to work_order_files table (Migration 031).
-  - Created ClientFilesManager component for internal users to toggle file visibility.
-  - Implemented PDF export for chat history.
-- **Files Modified**:
-  - database_migrations/031_client_portal_files.sql
-  - types/database.ts
-  - services/work-orders.service.ts
-  - components/work-orders/client-hub/ClientFilesManager.tsx
-  - components/work-orders/client-hub/ClientHubTab.tsx
-  - app/client-dashboard/page.tsx
+**Date**: December 23-24, 2024
+
+### Objectives
+1. Design and implement the client-facing portal view
+2. Add file visibility control for client access
+3. Implement chat export to PDF
+4. Create internal UI for managing file visibility
+
+### Planning Discussion
+- Reviewed existing `/client-dashboard` placeholder
+- Discussed file visibility approaches:
+  - Option A: All files visible
+  - Option B: Category-based visibility
+  - **Option C (Selected)**: Explicit `is_client_visible` flag per file
+- Decided on PDF-only export with company branding
+
+### Implementation Summary
+
+#### 1. Database Migration (`031_client_portal_files.sql`)
+- Added `is_client_visible BOOLEAN DEFAULT FALSE` to `work_order_files`
+- Created partial index for efficient filtering
+- Migration applied via Supabase MCP tool
+
+#### 2. Client Portal Service (`services/client-portal.service.ts`)
+New service with 7 methods:
+- `getCurrentProjectManager()` - Get current user's PM record
+- `getAccessibleWorkOrders()` - WOs where user is primary/additional PM
+- `getWorkOrderForClient()` - WO details with owner contact
+- `getClientVisibleFiles()` - Files with `is_client_visible = true`
+- `getChatMessagesForExport()` - Formatted messages for PDF
+- `getCompanySettings()` - Company branding
+- `canAccessWorkOrder()` - Access validation
+
+#### 3. Work Orders Service Updates
+Added 2 methods:
+- `getFilesWithVisibility()` - Split files by visibility status
+- `toggleFileClientVisibility()` - Toggle flag on/off
+
+#### 4. Client Portal UI (`app/client-dashboard/page.tsx`)
+Complete redesign with:
+- **Header**: Company logo + name, client info, sign out
+- **WO Selector**: Dropdown with accessible work orders
+- **Detail View**: WO#, status, PO, address, owner contact
+- **Tabs**: Chat (real-time + export), Files (download), Reports (placeholder)
+- **PDF Export**: jsPDF library, includes all header info + chat
+
+#### 5. Internal File Manager (`ClientFilesManager.tsx`)
+New component for Client Hub tab:
+- Shows shared files with green checkmark badges
+- Collapsible "Share More Files" section
+- One-click toggle with loading states
+- Thumbnail previews for images, icons for PDFs/docs
+
+### Bug Fixes
+- **Table Name Error**: Fixed `work_order_file_categories` → `file_categories` in both services
+
+### Files Created
+| File | Purpose |
+|------|---------|
+| `database_migrations/031_client_portal_files.sql` | Migration for visibility column |
+| `services/client-portal.service.ts` | New client portal service |
+| `components/work-orders/client-hub/ClientFilesManager.tsx` | File visibility UI |
+
+### Files Modified
+| File | Changes |
+|------|---------|
+| `types/database.ts` | Added `is_client_visible` to `WorkOrderFile` |
+| `services/work-orders.service.ts` | Added 2 visibility methods |
+| `app/client-dashboard/page.tsx` | Complete redesign |
+| `components/work-orders/client-hub/ClientHubTab.tsx` | Integrated file manager |
+| `components/work-orders/client-hub/index.ts` | Export `ClientFilesManager` |
+
+### Dependencies Added
+- `jspdf` - Client-side PDF generation
+
+### Git Commits
+- `feat: implement Client Portal with WO selector, chat, files tabs, and PDF export`
+- `feat: add client file visibility management to internal hub`
+- `fix: update file category table name in services`
+
+### Testing Notes
+- Files appear in "Share More Files" section by default (visibility = false)
+- Click "+" to share file with client
+- Client portal shows only shared files
+- PDF export includes all chat messages with timestamps
 

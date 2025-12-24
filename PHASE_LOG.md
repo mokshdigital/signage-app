@@ -1272,10 +1272,89 @@ Added 10+ methods:
 
 
 ## Phase 29: Client Portal
-- [x] Client Portal Base View (/client-dashboard)
-- [x] Client Access Control Logic (PM & Additional Contacts)
-- [x] Client Portal Service Layer
-- [x] File Visibility Management (is_client_visible flag)
-- [x] Chat Export to PDF functionality
-- [x] Internal UI for File Visibility (ClientHubTab)
+**Date**: December 23-24, 2024
+
+### Overview
+Implemented the client-facing portal for external Project Managers to access work orders, communicate via chat, view shared files, and export chat history to PDF.
+
+### Design Decisions
+1. **Separate Portal**: External clients access `/client-dashboard` (not main dashboard)
+2. **Purple Theme**: Consistent with Client Hub for brand cohesion
+3. **File Visibility Control**: Per-file `is_client_visible` flag (not category-based)
+4. **PDF Export**: Includes company branding, WO details, and full chat history
+5. **Internal Management**: File visibility toggled from Client Hub tab
+
+### Database Changes (Migration `031_client_portal_files.sql`)
+- **New Column**: `work_order_files.is_client_visible BOOLEAN DEFAULT FALSE`
+- **Partial Index**: `idx_work_order_files_client_visible` for efficient filtering
+
+### Service Layer
+
+#### New Service: `services/client-portal.service.ts`
+| Method | Description |
+|--------|-------------|
+| `getCurrentProjectManager()` | Get PM record for logged-in user |
+| `getAccessibleWorkOrders()` | WOs where user is primary/additional PM |
+| `getWorkOrderForClient(woId)` | WO details with owner contact info |
+| `getClientVisibleFiles(woId)` | Files marked as client-visible |
+| `getChatMessagesForExport(woId)` | Chat messages formatted for PDF |
+| `getCompanySettings()` | Company branding for PDF header |
+| `canAccessWorkOrder(woId)` | Access control check |
+
+#### Updated Service: `services/work-orders.service.ts`
+| Method | Description |
+|--------|-------------|
+| `getFilesWithVisibility(woId)` | Returns `{clientVisible[], notClientVisible[]}` |
+| `toggleFileClientVisibility(fileId, isVisible)` | Toggle file visibility flag |
+
+### UI Components
+
+#### Client Portal (`app/client-dashboard/page.tsx`)
+- **Header**: Company logo/name (left) + Client name/PM name + Sign Out (right)
+- **Work Order Selector**: Dropdown with WO# and site address
+- **WO Detail View**:
+  - WO Number, Status badge, PO Number, Site Address
+  - Owner contact card (name, phone, email)
+- **Tabs**:
+  - **Chat**: Real-time messages, send new, PDF export button
+  - **Files**: Download client-visible files
+  - **Reports**: Placeholder "Coming Soon"
+
+#### Internal File Manager (`components/work-orders/client-hub/ClientFilesManager.tsx`)
+- **Shared Files Section**: Thumbnails of client-visible files with ✓ badge
+- **Available Files Section**: Collapsible list of unshared files with + button
+- **One-Click Toggle**: Click to share/unshare files instantly
+- **Empty States**: Helpful guidance when no files uploaded
+
+### PDF Export Features
+- Company logo placeholder and name
+- Work Order number
+- Client name
+- Primary PM contact (name, email, phone)
+- WO Owner contact (name, email, phone)
+- Export timestamp
+- Full chat history with sender, company, and timestamp
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `database_migrations/031_client_portal_files.sql` | Add `is_client_visible` column |
+| `services/client-portal.service.ts` | New client portal service |
+| `services/work-orders.service.ts` | File visibility methods |
+| `types/database.ts` | Updated `WorkOrderFile` interface |
+| `app/client-dashboard/page.tsx` | Redesigned portal UI |
+| `components/work-orders/client-hub/ClientFilesManager.tsx` | File visibility management |
+| `components/work-orders/client-hub/ClientHubTab.tsx` | Integrated file manager |
+| `components/work-orders/client-hub/index.ts` | Updated exports |
+
+### Dependencies Added
+- `jspdf` - PDF generation for chat export
+
+### Current Status
+- ✅ Client portal fully functional
+- ✅ File visibility toggle working
+- ✅ PDF export working
+- ✅ Real-time chat in portal
+- ✅ Access control enforced
+
 
