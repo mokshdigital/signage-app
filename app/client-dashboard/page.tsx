@@ -309,14 +309,14 @@ export default function ClientDashboardPage() {
 
     if (loading) {
         return (
-            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-white"></div>
+            <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
             </div>
         )
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-gray-800 to-black">
             {/* Header */}
             <header className="bg-white/10 backdrop-blur-xl border-b border-white/10">
                 <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -330,7 +330,7 @@ export default function ClientDashboardPage() {
                                     className="h-10 w-auto object-contain"
                                 />
                             ) : (
-                                <div className="w-10 h-10 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                                <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">
                                     {companySettings?.name?.substring(0, 2) || 'TL'}
                                 </div>
                             )}
@@ -342,12 +342,12 @@ export default function ClientDashboardPage() {
                         {/* Right: Client Name & User Menu */}
                         <div className="flex items-center gap-4">
                             <div className="text-right hidden sm:block">
-                                <p className="text-purple-200 text-sm">{pmInfo?.client_name}</p>
-                                <p className="text-white/70 text-xs">{pmInfo?.name}</p>
+                                <p className="text-amber-200 text-sm">{pmInfo?.client_name}</p>
+                                <p className="text-gray-300 text-xs">{pmInfo?.name}</p>
                             </div>
                             <button
                                 onClick={handleSignOut}
-                                className="px-4 py-2 text-sm text-purple-200 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+                                className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/20 rounded-lg transition-colors"
                             >
                                 Sign Out
                             </button>
@@ -360,13 +360,13 @@ export default function ClientDashboardPage() {
             <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
                 {/* Work Order Selector */}
                 <div className="mb-6">
-                    <label className="block text-sm font-medium text-purple-200 mb-2">
+                    <label className="block text-sm font-medium text-amber-200 mb-2">
                         Select Work Order
                     </label>
                     <select
                         value={selectedWOId || ''}
                         onChange={(e) => setSelectedWOId(e.target.value || null)}
-                        className="w-full max-w-md px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                        className="w-full max-w-md px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-red-500 focus:border-transparent"
                     >
                         <option value="" className="bg-slate-800">Choose a work order...</option>
                         {workOrders.map(wo => (
@@ -388,11 +388,11 @@ export default function ClientDashboardPage() {
                                         <h1 className="text-2xl font-bold text-white">
                                             {selectedWO.work_order_number || 'Work Order'}
                                         </h1>
-                                        <span className="px-3 py-1 bg-purple-500/30 text-purple-200 text-sm rounded-full">
+                                        <span className="px-3 py-1 bg-red-600/30 text-red-200 text-sm rounded-full">
                                             {selectedWO.job_status}
                                         </span>
                                     </div>
-                                    <p className="text-purple-200/70 text-sm mb-1">
+                                    <p className="text-gray-400 text-sm mb-1">
                                         PO: {selectedWO.client_po_number || 'No PO'}
                                     </p>
                                     <p className="text-white/80">
@@ -403,13 +403,13 @@ export default function ClientDashboardPage() {
                                 {/* WO Owner Contact */}
                                 {selectedWO.owner && (
                                     <div className="bg-white/5 rounded-xl p-4 min-w-[240px]">
-                                        <p className="text-purple-200/70 text-xs uppercase tracking-wider mb-2">Your Contact</p>
+                                        <p className="text-amber-300/70 text-xs uppercase tracking-wider mb-2">Your Contact</p>
                                         <p className="text-white font-medium">{selectedWO.owner.display_name}</p>
                                         {selectedWO.owner.phone && (
-                                            <p className="text-purple-200 text-sm">📞 {selectedWO.owner.phone}</p>
+                                            <p className="text-gray-300 text-sm">📞 {selectedWO.owner.phone}</p>
                                         )}
                                         {selectedWO.owner.email && (
-                                            <p className="text-purple-200 text-sm">✉️ {selectedWO.owner.email}</p>
+                                            <p className="text-gray-300 text-sm">✉️ {selectedWO.owner.email}</p>
                                         )}
                                     </div>
                                 )}
@@ -423,8 +423,8 @@ export default function ClientDashboardPage() {
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === tab
-                                            ? 'text-white bg-white/10 border-b-2 border-purple-400'
-                                            : 'text-purple-200/70 hover:text-white hover:bg-white/5'
+                                        ? 'text-white bg-white/10 border-b-2 border-red-500'
+                                        : 'text-gray-400 hover:text-white hover:bg-white/5'
                                         }`}
                                 >
                                     {tab === 'chat' && '💬 '}
@@ -444,7 +444,7 @@ export default function ClientDashboardPage() {
                                         <button
                                             onClick={handleExportChat}
                                             disabled={exportingPDF || chatMessages.length === 0}
-                                            className="px-4 py-2 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+                                            className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
                                         >
                                             {exportingPDF ? 'Exporting...' : '📥 Export Chat (PDF)'}
                                         </button>
@@ -454,10 +454,10 @@ export default function ClientDashboardPage() {
                                     <div className="h-[400px] overflow-y-auto space-y-3 bg-white/5 rounded-xl p-4">
                                         {loadingChat ? (
                                             <div className="flex justify-center py-8">
-                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
                                             </div>
                                         ) : chatMessages.length === 0 ? (
-                                            <p className="text-center text-purple-200/50 py-8">No messages yet. Start the conversation!</p>
+                                            <p className="text-center text-gray-400 py-8">No messages yet. Start the conversation!</p>
                                         ) : (
                                             chatMessages.map(msg => (
                                                 <div key={msg.id} className="bg-white/5 rounded-lg p-3">
@@ -466,11 +466,11 @@ export default function ClientDashboardPage() {
                                                             {(msg.sender as any)?.display_name || 'Unknown'}
                                                         </span>
                                                         {msg.sender_company_name && (
-                                                            <span className="text-purple-300/70 text-xs">
+                                                            <span className="text-amber-300/70 text-xs">
                                                                 ({msg.sender_company_name})
                                                             </span>
                                                         )}
-                                                        <span className="text-purple-200/50 text-xs ml-auto">
+                                                        <span className="text-gray-500 text-xs ml-auto">
                                                             {new Date(msg.created_at).toLocaleString()}
                                                         </span>
                                                     </div>
@@ -488,12 +488,12 @@ export default function ClientDashboardPage() {
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                                             placeholder="Type a message..."
-                                            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-purple-300/50 focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                                            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent"
                                         />
                                         <button
                                             onClick={handleSendMessage}
                                             disabled={!newMessage.trim() || sendingMessage}
-                                            className="px-6 py-3 bg-purple-600 hover:bg-purple-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
+                                            className="px-6 py-3 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
                                         >
                                             Send
                                         </button>
@@ -505,19 +505,19 @@ export default function ClientDashboardPage() {
                                 <div className="space-y-4">
                                     {loadingFiles ? (
                                         <div className="flex justify-center py-12">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-purple-400"></div>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
                                         </div>
                                     ) : files.length === 0 ? (
                                         <div className="text-center py-12">
                                             <p className="text-4xl mb-4">📄</p>
-                                            <p className="text-purple-200/70">No files available for this work order yet.</p>
+                                            <p className="text-gray-400">No files available for this work order yet.</p>
                                         </div>
                                     ) : (
                                         <div className="grid gap-3">
                                             {files.map(file => (
                                                 <div key={file.id} className="flex items-center justify-between bg-white/5 rounded-xl p-4">
                                                     <div className="flex items-center gap-3 min-w-0">
-                                                        <div className="w-10 h-10 bg-purple-500/30 rounded-lg flex items-center justify-center text-purple-200">
+                                                        <div className="w-10 h-10 bg-amber-500/30 rounded-lg flex items-center justify-center text-amber-200">
                                                             {file.mime_type?.includes('pdf') ? '📄' :
                                                                 file.mime_type?.includes('image') ? '🖼️' : '📎'}
                                                         </div>
@@ -525,7 +525,7 @@ export default function ClientDashboardPage() {
                                                             <p className="text-white font-medium truncate">
                                                                 {file.file_name || 'Unnamed file'}
                                                             </p>
-                                                            <p className="text-purple-200/50 text-sm">
+                                                            <p className="text-gray-400 text-sm">
                                                                 {formatFileSize(file.file_size)}
                                                                 {file.category_name && ` • ${file.category_name}`}
                                                             </p>
@@ -536,7 +536,7 @@ export default function ClientDashboardPage() {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         download
-                                                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 text-white text-sm rounded-lg transition-colors shrink-0"
+                                                        className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm rounded-lg transition-colors shrink-0"
                                                     >
                                                         Download
                                                     </a>
@@ -551,7 +551,7 @@ export default function ClientDashboardPage() {
                                 <div className="text-center py-16">
                                     <p className="text-6xl mb-4">📊</p>
                                     <h3 className="text-white font-semibold text-xl mb-2">Reports Coming Soon</h3>
-                                    <p className="text-purple-200/70">
+                                    <p className="text-gray-400">
                                         Project reports and analytics will be available here in a future update.
                                     </p>
                                 </div>
@@ -563,7 +563,7 @@ export default function ClientDashboardPage() {
                     <div className="bg-white/10 backdrop-blur-xl rounded-2xl border border-white/20 p-12 text-center">
                         <p className="text-5xl mb-4">📋</p>
                         <h2 className="text-white text-xl font-semibold mb-2">Select a Work Order</h2>
-                        <p className="text-purple-200/70">
+                        <p className="text-gray-400">
                             Choose a work order from the dropdown above to view details, chat, and files.
                         </p>
                     </div>
@@ -571,7 +571,7 @@ export default function ClientDashboardPage() {
             </main>
 
             {/* Footer */}
-            <footer className="mt-auto py-6 text-center text-purple-300/50 text-sm">
+            <footer className="mt-auto py-6 text-center text-gray-500 text-sm">
                 © {new Date().getFullYear()} {companySettings?.name || 'Tops Lighting'}. All rights reserved.
             </footer>
         </div>
