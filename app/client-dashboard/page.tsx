@@ -38,6 +38,7 @@ export default function ClientDashboardPage() {
     const [newMessage, setNewMessage] = useState('')
     const [sendingMessage, setSendingMessage] = useState(false)
     const [exportingPDF, setExportingPDF] = useState(false)
+    const [currentUserId, setCurrentUserId] = useState<string | null>(null)
 
     const router = useRouter()
     const supabase = createClient()
@@ -51,6 +52,9 @@ export default function ClientDashboardPage() {
                 router.push('/client-login')
                 return
             }
+
+            // Store current user ID for chat alignment
+            setCurrentUserId(user.id)
 
             // Verify user is external
             const { data: profile } = await supabase
@@ -459,24 +463,35 @@ export default function ClientDashboardPage() {
                                         ) : chatMessages.length === 0 ? (
                                             <p className="text-center text-gray-400 py-8">No messages yet. Start the conversation!</p>
                                         ) : (
-                                            chatMessages.map(msg => (
-                                                <div key={msg.id} className="bg-white/5 rounded-lg p-3">
-                                                    <div className="flex items-center gap-2 mb-1">
-                                                        <span className="text-white font-medium text-sm">
-                                                            {(msg.sender as any)?.display_name || 'Unknown'}
-                                                        </span>
-                                                        {msg.sender_company_name && (
-                                                            <span className="text-amber-300/70 text-xs">
-                                                                ({msg.sender_company_name})
-                                                            </span>
-                                                        )}
-                                                        <span className="text-gray-500 text-xs ml-auto">
-                                                            {new Date(msg.created_at).toLocaleString()}
-                                                        </span>
+                                            chatMessages.map(msg => {
+                                                const isOwnMessage = msg.sender_id === currentUserId
+                                                return (
+                                                    <div
+                                                        key={msg.id}
+                                                        className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
+                                                    >
+                                                        <div className={`max-w-[75%] rounded-lg p-3 ${isOwnMessage
+                                                                ? 'bg-red-600/30 border border-red-500/30'
+                                                                : 'bg-white/5'
+                                                            }`}>
+                                                            <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
+                                                                <span className="text-white font-medium text-sm">
+                                                                    {isOwnMessage ? 'You' : ((msg.sender as any)?.display_name || 'Unknown')}
+                                                                </span>
+                                                                {msg.sender_company_name && !isOwnMessage && (
+                                                                    <span className="text-amber-300/70 text-xs">
+                                                                        ({msg.sender_company_name})
+                                                                    </span>
+                                                                )}
+                                                                <span className={`text-gray-500 text-xs ${isOwnMessage ? 'mr-auto' : 'ml-auto'}`}>
+                                                                    {new Date(msg.created_at).toLocaleString()}
+                                                                </span>
+                                                            </div>
+                                                            <p className={`text-sm ${isOwnMessage ? 'text-white' : 'text-white/90'}`}>{msg.message}</p>
+                                                        </div>
                                                     </div>
-                                                    <p className="text-white/90 text-sm">{msg.message}</p>
-                                                </div>
-                                            ))
+                                                )
+                                            })
                                         )}
                                     </div>
 
