@@ -84,24 +84,37 @@ export const clientPortalService = {
 
         if (!user) return null;
 
-        const { data, error } = await supabase
+        // First get the PM record
+        const { data: pmData, error: pmError } = await supabase
             .from('project_managers')
-            .select(`
-                id,
-                client_id,
-                name,
-                client:clients(name)
-            `)
+            .select('id, client_id, name')
             .eq('user_profile_id', user.id)
             .single();
 
-        if (error || !data) return null;
+        if (pmError || !pmData) {
+            console.error('Failed to get PM:', pmError);
+            return null;
+        }
+
+        // Then get the client name
+        let clientName = 'Unknown Client';
+        if (pmData.client_id) {
+            const { data: clientData } = await supabase
+                .from('clients')
+                .select('name')
+                .eq('id', pmData.client_id)
+                .single();
+
+            if (clientData?.name) {
+                clientName = clientData.name;
+            }
+        }
 
         return {
-            id: data.id,
-            client_id: data.client_id,
-            name: data.name,
-            client_name: (data.client as any)?.name || 'Unknown Client'
+            id: pmData.id,
+            client_id: pmData.client_id,
+            name: pmData.name,
+            client_name: clientName
         };
     },
 
