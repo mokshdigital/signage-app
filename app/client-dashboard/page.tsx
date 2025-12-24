@@ -314,7 +314,7 @@ export default function ClientDashboardPage() {
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-red-500"></div>
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-amber-400"></div>
             </div>
         )
     }
@@ -334,7 +334,7 @@ export default function ClientDashboardPage() {
                                     className="h-10 w-auto object-contain"
                                 />
                             ) : (
-                                <div className="w-10 h-10 bg-gradient-to-br from-red-600 to-red-700 rounded-lg flex items-center justify-center text-white font-bold text-lg">
+                                <div className="w-10 h-10 bg-gradient-to-br from-amber-500 to-amber-600 rounded-lg flex items-center justify-center text-white font-bold text-lg">
                                     {companySettings?.name?.substring(0, 2) || 'TL'}
                                 </div>
                             )}
@@ -351,7 +351,7 @@ export default function ClientDashboardPage() {
                             </div>
                             <button
                                 onClick={handleSignOut}
-                                className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-red-600/20 rounded-lg transition-colors"
+                                className="px-4 py-2 text-sm text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
                             >
                                 Sign Out
                             </button>
@@ -370,7 +370,7 @@ export default function ClientDashboardPage() {
                     <select
                         value={selectedWOId || ''}
                         onChange={(e) => setSelectedWOId(e.target.value || null)}
-                        className="w-full max-w-md px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        className="w-full max-w-md px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white focus:ring-2 focus:ring-amber-400 focus:border-transparent"
                     >
                         <option value="" className="bg-slate-800">Choose a work order...</option>
                         {workOrders.map(wo => (
@@ -392,7 +392,7 @@ export default function ClientDashboardPage() {
                                         <h1 className="text-2xl font-bold text-white">
                                             {selectedWO.work_order_number || 'Work Order'}
                                         </h1>
-                                        <span className="px-3 py-1 bg-red-600/30 text-red-200 text-sm rounded-full">
+                                        <span className="px-3 py-1 bg-amber-500/20 text-amber-200 text-sm rounded-full">
                                             {selectedWO.job_status}
                                         </span>
                                     </div>
@@ -427,7 +427,7 @@ export default function ClientDashboardPage() {
                                     key={tab}
                                     onClick={() => setActiveTab(tab)}
                                     className={`px-6 py-3 text-sm font-medium transition-colors ${activeTab === tab
-                                        ? 'text-white bg-white/10 border-b-2 border-red-500'
+                                        ? 'text-white bg-white/10 border-b-2 border-amber-400'
                                         : 'text-gray-400 hover:text-white hover:bg-white/5'
                                         }`}
                                 >
@@ -448,7 +448,7 @@ export default function ClientDashboardPage() {
                                         <button
                                             onClick={handleExportChat}
                                             disabled={exportingPDF || chatMessages.length === 0}
-                                            className="px-4 py-2 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
+                                            className="px-4 py-2 bg-slate-600 hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm rounded-lg transition-colors"
                                         >
                                             {exportingPDF ? 'Exporting...' : '📥 Export Chat (PDF)'}
                                         </button>
@@ -458,7 +458,7 @@ export default function ClientDashboardPage() {
                                     <div className="h-[400px] overflow-y-auto space-y-3 bg-white/5 rounded-xl p-4">
                                         {loadingChat ? (
                                             <div className="flex justify-center py-8">
-                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                                                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400"></div>
                                             </div>
                                         ) : chatMessages.length === 0 ? (
                                             <p className="text-center text-gray-400 py-8">No messages yet. Start the conversation!</p>
@@ -470,9 +470,9 @@ export default function ClientDashboardPage() {
                                                         key={msg.id}
                                                         className={`flex ${isOwnMessage ? 'justify-end' : 'justify-start'}`}
                                                     >
-                                                        <div className={`max-w-[75%] rounded-lg p-3 ${isOwnMessage
-                                                                ? 'bg-red-600/30 border border-red-500/30'
-                                                                : 'bg-white/5'
+                                                        <div className={`max-w-[75%] rounded-2xl p-3 ${isOwnMessage
+                                                            ? 'bg-amber-500/20 border border-amber-400/30'
+                                                            : 'bg-white/5 border border-white/10'
                                                             }`}>
                                                             <div className={`flex items-center gap-2 mb-1 ${isOwnMessage ? 'flex-row-reverse' : ''}`}>
                                                                 <span className="text-white font-medium text-sm">
@@ -503,12 +503,12 @@ export default function ClientDashboardPage() {
                                             onChange={(e) => setNewMessage(e.target.value)}
                                             onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
                                             placeholder="Type a message..."
-                                            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                                            className="flex-1 px-4 py-3 bg-white/10 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:ring-2 focus:ring-amber-400 focus:border-transparent"
                                         />
                                         <button
                                             onClick={handleSendMessage}
                                             disabled={!newMessage.trim() || sendingMessage}
-                                            className="px-6 py-3 bg-red-600 hover:bg-red-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
+                                            className="px-6 py-3 bg-slate-600 hover:bg-slate-500 disabled:opacity-50 disabled:cursor-not-allowed text-white font-medium rounded-xl transition-colors"
                                         >
                                             Send
                                         </button>
@@ -520,7 +520,7 @@ export default function ClientDashboardPage() {
                                 <div className="space-y-4">
                                     {loadingFiles ? (
                                         <div className="flex justify-center py-12">
-                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-red-500"></div>
+                                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-amber-400"></div>
                                         </div>
                                     ) : files.length === 0 ? (
                                         <div className="text-center py-12">
@@ -551,7 +551,7 @@ export default function ClientDashboardPage() {
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         download
-                                                        className="px-4 py-2 bg-red-600 hover:bg-red-500 text-white text-sm rounded-lg transition-colors shrink-0"
+                                                        className="px-4 py-2 bg-slate-600 hover:bg-slate-500 text-white text-sm rounded-lg transition-colors shrink-0"
                                                     >
                                                         Download
                                                     </a>
