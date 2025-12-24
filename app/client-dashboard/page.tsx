@@ -311,6 +311,31 @@ export default function ClientDashboardPage() {
         return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
     }
 
+    // Format message time - relative for recent, absolute for older
+    const formatMessageTime = (dateString: string) => {
+        const date = new Date(dateString)
+        const now = new Date()
+        const diffMs = now.getTime() - date.getTime()
+        const diffMinutes = Math.floor(diffMs / (1000 * 60))
+        const diffHours = Math.floor(diffMs / (1000 * 60 * 60))
+        const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+        // Less than 1 minute
+        if (diffMinutes < 1) return 'Just now'
+        // Less than 1 hour
+        if (diffMinutes < 60) return `${diffMinutes} min ago`
+        // Less than 24 hours
+        if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`
+        // Less than 7 days
+        if (diffDays < 7) {
+            return date.toLocaleDateString('en-US', { weekday: 'short' }) + ' ' +
+                date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+        }
+        // Older - show full date
+        return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' }) + ' ' +
+            date.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })
+    }
+
     if (loading) {
         return (
             <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-gray-900 via-gray-800 to-black">
@@ -484,7 +509,7 @@ export default function ClientDashboardPage() {
                                                                     </span>
                                                                 )}
                                                                 <span className={`text-gray-500 text-xs ${isOwnMessage ? 'mr-auto' : 'ml-auto'}`}>
-                                                                    {new Date(msg.created_at).toLocaleString()}
+                                                                    {formatMessageTime(msg.created_at)}
                                                                 </span>
                                                             </div>
                                                             <p className={`text-sm ${isOwnMessage ? 'text-white' : 'text-white/90'}`}>{msg.message}</p>
