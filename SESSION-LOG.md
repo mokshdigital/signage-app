@@ -1453,10 +1453,23 @@ New component for Client Hub tab:
 - `feat: implement Client Portal with WO selector, chat, files tabs, and PDF export`
 - `feat: add client file visibility management to internal hub`
 - `fix: update file category table name in services`
+- `docs: update all documentation for Client Portal (Phase 29) implementation`
+- `style: rebrand client portal with Tops Lighting colors`
+- `style: soften client portal colors - replace hard red with amber accents`
+- `feat: add standard chat alignment - own messages right-aligned`
+- `feat: add relative time formatting for recent chat messages`
+- `fix: fetch client name correctly via explicit query`
 
 ### Testing Notes
 - Files appear in "Share More Files" section by default (visibility = false)
 - Click "+" to share file with client
 - Client portal shows only shared files
 - PDF export includes all chat messages with timestamps
+
+### Additional Fixes (Session 16 Continued)
+1. **Storage Bucket**: Created `company-assets` bucket for logo uploads with proper policies
+2. **Branding Update**: Rebranded client portal from purple to Tops Lighting colors (amber accents, slate buttons)
+3. **Chat Alignment**: Own messages right-aligned with amber accent, others left-aligned
+4. **Relative Time**: Chat timestamps show "Just now", "5 min ago", etc. for recent messages
+5. **Client Name Fix**: Fixed client name display by using explicit query instead of joined syntax
 

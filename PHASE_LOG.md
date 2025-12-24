@@ -1356,5 +1356,9 @@ Implemented the client-facing portal for external Project Managers to access wor
 - ✅ PDF export working
 - ✅ Real-time chat in portal
 - ✅ Access control enforced
-
+- ✅ Tops Lighting branding (amber/slate color scheme)
+- ✅ Chat alignment (own messages right, others left)
+- ✅ Relative time formatting for recent messages
+- ✅ Client name display from PM's client relationship
+- ✅ Company assets storage bucket for logo uploads
 
