@@ -152,8 +152,8 @@ export default function TimesheetsPage() {
         );
     }
 
-    // Check if day is editable (Draft, Rejected, OR Submitted as per request)
-    const isDayEditable = todaysDay?.status === 'draft' || todaysDay?.status === 'rejected' || todaysDay?.status === 'submitted';
+    // Check if day is editable (Draft or Rejected only)
+    const isDayEditable = todaysDay?.status === 'draft' || todaysDay?.status === 'rejected';
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -308,7 +308,7 @@ export default function TimesheetsPage() {
                                 </div>
 
                                 {/* Submit Button */}
-                                {isDayEditable && canSubmit && todaysEntries.length > 0 && todaysDay?.status !== 'submitted' && (
+                                {isDayEditable && canSubmit && todaysEntries.length > 0 && (
                                     <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
                                         <Button onClick={handleSubmitDay} className="w-full">
                                             Submit Day for Approval

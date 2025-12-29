@@ -188,7 +188,7 @@ All permissions follow the format: `{resource}:{action}`
 #### Timesheets Resource
 | Permission | Description |
 |------------|-------------|
-| `timesheets:log_own` | Create and edit own time entries (can edit submitted timesheets) |
+| `timesheets:log_own` | Create and edit own time entries (Draft/Rejected only) |
 | `timesheets:submit_own` | Submit own timesheets for approval |
 | `timesheets:view_own` | View own timesheet history |
 | `timesheets:request_past_day` | Request to edit/log past days beyond today |
