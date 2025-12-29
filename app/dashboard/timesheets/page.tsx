@@ -11,7 +11,7 @@ import type { TimesheetEntry, TimesheetDay, TimesheetDayRequest } from '@/types/
 type TabType = 'log' | 'my-timesheets' | 'request-past' | 'approvals';
 
 export default function TimesheetsPage() {
-    const { hasPermission, loading: permLoading } = usePermissions();
+    const { hasPermission, isLoading: permLoading } = usePermissions();
     const [loading, setLoading] = useState(true);
     const [userId, setUserId] = useState<string | null>(null);
     const [activeTab, setActiveTab] = useState<TabType>('log');
@@ -116,12 +116,12 @@ export default function TimesheetsPage() {
     const canApprove = hasPermission('timesheets:approve');
 
     // Filter available tabs based on permissions
-    const availableTabs: { id: TabType; label: string; permission?: boolean }[] = [
-        { id: 'log', label: 'Log Time', permission: canLogTime },
-        { id: 'my-timesheets', label: 'My Timesheets', permission: true },
-        { id: 'request-past', label: 'Request Past Day', permission: canRequestPast },
-        { id: 'approvals', label: 'Approvals', permission: canApprove },
-    ].filter(tab => tab.permission !== false);
+    const availableTabs = ([
+        { id: 'log' as const, label: 'Log Time', permission: canLogTime },
+        { id: 'my-timesheets' as const, label: 'My Timesheets', permission: true },
+        { id: 'request-past' as const, label: 'Request Past Day', permission: canRequestPast },
+        { id: 'approvals' as const, label: 'Approvals', permission: canApprove },
+    ] as { id: TabType; label: string; permission?: boolean }[]).filter(tab => tab.permission !== false);
 
     if (loading || permLoading) {
         return (
