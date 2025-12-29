@@ -30,8 +30,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse, onSign
         { name: 'Equipment', href: '/dashboard/equipment', icon: '🔧', permission: 'equipment:read' },
         { name: 'Vehicles', href: '/dashboard/vehicles', icon: '🚗', permission: 'vehicles:read' },
         { name: 'Clients', href: '/dashboard/clients', icon: '🏢', permission: 'clients:read' },
-        { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋', permission: 'work_orders:read' },
-        { name: 'Work Orders (Beta)', href: '/dashboard/work-orders-v2', icon: '🆕', permission: 'work_orders:read' },
+        // { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋', permission: 'work_orders:read' }, // Archived - use Jobs (v2) instead
+        { name: 'Jobs', href: '/dashboard/work-orders-v2', icon: '📋', permission: 'work_orders:read' },
         { name: 'Timesheets', href: '/dashboard/timesheets', icon: '⏱️', permission: ['timesheets:log_own', 'timesheets:view_all'] },
         {
             name: 'Settings',
