@@ -43,7 +43,7 @@ export const timesheetsService = {
     // =============================================
 
     async getLocationChips(includeInactive = false): Promise<LocationChip[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         let query = supabase
             .from('location_chips')
             .select('*')
@@ -59,7 +59,7 @@ export const timesheetsService = {
     },
 
     async createLocationChip(name: string, color: string): Promise<LocationChip> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
 
         // Get max sort_order
         const { data: existing } = await supabase
@@ -81,7 +81,7 @@ export const timesheetsService = {
     },
 
     async updateLocationChip(id: string, updates: Partial<Pick<LocationChip, 'name' | 'color' | 'is_active' | 'sort_order'>>): Promise<LocationChip> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('location_chips')
             .update(updates)
@@ -94,7 +94,7 @@ export const timesheetsService = {
     },
 
     async deleteLocationChip(id: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         // Soft delete - just deactivate
         const { error } = await supabase
             .from('location_chips')
@@ -109,7 +109,7 @@ export const timesheetsService = {
     // =============================================
 
     async getActivityTypes(includeInactive = false): Promise<ActivityType[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         let query = supabase
             .from('activity_types')
             .select('*')
@@ -125,7 +125,7 @@ export const timesheetsService = {
     },
 
     async createActivityType(input: { name: string; color: string; requires_wo: boolean }): Promise<ActivityType> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
 
         // Get max sort_order
         const { data: existing } = await supabase
@@ -147,7 +147,7 @@ export const timesheetsService = {
     },
 
     async updateActivityType(id: string, updates: Partial<Pick<ActivityType, 'name' | 'color' | 'requires_wo' | 'is_active' | 'sort_order'>>): Promise<ActivityType> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('activity_types')
             .update(updates)
@@ -160,7 +160,7 @@ export const timesheetsService = {
     },
 
     async deleteActivityType(id: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         // Soft delete - just deactivate
         const { error } = await supabase
             .from('activity_types')
@@ -175,7 +175,7 @@ export const timesheetsService = {
     // =============================================
 
     async getOrCreateDay(userId: string, date: string): Promise<TimesheetDay> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
 
         // Try to find existing day
         const { data: existing, error: findError } = await supabase
@@ -199,7 +199,7 @@ export const timesheetsService = {
     },
 
     async getMyDays(userId: string, startDate: string, endDate: string): Promise<TimesheetDay[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_days')
             .select(`
@@ -226,7 +226,7 @@ export const timesheetsService = {
         endDate?: string;
         userId?: string;
     }): Promise<TimesheetDay[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         let query = supabase
             .from('timesheet_days')
             .select(`
@@ -256,7 +256,7 @@ export const timesheetsService = {
     },
 
     async getDayById(dayId: string): Promise<TimesheetDay | null> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_days')
             .select(`
@@ -280,7 +280,7 @@ export const timesheetsService = {
     },
 
     async submitDay(dayId: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { error } = await supabase
             .from('timesheet_days')
             .update({
@@ -294,7 +294,7 @@ export const timesheetsService = {
     },
 
     async approveDay(dayId: string, approverId: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { error } = await supabase
             .from('timesheet_days')
             .update({
@@ -310,7 +310,7 @@ export const timesheetsService = {
     },
 
     async rejectDay(dayId: string, approverId: string, reason: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { error } = await supabase
             .from('timesheet_days')
             .update({
@@ -326,7 +326,7 @@ export const timesheetsService = {
     },
 
     async processDay(dayId: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { error } = await supabase
             .from('timesheet_days')
             .update({ status: 'processed' })
@@ -341,7 +341,7 @@ export const timesheetsService = {
     // =============================================
 
     async getEntriesForDay(dayId: string): Promise<TimesheetEntry[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_entries')
             .select(`
@@ -358,7 +358,7 @@ export const timesheetsService = {
     },
 
     async createEntry(input: CreateEntryInput): Promise<TimesheetEntry> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_entries')
             .insert({
@@ -382,7 +382,7 @@ export const timesheetsService = {
     },
 
     async updateEntry(id: string, updates: UpdateEntryInput): Promise<TimesheetEntry> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_entries')
             .update(updates)
@@ -400,7 +400,7 @@ export const timesheetsService = {
     },
 
     async deleteEntry(id: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { error } = await supabase
             .from('timesheet_entries')
             .delete()
@@ -414,7 +414,7 @@ export const timesheetsService = {
     // =============================================
 
     async createPastDayRequest(userId: string, requestedDate: string, reason: string): Promise<TimesheetDayRequest> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_day_requests')
             .insert({ user_id: userId, requested_date: requestedDate, reason })
@@ -426,7 +426,7 @@ export const timesheetsService = {
     },
 
     async getMyRequests(userId: string): Promise<TimesheetDayRequest[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_day_requests')
             .select(`
@@ -441,7 +441,7 @@ export const timesheetsService = {
     },
 
     async getPendingRequests(): Promise<TimesheetDayRequest[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_day_requests')
             .select(`
@@ -456,7 +456,7 @@ export const timesheetsService = {
     },
 
     async approveRequest(id: string, reviewerId: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { error } = await supabase
             .from('timesheet_day_requests')
             .update({
@@ -471,7 +471,7 @@ export const timesheetsService = {
     },
 
     async denyRequest(id: string, reviewerId: string, notes: string): Promise<void> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { error } = await supabase
             .from('timesheet_day_requests')
             .update({
@@ -487,7 +487,7 @@ export const timesheetsService = {
     },
 
     async hasApprovedRequest(userId: string, date: string): Promise<boolean> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('timesheet_day_requests')
             .select('id')
@@ -505,7 +505,7 @@ export const timesheetsService = {
     // =============================================
 
     async getMyAssignedWorkOrders(userId: string): Promise<Pick<WorkOrder, 'id' | 'work_order_number' | 'site_address' | 'job_status'>[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('work_order_assignments')
             .select(`
@@ -576,7 +576,7 @@ export const timesheetsService = {
     // =============================================
 
     async getStagingItems(workOrderId?: string): Promise<InvoiceStagingItem[]> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         let query = supabase
             .from('wo_invoice_staging')
             .select(`
@@ -596,7 +596,7 @@ export const timesheetsService = {
     },
 
     async updateStagingItem(id: string, updates: { billed_value?: number; unit_rate?: number }): Promise<InvoiceStagingItem> {
-        const supabase = createClient();
+        const supabase = createClient() as any;
         const { data, error } = await supabase
             .from('wo_invoice_staging')
             .update(updates)
