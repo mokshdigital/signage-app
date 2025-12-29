@@ -185,6 +185,16 @@ All permissions follow the format: `{resource}:{action}`
 |------------|-------------|
 | `dashboard:read` | Access main dashboard |
 
+#### Timesheets Resource
+| Permission | Description |
+|------------|-------------|
+| `timesheets:log_own` | Create and edit own time entries (can edit submitted timesheets) |
+| `timesheets:submit_own` | Submit own timesheets for approval |
+| `timesheets:view_own` | View own timesheet history |
+| `timesheets:request_past_day` | Request to edit/log past days beyond today |
+| `timesheets:approve` | Approve or reject timesheets (Supervisors/Admins) |
+| `timesheets:admin_all` | View all timesheets and override status |
+
 ### Extended Permissions
 
 #### File Management (Migration 017)
