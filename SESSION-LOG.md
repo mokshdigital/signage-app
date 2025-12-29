@@ -1545,6 +1545,7 @@ New methods:
 ### Bug Fixes
 1. **New Day Editing**: Fixed bug where users couldn't log time for a brand new day (when `todaysDay` is null)
 2. **Admin Permissions**: Fixed missing `roles:manage` and `users:manage` permissions for admin roles
+3. **Timezone Date Display Bug**: Fixed issue where dates were displayed one day behind due to UTC/local timezone conversion. Problem: `new Date("2025-12-29")` parses as midnight UTC, which converts to Dec 28 in PST. Solution: Append `T00:00:00` to force local timezone interpretation.
 
 ### Tab Structure (After Changes)
 | Tab | Permission | Description |
@@ -1562,4 +1563,5 @@ New methods:
 - `feat(timesheets): add My Timesheets table view with filters and pagination`
 - `feat(timesheets): add All Timesheets admin tab with employee filter`
 - `fix(permissions): add missing roles:manage and users:manage to admin roles`
+- `fix(timesheets): fix timezone bug in date display - show correct local date`
 

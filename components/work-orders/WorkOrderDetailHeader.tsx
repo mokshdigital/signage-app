@@ -241,10 +241,190 @@ export function WorkOrderDetailHeader({
             <div className="bg-white sticky top-0 z-20 border-b border-gray-200 transition-all duration-300 ease-in-out">
 
                 {/* ═══════════════════════════════════════════════════════════════════
-                    COLLAPSED VIEW - Compact Single Row
+                    MOBILE HEADER - Always visible on small screens
+                ═══════════════════════════════════════════════════════════════════ */}
+                <div className="md:hidden">
+                    <div className="px-4 py-3">
+                        {/* Row 1: Back, WO#, Status, Menu */}
+                        <div className="flex items-center justify-between gap-3">
+                            <div className="flex items-center gap-3 flex-1 min-w-0">
+                                <button
+                                    onClick={() => router.push(backUrl)}
+                                    className="p-2 -ml-2 text-gray-500 hover:text-gray-700 rounded-lg"
+                                >
+                                    <ArrowLeft className="w-5 h-5" />
+                                </button>
+                                <div className="flex-1 min-w-0">
+                                    <p className="text-xs text-gray-400 font-medium">#WO</p>
+                                    <h1 className="text-lg font-bold text-gray-900 truncate">
+                                        {workOrder.work_order_number
+                                            ? safeRender(workOrder.work_order_number)
+                                            : 'Work Order'
+                                        }
+                                    </h1>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                {/* Status Dropdown */}
+                                <div className="relative">
+                                    <select
+                                        value={currentStatus}
+                                        onChange={(e) => handleStatusChange(e.target.value as JobStatus)}
+                                        disabled={savingStatus || saving}
+                                        className={`
+                                            ${statusStyle.bg} ${statusStyle.text}
+                                            px-3 py-1.5 rounded-lg text-xs font-semibold cursor-pointer 
+                                            border-0 appearance-none pr-6
+                                            focus:ring-2 focus:ring-offset-1 focus:ring-blue-500 focus:outline-none
+                                            disabled:opacity-50
+                                        `}
+                                    >
+                                        {JOB_STATUSES.map(status => (
+                                            <option key={status} value={status} className="bg-white text-gray-900">
+                                                {status}
+                                            </option>
+                                        ))}
+                                    </select>
+                                    <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 pointer-events-none text-white/80" />
+                                </div>
+
+                                {/* Actions Menu */}
+                                <div className="relative">
+                                    <button
+                                        onClick={() => setIsActionsOpen(!isActionsOpen)}
+                                        className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg"
+                                    >
+                                        <MoreHorizontal className="w-5 h-5" />
+                                    </button>
+                                    {isActionsOpen && (
+                                        <>
+                                            <div className="fixed inset-0 z-30" onClick={() => setIsActionsOpen(false)} />
+                                            <div className="absolute right-0 top-full mt-2 w-56 bg-white rounded-xl shadow-lg border border-gray-200 py-2 z-40">
+                                                <button
+                                                    onClick={() => { onViewFiles(); setIsActionsOpen(false); }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    <FileText className="w-4 h-4 text-gray-400" />
+                                                    View Work Order
+                                                </button>
+                                                <button
+                                                    onClick={() => { onViewAISummary(); setIsActionsOpen(false); }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-purple-600 hover:bg-purple-50"
+                                                >
+                                                    <Sparkles className="w-4 h-4" />
+                                                    AI Summary
+                                                </button>
+                                                <div className="border-t border-gray-100 my-2" />
+                                                <button
+                                                    onClick={() => { onEdit(); setIsActionsOpen(false); }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                                                >
+                                                    <Edit className="w-4 h-4 text-gray-400" />
+                                                    Edit Details
+                                                </button>
+                                                {!workOrder.client_id && onLinkClient && (
+                                                    <button
+                                                        onClick={() => { onLinkClient(); setIsActionsOpen(false); }}
+                                                        className="w-full flex items-center gap-3 px-4 py-3 text-sm text-gray-700 hover:bg-gray-50"
+                                                    >
+                                                        <Link className="w-4 h-4 text-gray-400" />
+                                                        Link to Client
+                                                    </button>
+                                                )}
+                                                <div className="border-t border-gray-100 my-2" />
+                                                <button
+                                                    onClick={() => { onDelete(); setIsActionsOpen(false); }}
+                                                    className="w-full flex items-center gap-3 px-4 py-3 text-sm text-red-600 hover:bg-red-50"
+                                                >
+                                                    <Trash2 className="w-4 h-4" />
+                                                    Delete Work Order
+                                                </button>
+                                            </div>
+                                        </>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Row 2: Quick Info (expandable) */}
+                        <button
+                            onClick={toggleCollapse}
+                            className="w-full mt-3 flex items-center justify-between text-left"
+                        >
+                            <div className="flex items-center gap-4 text-sm text-gray-600 overflow-hidden">
+                                {workOrder.client && (
+                                    <span className="flex items-center gap-1.5 truncate">
+                                        <Building2 className="w-3.5 h-3.5 text-gray-400 flex-shrink-0" />
+                                        <span className="truncate">{safeRender(workOrder.client.name)}</span>
+                                    </span>
+                                )}
+                                {workOrder.job_type && (
+                                    <span className="hidden xs:inline text-gray-400">•</span>
+                                )}
+                                {workOrder.job_type && (
+                                    <span className="hidden xs:inline truncate">{safeRender(workOrder.job_type.name)}</span>
+                                )}
+                            </div>
+                            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform flex-shrink-0 ${!isCollapsed ? 'rotate-180' : ''}`} />
+                        </button>
+
+                        {/* Expanded Details */}
+                        {!isCollapsed && (
+                            <div className="mt-4 pt-4 border-t border-gray-100 space-y-3">
+                                {/* Review Badge */}
+                                {needsReview && (
+                                    <div className="mb-3">
+                                        <ReviewBadge />
+                                    </div>
+                                )}
+
+                                {/* Site Address */}
+                                <div className="flex items-start gap-2">
+                                    <MapPin className="w-4 h-4 text-gray-400 mt-0.5 flex-shrink-0" />
+                                    <p className="text-sm text-gray-700">
+                                        {safeRender(workOrder.site_address) || <span className="text-gray-400">No address</span>}
+                                    </p>
+                                </div>
+
+                                {/* Dates */}
+                                <div className="flex items-center gap-2">
+                                    <Calendar className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <p className="text-sm text-gray-700">
+                                        {workOrder.planned_dates && workOrder.planned_dates.length > 0
+                                            ? formatDateShort(workOrder.planned_dates[0])
+                                            : <span className="text-gray-400">No date</span>
+                                        }
+                                    </p>
+                                </div>
+
+                                {/* Owner */}
+                                <div className="flex items-center gap-2">
+                                    <User className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                    <p className="text-sm text-gray-700">
+                                        {safeRender(workOrder.owner?.display_name) || <span className="text-gray-400">No owner</span>}
+                                    </p>
+                                </div>
+
+                                {/* PM */}
+                                {workOrder.project_manager && (
+                                    <div className="flex items-center gap-2">
+                                        <Building2 className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                                        <p className="text-sm text-gray-700">
+                                            PM: {safeRender(workOrder.project_manager.name)}
+                                        </p>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                {/* ═══════════════════════════════════════════════════════════════════
+                    DESKTOP: COLLAPSED VIEW - Compact Single Row (hidden on mobile)
                 ═══════════════════════════════════════════════════════════════════ */}
                 {isCollapsed && (
-                    <div className="max-w-[1600px] mx-auto px-8 lg:px-12">
+                    <div className="hidden md:block max-w-[1600px] mx-auto px-8 lg:px-12">
                         <div className="flex items-center justify-between gap-4 py-4">
                             {/* Left: Back + WO Number + Status */}
                             <div className="flex items-center gap-4">
@@ -363,10 +543,10 @@ export function WorkOrderDetailHeader({
                 )}
 
                 {/* ═══════════════════════════════════════════════════════════════════
-                    EXPANDED VIEW - Full Layout
+                    DESKTOP: EXPANDED VIEW - Full Layout (hidden on mobile)
                 ═══════════════════════════════════════════════════════════════════ */}
                 {!isCollapsed && (
-                    <>
+                    <div className="hidden md:block">
                         {/* ROW 1: Navigation + Actions */}
                         <div className="border-b border-gray-100">
                             <div className="max-w-[1600px] mx-auto px-8 lg:px-12 py-5">
@@ -587,7 +767,7 @@ export function WorkOrderDetailHeader({
 
                         {/* Collapse Pill at bottom */}
                         <CollapsePill />
-                    </>
+                    </div>
                 )}
             </div>
 

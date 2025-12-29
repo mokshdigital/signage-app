@@ -5,7 +5,7 @@ import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { Client, ProjectManager, WorkOrder } from '@/types/database';
 import { clientsService } from '@/services/clients.service';
-import { useModal, useConfirmDialog } from '@/hooks';
+import { useModal, useConfirmDialog, usePermissions } from '@/hooks';
 import { Button, Modal, Card, Badge, ConfirmDialog, Alert, LoadingSpinner, PlusIcon } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
 import { ClientForm, ClientFormData, ProjectManagerForm, ProjectManagerFormData } from '@/components/forms';
@@ -19,6 +19,12 @@ export default function ClientDetailPage() {
     const params = useParams();
     const router = useRouter();
     const clientId = params.id as string;
+
+    // Permissions
+    const { hasPermission } = usePermissions();
+    const canUpdate = hasPermission('clients:update');
+    const canDelete = hasPermission('clients:delete');
+    const canManage = hasPermission('clients:manage');
 
     // State
     const [client, setClient] = useState<Client | null>(null);
@@ -204,7 +210,7 @@ export default function ClientDetailPage() {
             align: 'right',
             render: (item: any) => (
                 <div className="flex justify-end gap-2">
-                    {!item.user_profile_id && item.email && (
+                    {canManage && !item.user_profile_id && item.email && (
                         <Button
                             size="sm"
                             variant="ghost"
@@ -217,27 +223,31 @@ export default function ClientDetailPage() {
                             Create Portal
                         </Button>
                     )}
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            openPMModal(item);
-                        }}
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDeletePM(item);
-                        }}
-                    >
-                        Delete
-                    </Button>
+                    {canUpdate && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openPMModal(item);
+                            }}
+                        >
+                            Edit
+                        </Button>
+                    )}
+                    {canDelete && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeletePM(item);
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    )}
                 </div>
             )
         }
@@ -347,12 +357,14 @@ export default function ClientDetailPage() {
                         )}
                     </div>
                     <div className="flex gap-2 items-start">
-                        <Button
-                            variant="secondary"
-                            onClick={() => openEditClient(client)}
-                        >
-                            Edit Client
-                        </Button>
+                        {canUpdate && (
+                            <Button
+                                variant="secondary"
+                                onClick={() => openEditClient(client)}
+                            >
+                                Edit Client
+                            </Button>
+                        )}
                     </div>
                 </div>
             </Card>
@@ -384,11 +396,13 @@ export default function ClientDetailPage() {
             {/* Tab Content */}
             {activeTab === 'contacts' && (
                 <div className="space-y-4">
-                    <div className="flex justify-end">
-                        <Button onClick={() => openPMModal()} leftIcon={<PlusIcon />}>
-                            Add Contact
-                        </Button>
-                    </div>
+                    {canUpdate && (
+                        <div className="flex justify-end">
+                            <Button onClick={() => openPMModal()} leftIcon={<PlusIcon />}>
+                                Add Contact
+                            </Button>
+                        </div>
+                    )}
                     <Card noPadding>
                         <DataTable
                             data={projectManagers}

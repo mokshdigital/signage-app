@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { Client } from '@/types/database';
 import { clientsService } from '@/services/clients.service';
-import { useModal, useConfirmDialog } from '@/hooks';
+import { useModal, useConfirmDialog, usePermissions } from '@/hooks';
 import { Button, Modal, Card, Badge, ConfirmDialog, Alert, LoadingSpinner, PlusIcon } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
 import { ClientForm, ClientFormData } from '@/components/forms';
@@ -12,6 +12,12 @@ import { toast } from '@/components/providers';
 import { safeRender } from '@/lib/utils/helpers';
 
 export default function ClientsPage() {
+    // Permissions
+    const { hasPermission, isLoading: permissionsLoading } = usePermissions();
+    const canCreate = hasPermission('clients:create');
+    const canUpdate = hasPermission('clients:update');
+    const canDelete = hasPermission('clients:delete');
+
     // State
     const [clients, setClients] = useState<Client[]>([]);
     const [loading, setLoading] = useState(true);
@@ -141,27 +147,31 @@ export default function ClientsPage() {
                             View
                         </Button>
                     </Link>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            openModal(item);
-                        }}
-                    >
-                        Edit
-                    </Button>
-                    <Button
-                        size="sm"
-                        variant="ghost"
-                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                        onClick={(e) => {
-                            e.stopPropagation();
-                            handleDelete(item);
-                        }}
-                    >
-                        Delete
-                    </Button>
+                    {canUpdate && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                openModal(item);
+                            }}
+                        >
+                            Edit
+                        </Button>
+                    )}
+                    {canDelete && (
+                        <Button
+                            size="sm"
+                            variant="ghost"
+                            className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                            onClick={(e) => {
+                                e.stopPropagation();
+                                handleDelete(item);
+                            }}
+                        >
+                            Delete
+                        </Button>
+                    )}
                 </div>
             )
         }
@@ -174,9 +184,11 @@ export default function ClientsPage() {
                     <h1 className="text-2xl font-bold text-gray-900">Clients</h1>
                     <p className="text-gray-500 text-sm mt-1">Manage corporate clients and their contacts</p>
                 </div>
-                <Button onClick={() => openModal()} leftIcon={<PlusIcon />}>
-                    Add Client
-                </Button>
+                {canCreate && (
+                    <Button onClick={() => openModal()} leftIcon={<PlusIcon />}>
+                        Add Client
+                    </Button>
+                )}
             </div>
 
             {/* Search */}

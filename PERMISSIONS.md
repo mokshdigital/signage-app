@@ -108,7 +108,7 @@ CREATE TABLE roles (
 ### Permission Format
 All permissions follow the format: `{resource}:{action}`
 
-### Core Permissions (37 total)
+### Core Permissions (42 total)
 
 #### Users Resource
 | Permission | Description |
@@ -164,6 +164,15 @@ All permissions follow the format: `{resource}:{action}`
 | `vehicles:update` | Update vehicle info |
 | `vehicles:delete` | Remove vehicles |
 | `vehicles:manage` | Full control over vehicles |
+
+#### Clients Resource
+| Permission | Description |
+|------------|-------------|
+| `clients:create` | Create new client records |
+| `clients:read` | View client list and details |
+| `clients:update` | Update client info and manage contacts |
+| `clients:delete` | Delete clients and contacts |
+| `clients:manage` | Full control (includes portal account creation) |
 
 #### Reports Resource
 | Permission | Description |
@@ -543,6 +552,7 @@ When modifying permissions, verify:
 ### admin
 - All `users:*` permissions
 - All `roles:*` permissions
+- All `clients:*` permissions
 - `settings:manage`, `settings:manage_company`
 - `client_hub:manage_contacts`
 
@@ -551,6 +561,7 @@ When modifying permissions, verify:
 - `technicians:read`, `technicians:update`
 - `equipment:read`
 - `vehicles:read`
+- `clients:read`
 - `dashboard:read`
 
 ### technician
@@ -563,7 +574,7 @@ When modifying permissions, verify:
 - `technicians:read`
 - `equipment:read`
 - `vehicles:read`
-- `clients:*` (if applicable)
+- `clients:read`, `clients:create`, `clients:update`
 - `dashboard:read`
 
 ### client
@@ -573,5 +584,5 @@ When modifying permissions, verify:
 
 ---
 
-*Last Updated: December 24, 2025*
-*Version: 1.0*
+*Last Updated: December 29, 2025*
+*Version: 1.1*
