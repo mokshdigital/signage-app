@@ -32,6 +32,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed, onToggleCollapse, onSign
         { name: 'Clients', href: '/dashboard/clients', icon: '🏢', permission: 'work_orders:read' },
         { name: 'Work Orders', href: '/dashboard/work-orders', icon: '📋', permission: 'work_orders:read' },
         { name: 'Work Orders (Beta)', href: '/dashboard/work-orders-v2', icon: '🆕', permission: 'work_orders:read' },
+        { name: 'Timesheets', href: '/dashboard/timesheets', icon: '⏱️', permission: ['timesheets:log_own', 'timesheets:view_all'] },
         {
             name: 'Settings',
             href: '/dashboard/settings',

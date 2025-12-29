@@ -17,7 +17,9 @@ export default function SettingsLayout({
         { name: 'Roles', href: '/dashboard/settings/roles', permission: 'roles:manage' },
         { name: 'Users', href: '/dashboard/settings/users', permission: 'users:manage' },
         { name: 'Job Types', href: '/dashboard/settings/job-types', permission: 'settings:manage' },
-        { name: 'Checklist Templates', href: '/dashboard/settings/checklist-templates', permission: 'settings:manage' }
+        { name: 'Checklist Templates', href: '/dashboard/settings/checklist-templates', permission: 'settings:manage' },
+        { name: 'Locations', href: '/dashboard/settings/locations', permission: 'settings:manage_locations' },
+        { name: 'Activity Types', href: '/dashboard/settings/activity-types', permission: 'settings:manage_activity_types' },
     ];
 
     return (

@@ -979,3 +979,206 @@ Added column for client portal file visibility control.
 | `getFilesWithVisibility(woId)` | Returns `{clientVisible[], notClientVisible[]}` |
 | `toggleFileClientVisibility(fileId, isVisible)` | Toggle the `is_client_visible` flag |
 
+---
+
+## Phase 30: Timesheet System
+
+### 23. `location_chips`
+Admin-managed location tags for timesheet entries.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `name` | TEXT | NOT NULL | Location name (e.g., "Shop", "Site") |
+| `color` | TEXT | DEFAULT #f59e0b | Hex color code |
+| `is_active` | BOOLEAN | DEFAULT TRUE | Soft-delete flag (show/hide) |
+| `sort_order` | INTEGER | DEFAULT 0 | Display order |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+
+#### Indexes
+- `idx_location_chips_name` - UNIQUE on `name` WHERE `is_active = TRUE`
+
+---
+
+### 24. `activity_types`
+Admin-managed activity types with optional WO requirement.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `name` | TEXT | NOT NULL | Activity name (e.g., "Installation") |
+| `color` | TEXT | DEFAULT #3b82f6 | Hex color code |
+| `requires_wo` | BOOLEAN | DEFAULT FALSE | If TRUE, shows WO dropdown in UI |
+| `is_active` | BOOLEAN | DEFAULT TRUE | Soft-delete flag |
+| `sort_order` | INTEGER | DEFAULT 0 | Display order |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+
+---
+
+### 25. `timesheet_days`
+Header table - one row per user per date.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `user_id` | UUID | FK → user_profiles, NOT NULL | User who owns this day |
+| `work_date` | DATE | NOT NULL | The calendar date |
+| `status` | TEXT | CHECK IN ('draft', 'submitted', 'approved', 'rejected', 'processed') | Workflow status |
+| `total_hours` | DECIMAL(5,2) | DEFAULT 0 | Auto-calculated sum of entries |
+| `submitted_at` | TIMESTAMPTZ | | When submitted for approval |
+| `approved_by` | UUID | FK → user_profiles | Approver |
+| `approved_at` | TIMESTAMPTZ | | Approval timestamp |
+| `rejection_reason` | TEXT | | Reason if rejected |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+
+#### Constraints
+- UNIQUE(user_id, work_date)
+
+---
+
+### 26. `timesheet_entries`
+Detail table - individual time entries.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `timesheet_day_id` | UUID | FK → timesheet_days, NOT NULL | Parent day |
+| `activity_type_id` | UUID | FK → activity_types, NOT NULL | Activity type |
+| `location_chip_id` | UUID | FK → location_chips, NOT NULL | Location |
+| `work_order_id` | UUID | FK → work_orders, NULLABLE | NULL = "General" |
+| `hours` | DECIMAL(4,2) | NOT NULL, CHECK > 0 AND ≤ 24 | Hours worked |
+| `start_time` | TIME | | Optional start time |
+| `end_time` | TIME | | Optional end time |
+| `notes` | TEXT | | Entry notes |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+
+#### Constraints
+- `hours_quarter_increments` - CHECK (MOD(hours * 100, 25) = 0) for 0.25 increments
+
+---
+
+### 27. `timesheet_status_history`
+Audit trail for timesheet status changes.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `timesheet_day_id` | UUID | FK → timesheet_days | Parent day |
+| `from_status` | TEXT | | Previous status |
+| `to_status` | TEXT | NOT NULL | New status |
+| `changed_by` | UUID | FK → user_profiles | Who changed |
+| `notes` | TEXT | | Optional notes |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Change timestamp |
+
+---
+
+### 28. `timesheet_day_requests`
+Past-day edit requests for technicians.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `user_id` | UUID | FK → user_profiles | Requesting user |
+| `requested_date` | DATE | NOT NULL | Date requesting access to |
+| `reason` | TEXT | NOT NULL | Justification |
+| `status` | TEXT | CHECK IN ('pending', 'approved', 'denied') | Request status |
+| `reviewed_by` | UUID | FK → user_profiles | Reviewer |
+| `reviewed_at` | TIMESTAMPTZ | | Review timestamp |
+| `review_notes` | TEXT | | Reviewer notes |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+
+---
+
+### 29. `wo_invoice_staging`
+Generalized billable items staging table.
+
+#### Columns
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| `id` | UUID | PRIMARY KEY | Unique identifier |
+| `work_order_id` | UUID | FK → work_orders, NOT NULL | Linked WO |
+| `source_type` | TEXT | CHECK IN ('labor', 'material', 'equipment', 'expense') | Item type |
+| `source_id` | UUID | NOT NULL | Source record ID (e.g., timesheet_entry.id) |
+| `description` | TEXT | | Item description |
+| `quantity` | DECIMAL(10,2) | DEFAULT 0 | Quantity |
+| `unit` | TEXT | DEFAULT 'hours' | Unit of measure |
+| `actual_value` | DECIMAL(10,2) | DEFAULT 0 | Actual value |
+| `billed_value` | DECIMAL(10,2) | DEFAULT 0 | Editable billed value |
+| `unit_rate` | DECIMAL(10,2) | DEFAULT 0 | Editable rate |
+| `is_billable` | BOOLEAN | DEFAULT TRUE | Include in billing |
+| `locked` | BOOLEAN | DEFAULT FALSE | Locked when invoiced |
+| `created_at` | TIMESTAMPTZ | DEFAULT NOW() | Creation timestamp |
+| `updated_at` | TIMESTAMPTZ | DEFAULT NOW() | Last update timestamp |
+
+---
+
+### Timesheet Triggers
+
+| Trigger | Purpose |
+|---------|---------|
+| `update_timesheet_day_total_hours` | Recalculates daily totals on entry changes |
+| `prevent_processed_timesheet_changes` | Hard-lock on processed days |
+| `copy_approved_entries_to_staging` | Copies WO-linked entries to staging on approval (skips General) |
+| `log_timesheet_status_change` | Records status changes to history |
+
+---
+
+### Timesheet RBAC Permissions
+
+| Permission | Description |
+|------------|-------------|
+| `timesheets:view_own` | View own entries |
+| `timesheets:log_own` | Create/edit own (today) |
+| `timesheets:submit_own` | Submit for approval |
+| `timesheets:request_past_day` | Request past-day edits |
+| `timesheets:view_all` | View all timesheets |
+| `timesheets:approve` | Approve/reject |
+| `timesheets:approve_past_requests` | Approve past-day requests |
+| `timesheets:process` | Mark as processed |
+| `timesheets:edit_any` | Edit any timesheet |
+| `timesheets:delete_any` | Delete any entry |
+| `settings:manage_locations` | CRUD location chips |
+| `settings:manage_activity_types` | CRUD activity types |
+| `billing:view_staging` | View staging |
+| `billing:edit_staging` | Edit billed values |
+| `billing:lock_staging` | Lock for invoicing |
+
+---
+
+### Timesheet Service Methods
+
+| Method | Description |
+|--------|-------------|
+| `getLocationChips(includeInactive)` | Get location chips |
+| `createLocationChip(name, color)` | Create new location |
+| `updateLocationChip(id, updates)` | Update location |
+| `getActivityTypes(includeInactive)` | Get activity types |
+| `createActivityType(input)` | Create new activity |
+| `updateActivityType(id, updates)` | Update activity |
+| `getOrCreateDay(userId, date)` | Get or create timesheet day |
+| `getMyDays(userId, start, end)` | Get user's days in range |
+| `getAllDays(filters)` | Admin: get all days |
+| `submitDay(dayId)` | Submit for approval |
+| `approveDay(dayId, approverId)` | Approve day |
+| `rejectDay(dayId, approverId, reason)` | Reject day |
+| `processDay(dayId)` | Mark as processed |
+| `createEntry(input)` | Create time entry |
+| `updateEntry(id, updates)` | Update entry |
+| `deleteEntry(id)` | Delete entry |
+| `createPastDayRequest(userId, date, reason)` | Request past-day access |
+| `getMyRequests(userId)` | Get user's requests |
+| `getPendingRequests()` | Admin: pending requests |
+| `approveRequest(id, reviewerId)` | Approve request |
+| `denyRequest(id, reviewerId, notes)` | Deny request |
+| `getWeeklySummary(userId, weekStart)` | Weekly totals |

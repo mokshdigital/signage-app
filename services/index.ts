@@ -11,3 +11,4 @@ export { createCrudService } from './crud.service';
 export { migrationService } from './migration.service';
 export { usersService } from './users.service';
 export { companySettingsService } from './company-settings.service';
+export { timesheetsService } from './timesheets.service';

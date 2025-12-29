@@ -365,3 +365,165 @@ export interface TaskTagAssignment {
     // Joined data
     tag?: TaskTag;
 }
+
+// =============================================
+// TIMESHEET SYSTEM TYPES (Phase 30)
+// =============================================
+
+// Location Chip - admin-managed locations
+export interface LocationChip {
+    id: string;
+    name: string;
+    color: string;
+    is_active: boolean;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
+// Activity Type - admin-managed with WO requirement flag
+export interface ActivityType {
+    id: string;
+    name: string;
+    color: string;
+    requires_wo: boolean;
+    is_active: boolean;
+    sort_order: number;
+    created_at: string;
+    updated_at: string;
+}
+
+// Timesheet Day Status
+export type TimesheetStatus = 'draft' | 'submitted' | 'approved' | 'rejected' | 'processed';
+
+// Timesheet Day - header table (one per user per date)
+export interface TimesheetDay {
+    id: string;
+    user_id: string;
+    work_date: string; // DATE as ISO string
+    status: TimesheetStatus;
+    total_hours: number;
+    submitted_at: string | null;
+    approved_by: string | null;
+    approved_at: string | null;
+    rejection_reason: string | null;
+    created_at: string;
+    updated_at: string;
+    // Optional: joined data
+    user?: {
+        id: string;
+        display_name: string;
+        avatar_url: string | null;
+    };
+    entries?: TimesheetEntry[];
+    approver?: {
+        id: string;
+        display_name: string;
+    };
+}
+
+// Timesheet Entry - detail table
+export interface TimesheetEntry {
+    id: string;
+    timesheet_day_id: string;
+    activity_type_id: string;
+    location_chip_id: string;
+    work_order_id: string | null; // NULL = "General"
+    hours: number;
+    start_time: string | null;
+    end_time: string | null;
+    notes: string | null;
+    created_at: string;
+    updated_at: string;
+    // Optional: joined data
+    activity_type?: ActivityType;
+    location_chip?: LocationChip;
+    work_order?: {
+        id: string;
+        work_order_number: string | null;
+        site_address: string | null;
+    };
+}
+
+// Timesheet Status History - audit trail
+export interface TimesheetStatusHistory {
+    id: string;
+    timesheet_day_id: string;
+    from_status: string | null;
+    to_status: string;
+    changed_by: string;
+    notes: string | null;
+    created_at: string;
+    // Optional: joined data
+    changed_by_user?: {
+        id: string;
+        display_name: string;
+    };
+}
+
+// Timesheet Day Request Status
+export type DayRequestStatus = 'pending' | 'approved' | 'denied';
+
+// Timesheet Day Request - past-day edit requests
+export interface TimesheetDayRequest {
+    id: string;
+    user_id: string;
+    requested_date: string; // DATE as ISO string
+    reason: string;
+    status: DayRequestStatus;
+    reviewed_by: string | null;
+    reviewed_at: string | null;
+    review_notes: string | null;
+    created_at: string;
+    updated_at: string;
+    // Optional: joined data
+    user?: {
+        id: string;
+        display_name: string;
+        avatar_url: string | null;
+    };
+    reviewer?: {
+        id: string;
+        display_name: string;
+    };
+}
+
+// Invoice Staging Source Type
+export type InvoiceStagingSourceType = 'labor' | 'material' | 'equipment' | 'expense';
+
+// WO Invoice Staging - billable items
+export interface InvoiceStagingItem {
+    id: string;
+    work_order_id: string;
+    source_type: InvoiceStagingSourceType;
+    source_id: string;
+    description: string | null;
+    quantity: number;
+    unit: string;
+    actual_value: number;
+    billed_value: number;
+    unit_rate: number;
+    is_billable: boolean;
+    locked: boolean;
+    created_at: string;
+    updated_at: string;
+    // Optional: joined data
+    work_order?: {
+        id: string;
+        work_order_number: string | null;
+    };
+}
+
+// Weekly Summary for display
+export interface WeeklySummary {
+    weekStart: string;
+    weekEnd: string;
+    totalHours: number;
+    days: {
+        date: string;
+        dayOfWeek: string;
+        hours: number;
+        status: TimesheetStatus | null;
+        dayId: string | null;
+    }[];
+}
