@@ -4,12 +4,12 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { timesheetsService } from '@/services';
 import { usePermissions } from '@/hooks/usePermissions';
-import { LogTimeForm, WeeklyTotalsWidget, PastDayRequestForm, ApprovalsQueue, MyTimesheetsTable } from '@/components/timesheets';
+import { LogTimeForm, WeeklyTotalsWidget, PastDayRequestForm, ApprovalsQueue, MyTimesheetsTable, AllTimesheetsTable } from '@/components/timesheets';
 import { LoadingSpinner, Button } from '@/components/ui';
 import { Pencil } from 'lucide-react';
 import type { TimesheetEntry, TimesheetDay, TimesheetDayRequest } from '@/types/database';
 
-type TabType = 'log' | 'my-timesheets' | 'request-past' | 'approvals';
+type TabType = 'log' | 'my-timesheets' | 'request-past' | 'approvals' | 'all-timesheets';
 
 export default function TimesheetsPage() {
     const { hasPermission, isLoading: permLoading } = usePermissions();
@@ -127,6 +127,7 @@ export default function TimesheetsPage() {
     const canSubmit = hasPermission('timesheets:submit_own');
     const canRequestPast = hasPermission('timesheets:request_past_day');
     const canApprove = hasPermission('timesheets:approve');
+    const canViewAll = hasPermission('timesheets:view_all');
 
     // Filter available tabs based on permissions
     const availableTabs = ([
@@ -134,6 +135,7 @@ export default function TimesheetsPage() {
         { id: 'my-timesheets' as const, label: 'My Timesheets', permission: true },
         { id: 'request-past' as const, label: 'Request Past Day', permission: canRequestPast },
         { id: 'approvals' as const, label: 'Approvals', permission: canApprove },
+        { id: 'all-timesheets' as const, label: 'All Timesheets', permission: canViewAll },
     ] as { id: TabType; label: string; permission?: boolean }[]).filter(tab => tab.permission !== false);
 
     if (loading || permLoading) {
@@ -373,6 +375,13 @@ export default function TimesheetsPage() {
                 {/* Approvals Tab */}
                 {activeTab === 'approvals' && (
                     <ApprovalsQueue currentUserId={userId} />
+                )}
+
+                {/* All Timesheets Tab (Admin) */}
+                {activeTab === 'all-timesheets' && (
+                    <div>
+                        <AllTimesheetsTable />
+                    </div>
                 )}
             </div>
         </div>

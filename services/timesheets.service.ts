@@ -368,6 +368,138 @@ export const timesheetsService = {
         return data || [];
     },
 
+    // Paginated version of getAllDays for admin "All Timesheets" view
+    async getAllDaysPaginated(
+        filters: {
+            dateFrom?: string;
+            dateTo?: string;
+            status?: string[];
+            userId?: string;
+            activityTypeId?: string;
+            locationChipId?: string;
+            workOrderId?: string;
+        },
+        page: number = 1,
+        limit: number = 14
+    ): Promise<{
+        days: TimesheetDay[];
+        totalDays: number;
+        totalPages: number;
+        currentPage: number;
+    }> {
+        const supabase = createClient() as any;
+
+        // Build base query for counting and getting IDs
+        let dayQuery = supabase
+            .from('timesheet_days')
+            .select('id, work_date, user_id', { count: 'exact' })
+            .order('work_date', { ascending: false });
+
+        if (filters.dateFrom) {
+            dayQuery = dayQuery.gte('work_date', filters.dateFrom);
+        }
+        if (filters.dateTo) {
+            dayQuery = dayQuery.lte('work_date', filters.dateTo);
+        }
+        if (filters.status && filters.status.length > 0) {
+            dayQuery = dayQuery.in('status', filters.status);
+        }
+        if (filters.userId) {
+            dayQuery = dayQuery.eq('user_id', filters.userId);
+        }
+
+        const { data: allDays, count, error: countError } = await dayQuery;
+        if (countError) throw countError;
+
+        let filteredDayIds: string[] = allDays?.map((d: any) => d.id) || [];
+
+        // If entry-level filters, filter by checking entries
+        if (filters.activityTypeId || filters.locationChipId || filters.workOrderId) {
+            let entryQuery = supabase
+                .from('timesheet_entries')
+                .select('timesheet_day_id')
+                .in('timesheet_day_id', filteredDayIds);
+
+            if (filters.activityTypeId) {
+                entryQuery = entryQuery.eq('activity_type_id', filters.activityTypeId);
+            }
+            if (filters.locationChipId) {
+                entryQuery = entryQuery.eq('location_chip_id', filters.locationChipId);
+            }
+            if (filters.workOrderId) {
+                entryQuery = entryQuery.eq('work_order_id', filters.workOrderId);
+            }
+
+            const { data: matchingEntries, error: entryError } = await entryQuery;
+            if (entryError) throw entryError;
+
+            const matchingDayIds = new Set(matchingEntries?.map((e: any) => e.timesheet_day_id) || []);
+            filteredDayIds = filteredDayIds.filter(id => matchingDayIds.has(id));
+        }
+
+        const totalDays = filteredDayIds.length;
+        const totalPages = Math.ceil(totalDays / limit);
+        const offset = (page - 1) * limit;
+        const paginatedDayIds = filteredDayIds.slice(offset, offset + limit);
+
+        if (paginatedDayIds.length === 0) {
+            return { days: [], totalDays: 0, totalPages: 0, currentPage: page };
+        }
+
+        // Fetch full day data with entries and user info
+        const { data: days, error } = await supabase
+            .from('timesheet_days')
+            .select(`
+                *,
+                user:user_profiles!user_id(id, display_name, avatar_url),
+                entries:timesheet_entries(
+                    *,
+                    activity_type:activity_types(*),
+                    location_chip:location_chips(*),
+                    work_order:work_orders(id, work_order_number, site_address)
+                )
+            `)
+            .in('id', paginatedDayIds)
+            .order('work_date', { ascending: false });
+
+        if (error) throw error;
+
+        // Sort by date descending (newest first)
+        const sortedDays = (days || []).sort((a: any, b: any) =>
+            new Date(b.work_date).getTime() - new Date(a.work_date).getTime()
+        );
+
+        return {
+            days: sortedDays,
+            totalDays,
+            totalPages,
+            currentPage: page,
+        };
+    },
+
+    // Get all users who have timesheets (for admin filter dropdown)
+    async getTimesheetUsers(): Promise<{ id: string; display_name: string }[]> {
+        const supabase = createClient() as any;
+        const { data, error } = await supabase
+            .from('timesheet_days')
+            .select('user_id, user:user_profiles!user_id(id, display_name)')
+            .order('user_id');
+
+        if (error) throw error;
+
+        // Deduplicate users
+        const usersMap = new Map<string, { id: string; display_name: string }>();
+        (data || []).forEach((d: any) => {
+            if (d.user && !usersMap.has(d.user.id)) {
+                usersMap.set(d.user.id, { id: d.user.id, display_name: d.user.display_name });
+            }
+        });
+
+        return Array.from(usersMap.values()).sort((a, b) =>
+            a.display_name.localeCompare(b.display_name)
+        );
+    },
+
     async getDayById(dayId: string): Promise<TimesheetDay | null> {
         const supabase = createClient() as any;
         const { data, error } = await supabase
