@@ -6,6 +6,7 @@ import { timesheetsService } from '@/services';
 import { usePermissions } from '@/hooks/usePermissions';
 import { LogTimeForm, WeeklyTotalsWidget, PastDayRequestForm, ApprovalsQueue } from '@/components/timesheets';
 import { LoadingSpinner, Button } from '@/components/ui';
+import { Pencil } from 'lucide-react';
 import type { TimesheetEntry, TimesheetDay, TimesheetDayRequest } from '@/types/database';
 
 type TabType = 'log' | 'my-timesheets' | 'request-past' | 'approvals';
@@ -19,6 +20,7 @@ export default function TimesheetsPage() {
     // Today's entries for Log Time tab
     const [todaysEntries, setTodaysEntries] = useState<TimesheetEntry[]>([]);
     const [todaysDay, setTodaysDay] = useState<TimesheetDay | null>(null);
+    const [editingEntry, setEditingEntry] = useState<TimesheetEntry | null>(null);
 
     // My requests for Request Past tab
     const [myRequests, setMyRequests] = useState<TimesheetDayRequest[]>([]);
@@ -81,6 +83,17 @@ export default function TimesheetsPage() {
         }
     };
 
+    const handleEntryUpdated = (updatedEntry: TimesheetEntry) => {
+        setTodaysEntries(prev => prev.map(e => e.id === updatedEntry.id ? updatedEntry : e));
+        setEditingEntry(null);
+        // Force reload day to get updated total (or calc locally, but reload is safer with triggers)
+        loadTodaysEntries();
+    };
+
+    const handleCancelEdit = () => {
+        setEditingEntry(null);
+    };
+
     // Handle entry deleted
     const handleDeleteEntry = async (entryId: string) => {
         try {
@@ -139,8 +152,8 @@ export default function TimesheetsPage() {
         );
     }
 
-    // Check if day is editable
-    const isDayEditable = todaysDay?.status === 'draft' || todaysDay?.status === 'rejected';
+    // Check if day is editable (Draft, Rejected, OR Submitted as per request)
+    const isDayEditable = todaysDay?.status === 'draft' || todaysDay?.status === 'rejected' || todaysDay?.status === 'submitted';
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
@@ -218,6 +231,9 @@ export default function TimesheetsPage() {
                                     userId={userId}
                                     date={today}
                                     onEntryCreated={handleEntryCreated}
+                                    onEntryUpdated={handleEntryUpdated}
+                                    onCancelEdit={handleCancelEdit}
+                                    initialData={editingEntry}
                                     disabled={!isDayEditable}
                                 />
                             </div>
@@ -264,15 +280,27 @@ export default function TimesheetsPage() {
                                                     {entry.hours}h
                                                 </span>
                                                 {isDayEditable && (
-                                                    <button
-                                                        onClick={() => handleDeleteEntry(entry.id)}
-                                                        className="p-1 text-slate-400 hover:text-red-500 transition-colors"
-                                                        title="Delete entry"
-                                                    >
-                                                        <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                                                        </svg>
-                                                    </button>
+                                                    <>
+                                                        <button
+                                                            onClick={() => {
+                                                                setEditingEntry(entry);
+                                                                window.scrollTo({ top: 0, behavior: 'smooth' });
+                                                            }}
+                                                            className="p-1 text-slate-400 hover:text-amber-500 transition-colors"
+                                                            title="Edit entry"
+                                                        >
+                                                            <Pencil className="w-5 h-5" />
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleDeleteEntry(entry.id)}
+                                                            className="p-1 text-slate-400 hover:text-red-500 transition-colors"
+                                                            title="Delete entry"
+                                                        >
+                                                            <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                                                            </svg>
+                                                        </button>
+                                                    </>
                                                 )}
                                             </div>
                                         </div>
@@ -280,7 +308,7 @@ export default function TimesheetsPage() {
                                 </div>
 
                                 {/* Submit Button */}
-                                {isDayEditable && canSubmit && todaysEntries.length > 0 && (
+                                {isDayEditable && canSubmit && todaysEntries.length > 0 && todaysDay?.status !== 'submitted' && (
                                     <div className="px-6 py-4 bg-slate-50 border-t border-slate-100">
                                         <Button onClick={handleSubmitDay} className="w-full">
                                             Submit Day for Approval

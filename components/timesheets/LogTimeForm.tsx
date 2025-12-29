@@ -9,10 +9,13 @@ interface LogTimeFormProps {
     userId: string;
     date: string; // ISO date string (YYYY-MM-DD)
     onEntryCreated?: (entry: TimesheetEntry) => void;
+    onEntryUpdated?: (entry: TimesheetEntry) => void;
+    onCancelEdit?: () => void;
     disabled?: boolean;
+    initialData?: TimesheetEntry | null;
 }
 
-export function LogTimeForm({ userId, date, onEntryCreated, disabled = false }: LogTimeFormProps) {
+export function LogTimeForm({ userId, date, onEntryCreated, onEntryUpdated, onCancelEdit, disabled = false, initialData }: LogTimeFormProps) {
     const [loading, setLoading] = useState(true);
     const [submitting, setSubmitting] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -53,7 +56,25 @@ export function LogTimeForm({ userId, date, onEntryCreated, disabled = false }: 
             }
         }
         loadData();
+        loadData();
     }, [userId]);
+
+    // Update state when initialData changes
+    useEffectReact(() => {
+        if (initialData) {
+            setSelectedActivityId(initialData.activity_type_id);
+            setSelectedLocationId(initialData.location_chip_id);
+            setSelectedWOId(initialData.work_order_id || '');
+            setHours(initialData.hours.toString());
+            setNotes(initialData.notes || '');
+        } else {
+            setSelectedActivityId('');
+            setSelectedLocationId('');
+            setSelectedWOId('');
+            setHours('');
+            setNotes('');
+        }
+    }, [initialData]);
 
     // Validate hours (0.25 increments)
     const validateHours = (value: string): boolean => {
@@ -86,29 +107,40 @@ export function LogTimeForm({ userId, date, onEntryCreated, disabled = false }: 
             setSubmitting(true);
             setError(null);
 
-            // Get or create the timesheet day
-            const day = await timesheetsService.getOrCreateDay(userId, date);
+            if (initialData) {
+                // Update
+                const updated = await timesheetsService.updateEntry(initialData.id, {
+                    activity_type_id: selectedActivityId,
+                    location_chip_id: selectedLocationId,
+                    work_order_id: selectedWOId || null,
+                    hours: parseFloat(hours),
+                    notes: notes || undefined,
+                });
+                onEntryUpdated?.(updated);
+                // Don't clear form here, parent will clear initialData or unmount
+            } else {
+                // Create
+                const day = await timesheetsService.getOrCreateDay(userId, date);
+                const entry = await timesheetsService.createEntry({
+                    timesheet_day_id: day.id,
+                    activity_type_id: selectedActivityId,
+                    location_chip_id: selectedLocationId,
+                    work_order_id: selectedWOId || null, // empty = General
+                    hours: parseFloat(hours),
+                    notes: notes || undefined,
+                });
 
-            // Create entry
-            const entry = await timesheetsService.createEntry({
-                timesheet_day_id: day.id,
-                activity_type_id: selectedActivityId,
-                location_chip_id: selectedLocationId,
-                work_order_id: selectedWOId || null, // empty = General
-                hours: parseFloat(hours),
-                notes: notes || undefined,
-            });
+                // Reset form
+                setSelectedActivityId('');
+                setSelectedLocationId('');
+                setSelectedWOId('');
+                setHours('');
+                setNotes('');
 
-            // Reset form
-            setSelectedActivityId('');
-            setSelectedLocationId('');
-            setSelectedWOId('');
-            setHours('');
-            setNotes('');
-
-            onEntryCreated?.(entry);
+                onEntryCreated?.(entry);
+            }
         } catch (err) {
-            setError(err instanceof Error ? err.message : 'Failed to create entry');
+            setError(err instanceof Error ? err.message : 'Failed to save entry');
         } finally {
             setSubmitting(false);
         }
@@ -198,8 +230,8 @@ export function LogTimeForm({ userId, date, onEntryCreated, disabled = false }: 
                             onClick={() => setSelectedLocationId(chip.id)}
                             disabled={disabled || submitting}
                             className={`px-4 py-2 rounded-full text-sm font-medium transition-all ${selectedLocationId === chip.id
-                                    ? 'ring-2 ring-offset-2 ring-amber-500 scale-105'
-                                    : 'hover:scale-105'
+                                ? 'ring-2 ring-offset-2 ring-amber-500 scale-105'
+                                : 'hover:scale-105'
                                 } disabled:opacity-50 disabled:cursor-not-allowed`}
                             style={{
                                 backgroundColor: chip.color,
@@ -230,8 +262,8 @@ export function LogTimeForm({ userId, date, onEntryCreated, disabled = false }: 
                             onClick={() => setHours(h.toString())}
                             disabled={disabled || submitting}
                             className={`px-3 py-1.5 rounded-lg text-sm font-medium border transition-all ${hours === h.toString()
-                                    ? 'bg-amber-500 text-white border-amber-500'
-                                    : 'bg-white text-slate-700 border-slate-300 hover:border-amber-400'
+                                ? 'bg-amber-500 text-white border-amber-500'
+                                : 'bg-white text-slate-700 border-slate-300 hover:border-amber-400'
                                 } disabled:opacity-50`}
                         >
                             {h}h
@@ -278,12 +310,23 @@ export function LogTimeForm({ userId, date, onEntryCreated, disabled = false }: 
                 {submitting ? (
                     <>
                         <LoadingSpinner size="sm" />
-                        <span className="ml-2">Adding...</span>
+                        <span className="ml-2">{initialData ? 'Updating...' : 'Adding...'}</span>
                     </>
                 ) : (
-                    'Add Time Entry'
+                    initialData ? 'Update Entry' : 'Add Time Entry'
                 )}
             </Button>
+            {initialData && (
+                <Button
+                    type="button"
+                    variant="ghost"
+                    onClick={onCancelEdit}
+                    disabled={submitting}
+                    className="w-full mt-2"
+                >
+                    Cancel Edit
+                </Button>
+            )}
         </form>
     );
 }
