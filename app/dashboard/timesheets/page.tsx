@@ -152,8 +152,8 @@ export default function TimesheetsPage() {
         );
     }
 
-    // Check if day is editable (Draft or Rejected only)
-    const isDayEditable = todaysDay?.status === 'draft' || todaysDay?.status === 'rejected';
+    // Check if day is editable (New, Draft, or Rejected)
+    const isDayEditable = !todaysDay || todaysDay.status === 'draft' || todaysDay.status === 'rejected';
 
     return (
         <div className="max-w-4xl mx-auto px-4 py-6 space-y-6">
