@@ -1362,3 +1362,70 @@ Implemented the client-facing portal for external Project Managers to access wor
 - ✅ Client name display from PM's client relationship
 - ✅ Company assets storage bucket for logo uploads
 
+
+## Phase 30: Timesheets V2 Views & Admin Permissions
+**Date**: December 29, 2024
+
+### Overview
+Implemented comprehensive timesheet viewing interfaces for both end users and administrators, with robust filtering, pagination, and proper permission enforcement.
+
+### Completed Tasks
+
+#### A. My Timesheets Table View
+- ✅ **New Component**: `MyTimesheetsTable.tsx` replacing `WeeklyTotalsWidget`
+- ✅ **Filter Bar**: Date range, status chips, activity type, location, work order
+- ✅ **Grouped Layout**: Collapsible day headers with nested entry rows
+- ✅ **Mobile Responsive**: Card-based layout for small screens
+- ✅ **Pagination**: 14 days per page, newest first
+
+#### B. All Timesheets Admin View
+- ✅ **New Component**: `AllTimesheetsTable.tsx` (admin-only)
+- ✅ **Employee Filter**: Dropdown populated with users who have timesheets
+- ✅ **All Filters**: Date range, status, activity, location + employee
+- ✅ **Employee Display**: Name + avatar in day headers
+- ✅ **Permission Gated**: Requires `timesheets:view_all`
+
+#### C. Service Layer Enhancement
+- ✅ `getMyDaysPaginated()` - User's timesheets with pagination
+- ✅ `getAllDaysPaginated()` - All users' timesheets for admin
+- ✅ `getTimesheetUsers()` - Distinct users with timesheet data
+
+#### D. Edit Access Revert (Migration 035)
+- ✅ Reverted ability to edit timesheets once submitted
+- ✅ RLS policies enforce Draft/Rejected-only editing
+- ✅ UI reflects restriction
+
+#### E. Admin Permissions Fix (Migration 036)
+- ✅ **Bug Fixed**: `roles:manage` and `users:manage` were not assigned to `super_admin`/`admin`
+- ✅ Added missing role_permissions entries
+
+### Database Migrations
+| Migration | Purpose |
+|-----------|---------|
+| `035_timesheets_revert_submission_edit.sql` | Revert submitted timesheet editing |
+| `036_fix_missing_role_permissions.sql` | Add missing admin permissions |
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `components/timesheets/MyTimesheetsTable.tsx` | User's timesheet history view |
+| `components/timesheets/AllTimesheetsTable.tsx` | Admin view for all employees |
+| `services/timesheets.service.ts` | 3 new paginated methods |
+| `app/dashboard/timesheets/page.tsx` | Tab integration |
+
+### Timesheets Tab Structure
+| Tab | Permission | Description |
+|-----|------------|-------------|
+| Log Time | `timesheets:log_own` | Today's time entry |
+| My Timesheets | (all users) | Personal history with filters |
+| Request Past Day | `timesheets:request_past_day` | Past day edit requests |
+| Approvals | `timesheets:approve` | Approval queue |
+| All Timesheets | `timesheets:view_all` | Admin view of all users |
+
+### Current Status
+- ✅ My Timesheets fully functional with filters
+- ✅ All Timesheets accessible to admins
+- ✅ Pagination working correctly
+- ✅ Mobile-responsive design
+- ✅ Admin permissions restored
+

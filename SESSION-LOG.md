@@ -1473,3 +1473,93 @@ New component for Client Hub tab:
 4. **Relative Time**: Chat timestamps show "Just now", "5 min ago", etc. for recent messages
 5. **Client Name Fix**: Fixed client name display by using explicit query instead of joined syntax
 
+
+## Session 17: Timesheets V2 Views & Permissions Fix
+**Date**: December 29, 2024
+
+### Objectives
+1. Create new "My Timesheets" table view with filters and pagination
+2. Create "All Timesheets" admin view for super admins
+3. Fix missing role permissions for super_admin and admin roles
+
+### Implementation Summary
+
+#### 1. Data Cleanup
+- Cleared all transactional timesheet data via `TRUNCATE TABLE ... CASCADE`
+- Configuration tables (Activity Types, Locations) preserved
+
+#### 2. Reverted Submitted Timesheet Editing (Migration `035_timesheets_revert_submission_edit.sql`)
+- Reverted ability to edit timesheets once submitted
+- Users can only edit in Draft or Rejected status
+- RLS policies updated to enforce this rule
+- `PERMISSIONS.md` updated to reflect restriction
+
+#### 3. "My Timesheets" Table View (`MyTimesheetsTable.tsx`)
+New component replacing `WeeklyTotalsWidget` with:
+- **Filters**: Date range, status chips, activity type, location, work order
+- **Layout**: Grouped table with collapsible day headers
+- **Day Headers**: Status dot, formatted date, total hours, status badge, expand/collapse
+- **Entry Rows**: Activity + color, Location + color, WO#, Hours, Notes (expandable)
+- **Mobile**: Card-based layout with expandable days
+- **Pagination**: 14 days per page, newest first
+
+#### 4. "All Timesheets" Admin Tab (`AllTimesheetsTable.tsx`)
+New admin-only tab (requires `timesheets:view_all` permission) with:
+- **Employee Filter**: Dropdown to filter by specific user
+- **All Filters**: Same as My Timesheets plus employee
+- **Employee Display**: User name + avatar in day headers
+- **Default Range**: 30 days (vs 14 for personal view)
+- **RLS Enforcement**: Uses existing `is_internal()` function
+
+#### 5. Service Layer Updates (`timesheets.service.ts`)
+New methods:
+| Method | Purpose |
+|--------|---------|
+| `getMyDaysPaginated()` | Paginated days for current user with filters |
+| `getAllDaysPaginated()` | Paginated days for all users (admin view) |
+| `getTimesheetUsers()` | List of users with timesheet data for dropdown |
+
+#### 6. Permissions Fix (Migration `036_fix_missing_role_permissions.sql`)
+**Bug Found**: `roles:manage` and `users:manage` permissions existed but were never assigned to `super_admin` or `admin` roles.
+
+**Fix Applied**: Inserted missing `role_permissions` entries for:
+- `super_admin`: +`roles:manage`, +`users:manage`
+- `admin`: +`roles:manage`, +`users:manage`
+
+### Files Created
+| File | Purpose |
+|------|---------|
+| `components/timesheets/MyTimesheetsTable.tsx` | User's timesheet table view |
+| `components/timesheets/AllTimesheetsTable.tsx` | Admin timesheet view |
+| `database_migrations/035_timesheets_revert_submission_edit.sql` | Revert edit access |
+| `database_migrations/036_fix_missing_role_permissions.sql` | Fix role-permission links |
+
+### Files Modified
+| File | Changes |
+|------|---------|
+| `services/timesheets.service.ts` | Added 3 paginated methods |
+| `app/dashboard/timesheets/page.tsx` | Added My Timesheets + All Timesheets tabs |
+| `components/timesheets/index.ts` | Export new components |
+| `PERMISSIONS.md` | Updated `timesheets:log_own` description |
+
+### Bug Fixes
+1. **New Day Editing**: Fixed bug where users couldn't log time for a brand new day (when `todaysDay` is null)
+2. **Admin Permissions**: Fixed missing `roles:manage` and `users:manage` permissions for admin roles
+
+### Tab Structure (After Changes)
+| Tab | Permission | Description |
+|-----|------------|-------------|
+| Log Time | `timesheets:log_own` | Log today's hours |
+| My Timesheets | (all users) | Personal timesheet history with filters |
+| Request Past Day | `timesheets:request_past_day` | Request to edit past days |
+| Approvals | `timesheets:approve` | Approve/reject submitted timesheets |
+| All Timesheets | `timesheets:view_all` | Admin view of all employees |
+
+### Git Commits
+- `chore: clear test timesheet data`
+- `feat(timesheets): revert submit-edit and create migration 035`
+- `refactor(timesheets): remove WeeklyTotalsWidget usage in favor of MyTimesheetsTable`
+- `feat(timesheets): add My Timesheets table view with filters and pagination`
+- `feat(timesheets): add All Timesheets admin tab with employee filter`
+- `fix(permissions): add missing roles:manage and users:manage to admin roles`
+

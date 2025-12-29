@@ -193,7 +193,16 @@ All permissions follow the format: `{resource}:{action}`
 | `timesheets:view_own` | View own timesheet history |
 | `timesheets:request_past_day` | Request to edit/log past days beyond today |
 | `timesheets:approve` | Approve or reject timesheets (Supervisors/Admins) |
-| `timesheets:admin_all` | View all timesheets and override status |
+| `timesheets:view_all` | View all employees' timesheets (Admin "All Timesheets" tab) |
+| `timesheets:process` | Mark approved timesheets as processed for payroll |
+
+#### Roles and Users Resources
+| Permission | Description |
+|------------|-------------|
+| `roles:manage` | Full control over role definitions and permission assignments |
+| `users:manage` | Manage user accounts and role assignments |
+
+> **Note**: Migration `036_fix_missing_role_permissions.sql` added `roles:manage` and `users:manage` to `super_admin` and `admin` roles. These permissions were created but never assigned in the original migration.
 
 ### Extended Permissions
 
