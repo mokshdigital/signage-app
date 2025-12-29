@@ -18,7 +18,7 @@ import { TagSelector } from './TagSelector';
 // Helper to get initials
 const getInitials = (name?: string) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
 
-export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { workOrderId: string, availableTechnicians?: TechnicianUser[] }) {
+export function WorkOrderTasks({ workOrderId, availableTechnicians = [], canManage = true }: { workOrderId: string, availableTechnicians?: TechnicianUser[], canManage?: boolean }) {
     const [tasks, setTasks] = useState<WorkOrderTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -52,10 +52,12 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { wor
         <Card
             title="Tasks & Execution"
             headerActions={
-                <Button size="sm" onClick={() => setIsCreateOpen(true)}>
-                    <Plus className="w-4 h-4 mr-1" />
-                    Add Task
-                </Button>
+                canManage ? (
+                    <Button size="sm" onClick={() => setIsCreateOpen(true)}>
+                        <Plus className="w-4 h-4 mr-1" />
+                        Add Task
+                    </Button>
+                ) : null
             }
         >
             <div className="space-y-4">
@@ -65,9 +67,11 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { wor
                     <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                         <CheckSquare className="mx-auto h-8 w-8 text-gray-300 mb-2" />
                         <p className="text-gray-500 text-sm">No tasks added yet.</p>
-                        <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(true)} className="text-blue-600 hover:text-blue-700">
-                            Create your first task
-                        </Button>
+                        {canManage && (
+                            <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(true)} className="text-blue-600 hover:text-blue-700">
+                                Create your first task
+                            </Button>
+                        )}
                     </div>
                 ) : (
                     tasks.map(task => (
@@ -77,6 +81,7 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { wor
                             onUpdate={fetchTasks}
                             availableTechnicians={availableTechnicians}
                             onOpenComments={() => setCommentsTask(task)}
+                            canManage={canManage}
                         />
                     ))
                 )}
@@ -102,7 +107,7 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [] }: { wor
     );
 }
 
-function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { task: WorkOrderTask, onUpdate: () => void, availableTechnicians: TechnicianUser[], onOpenComments: () => void }) {
+function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments, canManage = true }: { task: WorkOrderTask, onUpdate: () => void, availableTechnicians: TechnicianUser[], onOpenComments: () => void, canManage?: boolean }) {
     const [expanded, setExpanded] = useState(false);
     const [checklists, setChecklists] = useState<TaskChecklist[]>([]);
     const [loadingChecklists, setLoadingChecklists] = useState(false);
@@ -380,16 +385,20 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments }: { ta
                             ))}
                         </div>
                         <div className="flex gap-2">
-                            <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600" onClick={() => setIsEditingTask(true)}>
-                                <span className="text-xs">Edit Task</span>
-                            </Button>
-                            <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => {
-                                if (confirm('Delete task?')) {
-                                    workOrdersService.deleteTask(task.id).then(onUpdate);
-                                }
-                            }}>
-                                <span className="text-xs">Delete Task</span>
-                            </Button>
+                            {canManage && (
+                                <>
+                                    <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600" onClick={() => setIsEditingTask(true)}>
+                                        <span className="text-xs">Edit Task</span>
+                                    </Button>
+                                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => {
+                                        if (confirm('Delete task?')) {
+                                            workOrdersService.deleteTask(task.id).then(onUpdate);
+                                        }
+                                    }}>
+                                        <span className="text-xs">Delete Task</span>
+                                    </Button>
+                                </>
+                            )}
                         </div>
                     </div>
 

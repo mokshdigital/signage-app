@@ -108,7 +108,7 @@ CREATE TABLE roles (
 ### Permission Format
 All permissions follow the format: `{resource}:{action}`
 
-### Core Permissions (42 total)
+### Core Permissions (54 total)
 
 #### Users Resource
 | Permission | Description |
@@ -173,6 +173,22 @@ All permissions follow the format: `{resource}:{action}`
 | `clients:update` | Update client info and manage contacts |
 | `clients:delete` | Delete clients and contacts |
 | `clients:manage` | Full control (includes portal account creation) |
+
+#### Jobs Tabs Resource (12 permissions)
+| Permission | Tab | Description |
+|------------|-----|-------------|
+| `jobs:requirements:view` | Requirements | View requirements tab |
+| `jobs:requirements:edit` | Requirements | Edit skills, permits, equipment, materials |
+| `jobs:tasks:view` | Tasks | View tasks tab |
+| `jobs:tasks:manage` | Tasks | Create/edit/delete tasks, comments, checklists |
+| `jobs:technicians:view` | Technicians | View assigned technicians |
+| `jobs:technicians:assign` | Technicians | Assign/unassign technicians to job |
+| `jobs:team:view` | Team | View team roster and chat |
+| `jobs:team:manage` | Team | Add/remove team members, send messages |
+| `jobs:files:view` | Files | View project files |
+| `jobs:files:manage` | Files | Upload, move, delete files |
+| `jobs:shipments:view` | Shipments | View shipments and tracking |
+| `jobs:shipments:manage` | Shipments | Add/edit shipments, shipping comments |
 
 #### Reports Resource
 | Permission | Description |

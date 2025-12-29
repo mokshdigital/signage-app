@@ -35,7 +35,7 @@ import {
     ClientHubTab
 } from '@/components/work-orders';
 import { toast } from '@/components/providers';
-import { useConfirmDialog } from '@/hooks';
+import { useConfirmDialog, usePermissions } from '@/hooks';
 import { Button, ConfirmDialog } from '@/components/ui';
 import { safeRender } from '@/lib/utils/helpers';
 import { createClient } from '@/lib/supabase/client';
@@ -48,6 +48,17 @@ export default function WorkOrderDetailV2Page() {
 
     // Get active tab from URL, default to 'tasks'
     const activeTab = searchParams.get('tab') || 'tasks';
+
+    // Permissions for tab visibility and actions
+    const { hasPermission } = usePermissions();
+    const permissions = {
+        requirements: { view: hasPermission('jobs:requirements:view'), edit: hasPermission('jobs:requirements:edit') },
+        tasks: { view: hasPermission('jobs:tasks:view'), manage: hasPermission('jobs:tasks:manage') },
+        technicians: { view: hasPermission('jobs:technicians:view'), assign: hasPermission('jobs:technicians:assign') },
+        team: { view: hasPermission('jobs:team:view'), manage: hasPermission('jobs:team:manage') },
+        files: { view: hasPermission('jobs:files:view'), manage: hasPermission('jobs:files:manage') },
+        shipments: { view: hasPermission('jobs:shipments:view'), manage: hasPermission('jobs:shipments:manage') },
+    };
 
     // Main work order state
     const [workOrder, setWorkOrder] = useState<WorkOrder | null>(null);
@@ -90,22 +101,24 @@ export default function WorkOrderDetailV2Page() {
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
     const [teamFiles, setTeamFiles] = useState<{ id: string; filename: string; category: string; url: string; mime_type: string }[]>([]);
 
-    // Tab configuration with badge counts
+    // Tab configuration with badge counts - filtered by permissions
     const tabs = useMemo(() => {
         if (!workOrder) return [];
 
-        return [
-            { id: 'requirements', label: 'Requirements' },
-            { id: 'tasks', label: 'Tasks', badge: workOrder.tasks?.length || 0 },
-            { id: 'technicians', label: 'Technicians', badge: workOrder.assignments?.length || 0 },
-            { id: 'team', label: 'Team' },
-            { id: 'client-hub', label: 'Client Hub', className: 'text-purple-600' },
-            { id: 'files', label: 'Files', badge: workOrder.files?.length || 0 },
-            { id: 'shipments', label: 'Shipments', badge: workOrder.shipments?.length || 0 },
-            { id: 'schedule', label: 'Schedule', disabled: true },
-            { id: 'post-completion', label: 'Post-completion', disabled: true }
+        const allTabs = [
+            { id: 'requirements', label: 'Requirements', visible: permissions.requirements.view },
+            { id: 'tasks', label: 'Tasks', badge: workOrder.tasks?.length || 0, visible: permissions.tasks.view },
+            { id: 'technicians', label: 'Technicians', badge: workOrder.assignments?.length || 0, visible: permissions.technicians.view },
+            { id: 'team', label: 'Team', visible: permissions.team.view },
+            { id: 'client-hub', label: 'Client Hub', className: 'text-purple-600', visible: true }, // Uses client_hub:* permissions
+            { id: 'files', label: 'Files', badge: workOrder.files?.length || 0, visible: permissions.files.view },
+            { id: 'shipments', label: 'Shipments', badge: workOrder.shipments?.length || 0, visible: permissions.shipments.view },
+            { id: 'schedule', label: 'Schedule', disabled: true, visible: true },
+            { id: 'post-completion', label: 'Post-completion', disabled: true, visible: true }
         ];
-    }, [workOrder]);
+
+        return allTabs.filter(tab => tab.visible);
+    }, [workOrder, permissions]);
 
     // Fetch work order data
     useEffect(() => {
@@ -277,7 +290,7 @@ export default function WorkOrderDetailV2Page() {
                     <Card
                         title="Work Constraints & Requirements"
                         headerActions={
-                            !isEditingRequirements ? (
+                            !isEditingRequirements && permissions.requirements.edit ? (
                                 <Button size="sm" variant="ghost" onClick={() => setIsEditingRequirements(true)}>
                                     Edit
                                 </Button>
@@ -420,6 +433,7 @@ export default function WorkOrderDetailV2Page() {
                     <WorkOrderTasks
                         workOrderId={workOrderId}
                         availableTechnicians={technicians}
+                        canManage={permissions.tasks.manage}
                     />
                 );
 
@@ -428,7 +442,7 @@ export default function WorkOrderDetailV2Page() {
                     <Card
                         title="Assigned Technicians"
                         headerActions={
-                            !isEditingAssignments && selectedTechIds.length > 0 ? (
+                            !isEditingAssignments && selectedTechIds.length > 0 && permissions.technicians.assign ? (
                                 <Button size="sm" variant="ghost" onClick={() => setIsEditingAssignments(true)}>
                                     Edit
                                 </Button>
@@ -438,34 +452,40 @@ export default function WorkOrderDetailV2Page() {
                         <div className="space-y-3">
                             {technicians.length === 0 ? (
                                 <p className="text-sm text-gray-500">No technicians available</p>
-                            ) : !isEditingAssignments && selectedTechIds.length > 0 ? (
-                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                                    {technicians
-                                        .filter(t => selectedTechIds.includes(t.id))
-                                        .map(tech => {
-                                            const skills = tech.technician?.[0]?.skills || [];
-                                            return (
-                                                <div key={tech.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
-                                                    {tech.avatar_url ? (
-                                                        <img src={tech.avatar_url} alt={tech.display_name} className="w-10 h-10 rounded-full object-cover" />
-                                                    ) : (
-                                                        <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
-                                                            {tech.display_name.charAt(0).toUpperCase()}
-                                                        </div>
-                                                    )}
-                                                    <div className="flex-1 min-w-0">
-                                                        <p className="font-medium text-sm">{safeRender(tech.display_name)}</p>
-                                                        {skills.length > 0 && (
-                                                            <p className="text-xs text-gray-500 truncate">
-                                                                {skills.slice(0, 2).join(', ')}
-                                                            </p>
+                            ) : (!isEditingAssignments && selectedTechIds.length > 0) || !permissions.technicians.assign ? (
+                                // View mode - show assigned technicians (or all assigned if no permission)
+                                selectedTechIds.length > 0 ? (
+                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                                        {technicians
+                                            .filter(t => selectedTechIds.includes(t.id))
+                                            .map(tech => {
+                                                const skills = tech.technician?.[0]?.skills || [];
+                                                return (
+                                                    <div key={tech.id} className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                                                        {tech.avatar_url ? (
+                                                            <img src={tech.avatar_url} alt={tech.display_name} className="w-10 h-10 rounded-full object-cover" />
+                                                        ) : (
+                                                            <div className="w-10 h-10 rounded-full bg-blue-100 flex items-center justify-center text-blue-600 font-medium">
+                                                                {tech.display_name.charAt(0).toUpperCase()}
+                                                            </div>
                                                         )}
+                                                        <div className="flex-1 min-w-0">
+                                                            <p className="font-medium text-sm">{safeRender(tech.display_name)}</p>
+                                                            {skills.length > 0 && (
+                                                                <p className="text-xs text-gray-500 truncate">
+                                                                    {skills.slice(0, 2).join(', ')}
+                                                                </p>
+                                                            )}
+                                                        </div>
                                                     </div>
-                                                </div>
-                                            );
-                                        })}
-                                </div>
+                                                );
+                                            })}
+                                    </div>
+                                ) : (
+                                    <p className="text-sm text-gray-500 italic">No technicians assigned</p>
+                                )
                             ) : (
+                                // Edit mode - only accessible with assign permission
                                 <>
                                     <Input
                                         placeholder="Search technicians..."
@@ -548,17 +568,18 @@ export default function WorkOrderDetailV2Page() {
                 );
 
             case 'files':
-                return <WorkOrderFilesCard workOrderId={workOrderId} />;
+                return <WorkOrderFilesCard workOrderId={workOrderId} canManage={permissions.files.manage} />;
 
             case 'shipments':
                 return (
                     <Card title="Shipments & Tracking">
-                        <ShippingComments workOrderId={workOrderId} />
+                        <ShippingComments workOrderId={workOrderId} canManage={permissions.shipments.manage} />
                         <div className="border-t border-gray-200 my-4" />
                         <ShipmentManager
                             workOrderId={workOrderId}
                             shipments={workOrder.shipments || []}
                             onShipmentsChange={fetchWorkOrder}
+                            canManage={permissions.shipments.manage}
                         />
                     </Card>
                 );
@@ -575,6 +596,7 @@ export default function WorkOrderDetailV2Page() {
                         workOrderId={workOrderId}
                         currentUserId={currentUserId}
                         workOrderFiles={teamFiles}
+                        canManage={permissions.team.manage}
                     />
                 ) : (
                     <div className="flex items-center justify-center py-8">

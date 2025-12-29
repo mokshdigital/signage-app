@@ -11,9 +11,10 @@ import { Pencil, Trash2, X, Check } from 'lucide-react';
 
 interface ShippingCommentsProps {
     workOrderId: string;
+    canManage?: boolean;
 }
 
-export function ShippingComments({ workOrderId }: ShippingCommentsProps) {
+export function ShippingComments({ workOrderId, canManage = true }: ShippingCommentsProps) {
     const [comments, setComments] = useState<ShippingComment[]>([]);
     const [loading, setLoading] = useState(true);
     const [newComment, setNewComment] = useState('');
@@ -124,25 +125,27 @@ export function ShippingComments({ workOrderId }: ShippingCommentsProps) {
             <h4 className="font-semibold text-gray-900">Shipping Comments</h4>
 
             {/* Add Comment Input */}
-            <div className="space-y-2">
-                <Textarea
-                    value={newComment}
-                    onChange={(e) => setNewComment(e.target.value)}
-                    placeholder="Add a shipping comment..."
-                    rows={2}
-                    className="w-full"
-                />
-                <div className="flex justify-end">
-                    <Button
-                        size="sm"
-                        onClick={handleAddComment}
-                        loading={submitting}
-                        disabled={!newComment.trim()}
-                    >
-                        Add Comment
-                    </Button>
+            {canManage && (
+                <div className="space-y-2">
+                    <Textarea
+                        value={newComment}
+                        onChange={(e) => setNewComment(e.target.value)}
+                        placeholder="Add a shipping comment..."
+                        rows={2}
+                        className="w-full"
+                    />
+                    <div className="flex justify-end">
+                        <Button
+                            size="sm"
+                            onClick={handleAddComment}
+                            loading={submitting}
+                            disabled={!newComment.trim()}
+                        >
+                            Add Comment
+                        </Button>
+                    </div>
                 </div>
-            </div>
+            )}
 
             {/* Comments List */}
             {comments.length === 0 ? (
@@ -176,8 +179,8 @@ export function ShippingComments({ workOrderId }: ShippingCommentsProps) {
                                     </div>
                                 </div>
 
-                                {/* Actions - show only for own comments */}
-                                {currentUserId === comment.user_id && editingId !== comment.id && (
+                                {/* Actions - show only for own comments and if can manage */}
+                                {canManage && currentUserId === comment.user_id && editingId !== comment.id && (
                                     <div className="flex gap-1">
                                         <button
                                             onClick={() => handleEdit(comment)}

@@ -20,6 +20,7 @@ interface WorkOrderTeamTabProps {
     currentUserId: string;
     workOrderFiles: WorkOrderFile[];
     onNavigateToTab?: (tabName: string) => void;
+    canManage?: boolean;
 }
 
 export function WorkOrderTeamTab({
@@ -27,6 +28,7 @@ export function WorkOrderTeamTab({
     currentUserId,
     workOrderFiles,
     onNavigateToTab,
+    canManage = true,
 }: WorkOrderTeamTabProps) {
     const [isTeamMember, setIsTeamMember] = useState<boolean | null>(null);
     const [loading, setLoading] = useState(true);

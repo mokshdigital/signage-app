@@ -11,9 +11,10 @@ interface ShipmentManagerProps {
     workOrderId: string;
     shipments: WorkOrderShipment[];
     onShipmentsChange: () => void;
+    canManage?: boolean;
 }
 
-export default function ShipmentManager({ workOrderId, shipments, onShipmentsChange }: ShipmentManagerProps) {
+export default function ShipmentManager({ workOrderId, shipments, onShipmentsChange, canManage = true }: ShipmentManagerProps) {
     // Modal states
     const [isAddOpen, setIsAddOpen] = useState(false);
     const [isEditOpen, setIsEditOpen] = useState(false);
@@ -207,17 +208,21 @@ export default function ShipmentManager({ workOrderId, shipments, onShipmentsCha
                 <h3 className="text-lg font-semibold text-gray-900">
                     Shipments ({shipments.length})
                 </h3>
-                <Button size="sm" onClick={handleOpenAdd}>
-                    + Add Shipment
-                </Button>
+                {canManage && (
+                    <Button size="sm" onClick={handleOpenAdd}>
+                        + Add Shipment
+                    </Button>
+                )}
             </div>
 
             {shipments.length === 0 ? (
                 <Card className="text-center py-8">
                     <p className="text-gray-500">No shipments tracked for this work order</p>
-                    <Button size="sm" variant="ghost" onClick={handleOpenAdd} className="mt-2">
-                        Add first shipment
-                    </Button>
+                    {canManage && (
+                        <Button size="sm" variant="ghost" onClick={handleOpenAdd} className="mt-2">
+                            Add first shipment
+                        </Button>
+                    )}
                 </Card>
             ) : (
                 <div className="space-y-3">
@@ -267,22 +272,26 @@ export default function ShipmentManager({ workOrderId, shipments, onShipmentsCha
                                     )}
                                 </div>
                                 <div className="flex gap-2 flex-shrink-0">
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        onClick={() => handleOpenEdit(shipment)}
-                                    >
-                                        Edit
-                                    </Button>
-                                    <Button
-                                        size="sm"
-                                        variant="ghost"
-                                        className="text-red-600 hover:text-red-700 hover:bg-red-50"
-                                        onClick={() => handleDeleteShipment(shipment.id)}
-                                        loading={deleting === shipment.id}
-                                    >
-                                        Delete
-                                    </Button>
+                                    {canManage && (
+                                        <>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => handleOpenEdit(shipment)}
+                                            >
+                                                Edit
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                className="text-red-600 hover:text-red-700 hover:bg-red-50"
+                                                onClick={() => handleDeleteShipment(shipment.id)}
+                                                loading={deleting === shipment.id}
+                                            >
+                                                Delete
+                                            </Button>
+                                        </>
+                                    )}
                                 </div>
                             </div>
                         </Card>

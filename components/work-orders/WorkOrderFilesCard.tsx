@@ -23,9 +23,10 @@ import { formatFileSize } from '@/lib/utils/formatters';
 
 interface WorkOrderFilesCardProps {
     workOrderId: string;
+    canManage?: boolean;
 }
 
-export function WorkOrderFilesCard({ workOrderId }: WorkOrderFilesCardProps) {
+export function WorkOrderFilesCard({ workOrderId, canManage: canManageProp = true }: WorkOrderFilesCardProps) {
     const [categories, setCategories] = useState<FileCategory[]>([]);
     const [loading, setLoading] = useState(true);
     const [expanded, setExpanded] = useState<Record<string, boolean>>({});
@@ -167,7 +168,7 @@ export function WorkOrderFilesCard({ workOrderId }: WorkOrderFilesCardProps) {
         const subcategories = categories.filter(c => c.parent_id === cat.id);
         const hasSubcategories = subcategories.length > 0;
         const isExpanded = expanded[cat.id];
-        const canManage = canManageCategory(cat);
+        const canManage = canManageProp && canManageCategory(cat);
 
         return (
             <div key={cat.id} className={`border-b border-gray-100 last:border-0`}>
