@@ -18,7 +18,32 @@ import { TagSelector } from './TagSelector';
 // Helper to get initials
 const getInitials = (name?: string) => name ? name.split(' ').map(n => n[0]).join('').toUpperCase().substring(0, 2) : '??';
 
-export function WorkOrderTasks({ workOrderId, availableTechnicians = [], canManage = true }: { workOrderId: string, availableTechnicians?: TechnicianUser[], canManage?: boolean }) {
+// Task permissions type
+export interface TaskPermissions {
+    view: boolean;
+    create: boolean;
+    edit: boolean;
+    delete: boolean;
+    assign: boolean;
+    status: boolean;
+    block: boolean;
+    comment: boolean;
+    commentEditOwn: boolean;
+    commentDeleteOwn: boolean;
+    checklistAdd: boolean;
+    checklistToggle: boolean;
+    checklistEdit: boolean;
+    checklistDelete: boolean;
+}
+
+// Default permissions (all true for backwards compatibility)
+const defaultTaskPermissions: TaskPermissions = {
+    view: true, create: true, edit: true, delete: true, assign: true, status: true, block: true,
+    comment: true, commentEditOwn: true, commentDeleteOwn: true,
+    checklistAdd: true, checklistToggle: true, checklistEdit: true, checklistDelete: true
+};
+
+export function WorkOrderTasks({ workOrderId, availableTechnicians = [], taskPermissions = defaultTaskPermissions }: { workOrderId: string, availableTechnicians?: TechnicianUser[], taskPermissions?: TaskPermissions }) {
     const [tasks, setTasks] = useState<WorkOrderTask[]>([]);
     const [loading, setLoading] = useState(true);
     const [isCreateOpen, setIsCreateOpen] = useState(false);
@@ -52,7 +77,7 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [], canMana
         <Card
             title="Tasks & Execution"
             headerActions={
-                canManage ? (
+                taskPermissions.create ? (
                     <Button size="sm" onClick={() => setIsCreateOpen(true)}>
                         <Plus className="w-4 h-4 mr-1" />
                         Add Task
@@ -67,7 +92,7 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [], canMana
                     <div className="text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-200">
                         <CheckSquare className="mx-auto h-8 w-8 text-gray-300 mb-2" />
                         <p className="text-gray-500 text-sm">No tasks added yet.</p>
-                        {canManage && (
+                        {taskPermissions.create && (
                             <Button variant="ghost" size="sm" onClick={() => setIsCreateOpen(true)} className="text-blue-600 hover:text-blue-700">
                                 Create your first task
                             </Button>
@@ -81,7 +106,7 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [], canMana
                             onUpdate={fetchTasks}
                             availableTechnicians={availableTechnicians}
                             onOpenComments={() => setCommentsTask(task)}
-                            canManage={canManage}
+                            taskPermissions={taskPermissions}
                         />
                     ))
                 )}
@@ -94,6 +119,9 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [], canMana
                     onClose={() => setCommentsTask(null)}
                     task={commentsTask}
                     workOrderId={workOrderId}
+                    canComment={taskPermissions.comment}
+                    canEditOwn={taskPermissions.commentEditOwn}
+                    canDeleteOwn={taskPermissions.commentDeleteOwn}
                 />
             )}
 
@@ -107,7 +135,7 @@ export function WorkOrderTasks({ workOrderId, availableTechnicians = [], canMana
     );
 }
 
-function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments, canManage = true }: { task: WorkOrderTask, onUpdate: () => void, availableTechnicians: TechnicianUser[], onOpenComments: () => void, canManage?: boolean }) {
+function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments, taskPermissions = defaultTaskPermissions }: { task: WorkOrderTask, onUpdate: () => void, availableTechnicians: TechnicianUser[], onOpenComments: () => void, taskPermissions?: TaskPermissions }) {
     const [expanded, setExpanded] = useState(false);
     const [checklists, setChecklists] = useState<TaskChecklist[]>([]);
     const [loadingChecklists, setLoadingChecklists] = useState(false);
@@ -368,55 +396,80 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments, canMan
             {/* Expanded Content */}
             {expanded && (
                 <div className="border-t border-gray-100 bg-gray-50/50 p-4 space-y-4">
-                    {/* Controls */}
+                    {/* Status Controls */}
                     <div className="flex justify-between items-center text-sm">
                         <div className="flex gap-2">
-                            {['Pending', 'In Progress', 'Done', 'Blocked'].map(s => (
+                            {/* Status buttons - regular statuses for users with status permission */}
+                            {taskPermissions.status && (
+                                <>
+                                    {['Pending', 'In Progress', 'Done'].map(s => (
+                                        <button
+                                            key={s}
+                                            onClick={() => handleStatusChange(s)}
+                                            className={`px-3 py-1 rounded border transition-colors ${task.status === s
+                                                ? 'bg-white border-blue-500 text-blue-600 shadow-sm font-medium'
+                                                : 'border-gray-200 text-gray-600 hover:bg-gray-100'
+                                                }`}
+                                        >
+                                            {s}
+                                        </button>
+                                    ))}
+                                </>
+                            )}
+                            {/* Blocked button - only for users with block permission */}
+                            {taskPermissions.block && (
                                 <button
-                                    key={s}
-                                    onClick={() => handleStatusChange(s)}
-                                    className={`px-3 py-1 rounded border transition-colors ${task.status === s
-                                        ? 'bg-white border-blue-500 text-blue-600 shadow-sm font-medium'
+                                    onClick={() => handleStatusChange('Blocked')}
+                                    className={`px-3 py-1 rounded border transition-colors ${task.status === 'Blocked'
+                                        ? 'bg-white border-red-500 text-red-600 shadow-sm font-medium'
                                         : 'border-gray-200 text-gray-600 hover:bg-gray-100'
                                         }`}
                                 >
-                                    {s}
+                                    Blocked
                                 </button>
-                            ))}
+                            )}
+                            {/* Show current status read-only if no permissions */}
+                            {!taskPermissions.status && !taskPermissions.block && (
+                                <span className="px-3 py-1 text-gray-500 italic">Status: {task.status}</span>
+                            )}
                         </div>
                         <div className="flex gap-2">
-                            {canManage && (
-                                <>
-                                    <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600" onClick={() => setIsEditingTask(true)}>
-                                        <span className="text-xs">Edit Task</span>
-                                    </Button>
-                                    <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => {
-                                        if (confirm('Delete task?')) {
-                                            workOrdersService.deleteTask(task.id).then(onUpdate);
-                                        }
-                                    }}>
-                                        <span className="text-xs">Delete Task</span>
-                                    </Button>
-                                </>
+                            {taskPermissions.edit && (
+                                <Button variant="ghost" size="sm" className="text-blue-500 hover:text-blue-600" onClick={() => setIsEditingTask(true)}>
+                                    <span className="text-xs">Edit Task</span>
+                                </Button>
+                            )}
+                            {taskPermissions.delete && (
+                                <Button variant="ghost" size="sm" className="text-red-500 hover:text-red-600" onClick={() => {
+                                    if (confirm('Delete task?')) {
+                                        workOrdersService.deleteTask(task.id).then(onUpdate);
+                                    }
+                                }}>
+                                    <span className="text-xs">Delete Task</span>
+                                </Button>
                             )}
                         </div>
                     </div>
 
-                    {/* Block reason if Blocked */}
+                    {/* Block reason if Blocked - only editable with block permission */}
                     {task.status === 'Blocked' && (
                         <div className="bg-red-50 border border-red-100 p-3 rounded-md">
                             <label className="text-xs font-medium text-red-800 block mb-1">Reason for Blocking</label>
-                            <Input
-                                value={task.block_reason || ''}
-                                onChange={(e) => {
-                                    // Debounce or Blur save ideally. For now simple onChange specific update might be too much.
-                                }}
-                                onBlur={(e) => {
-                                    workOrdersService.updateTask(task.id, { block_reason: e.target.value });
-                                }}
-                                placeholder="Why is this blocked?"
-                                className="bg-white border-red-200"
-                            />
+                            {taskPermissions.block ? (
+                                <Input
+                                    value={task.block_reason || ''}
+                                    onChange={(e) => {
+                                        // Debounce or Blur save ideally.
+                                    }}
+                                    onBlur={(e) => {
+                                        workOrdersService.updateTask(task.id, { block_reason: e.target.value });
+                                    }}
+                                    placeholder="Why is this blocked?"
+                                    className="bg-white border-red-200"
+                                />
+                            ) : (
+                                <p className="text-sm text-red-700">{task.block_reason || 'No reason provided'}</p>
+                            )}
                         </div>
                     )}
 
@@ -435,37 +488,40 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments, canMan
                                     <ChecklistItemRow
                                         key={item.id}
                                         item={item}
-                                        onToggle={() => toggleChecklist(item)}
-                                        onDelete={() => deleteChecklist(item.id)}
-                                        onUpdate={(newContent) => {
+                                        onToggle={taskPermissions.checklistToggle ? () => toggleChecklist(item) : undefined}
+                                        onDelete={taskPermissions.checklistDelete ? () => deleteChecklist(item.id) : undefined}
+                                        onUpdate={taskPermissions.checklistEdit ? (newContent) => {
                                             workOrdersService.updateChecklistItem(item.id, newContent).then(() => {
                                                 setChecklists(checklists.map(c => c.id === item.id ? { ...c, content: newContent } : c));
                                             });
-                                        }}
+                                        } : undefined}
                                     />
                                 ))}
                             </ul>
                         )}
 
-                        <div className="flex gap-2">
-                            <Input
-                                placeholder="Add checklist item..."
-                                id={`new-item-${task.id}`}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter') {
-                                        addChecklist(e.currentTarget.value);
-                                        e.currentTarget.value = '';
-                                    }
-                                }}
-                                className="text-sm"
-                            />
-                            {/* Templates Dropdown could go here */}
-                            <TemplateSelector onSelect={async (templateId) => {
-                                await workOrdersService.applyTemplateToTask(task.id, templateId);
-                                fetchChecklists();
-                                onUpdate();
-                            }} />
-                        </div>
+                        {/* Add checklist item - only with checklistAdd permission */}
+                        {taskPermissions.checklistAdd && (
+                            <div className="flex gap-2">
+                                <Input
+                                    placeholder="Add checklist item..."
+                                    id={`new-item-${task.id}`}
+                                    onKeyDown={(e) => {
+                                        if (e.key === 'Enter') {
+                                            addChecklist(e.currentTarget.value);
+                                            e.currentTarget.value = '';
+                                        }
+                                    }}
+                                    className="text-sm"
+                                />
+                                {/* Templates Dropdown could go here */}
+                                <TemplateSelector onSelect={async (templateId) => {
+                                    await workOrdersService.applyTemplateToTask(task.id, templateId);
+                                    fetchChecklists();
+                                    onUpdate();
+                                }} />
+                            </div>
+                        )}
                     </div>
 
                     {/* Assignees */}
@@ -477,44 +533,48 @@ function TaskItem({ task, onUpdate, availableTechnicians, onOpenComments, canMan
                                 .map(tech => (
                                     <Badge key={tech.id} variant="default" className="text-xs">
                                         {tech.display_name}
-                                        <button className="ml-1 hover:text-red-500" onClick={() => {
-                                            const newIds = task.assignments!.filter(a => a.user_profile_id !== tech.id).map(a => a.user_profile_id);
-                                            workOrdersService.assignTask(task.id, newIds).then(onUpdate);
-                                        }}>×</button>
+                                        {taskPermissions.assign && (
+                                            <button className="ml-1 hover:text-red-500" onClick={() => {
+                                                const newIds = task.assignments!.filter(a => a.user_profile_id !== tech.id).map(a => a.user_profile_id);
+                                                workOrdersService.assignTask(task.id, newIds).then(onUpdate);
+                                            }}>×</button>
+                                        )}
                                     </Badge>
                                 ))
                             }
-                            <div className="relative group">
-                                <Button variant="secondary" size="sm" className="h-6 px-2 text-xs">
-                                    + Assign
-                                </Button>
-                                {/* Simple Dropdown for assignment */}
-                                <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-gray-200 shadow-lg rounded-md hidden group-hover:block z-10 p-1">
-                                    {availableTechnicians.length === 0 ? <div className="p-2 text-xs text-gray-500">No techs available</div> :
-                                        availableTechnicians.map(t => {
-                                            const currentIds = task.assignments?.map(a => a.user_profile_id) || [];
-                                            const isAssigned = currentIds.includes(t.id);
-                                            return (
-                                                <button
-                                                    key={t.id}
-                                                    className={`w-full text-left px-2 py-1.5 text-xs rounded truncate flex items-center justify-between ${isAssigned
-                                                        ? 'bg-green-50 text-green-700 font-medium'
-                                                        : 'hover:bg-gray-100'
-                                                        }`}
-                                                    onClick={() => {
-                                                        if (!isAssigned) {
-                                                            workOrdersService.assignTask(task.id, [...currentIds, t.id]).then(onUpdate);
-                                                        }
-                                                    }}
-                                                >
-                                                    <span>{t.display_name}</span>
-                                                    {isAssigned && <span className="text-green-600">✓</span>}
-                                                </button>
-                                            );
-                                        })
-                                    }
+                            {taskPermissions.assign && (
+                                <div className="relative group">
+                                    <Button variant="secondary" size="sm" className="h-6 px-2 text-xs">
+                                        + Assign
+                                    </Button>
+                                    {/* Simple Dropdown for assignment */}
+                                    <div className="absolute bottom-full left-0 mb-1 w-48 bg-white border border-gray-200 shadow-lg rounded-md hidden group-hover:block z-10 p-1">
+                                        {availableTechnicians.length === 0 ? <div className="p-2 text-xs text-gray-500">No techs available</div> :
+                                            availableTechnicians.map(t => {
+                                                const currentIds = task.assignments?.map(a => a.user_profile_id) || [];
+                                                const isAssigned = currentIds.includes(t.id);
+                                                return (
+                                                    <button
+                                                        key={t.id}
+                                                        className={`w-full text-left px-2 py-1.5 text-xs rounded truncate flex items-center justify-between ${isAssigned
+                                                            ? 'bg-green-50 text-green-700 font-medium'
+                                                            : 'hover:bg-gray-100'
+                                                            }`}
+                                                        onClick={() => {
+                                                            if (!isAssigned) {
+                                                                workOrdersService.assignTask(task.id, [...currentIds, t.id]).then(onUpdate);
+                                                            }
+                                                        }}
+                                                    >
+                                                        <span>{t.display_name}</span>
+                                                        {isAssigned && <span className="text-green-600">✓</span>}
+                                                    </button>
+                                                );
+                                            })
+                                        }
+                                    </div>
                                 </div>
-                            </div>
+                            )}
                         </div>
                     </div>
 
@@ -710,15 +770,15 @@ function ChecklistItemRow({
     onUpdate
 }: {
     item: TaskChecklist,
-    onToggle: () => void,
-    onDelete: () => void,
-    onUpdate: (newContent: string) => void
+    onToggle?: () => void,
+    onDelete?: () => void,
+    onUpdate?: (newContent: string) => void
 }) {
     const [isEditing, setIsEditing] = useState(false);
     const [editValue, setEditValue] = useState(item.content);
 
     const handleSave = () => {
-        if (editValue.trim() && editValue !== item.content) {
+        if (editValue.trim() && editValue !== item.content && onUpdate) {
             onUpdate(editValue.trim());
         }
         setIsEditing(false);
@@ -730,7 +790,8 @@ function ChecklistItemRow({
                 type="checkbox"
                 checked={item.is_completed}
                 onChange={onToggle}
-                className="mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+                disabled={!onToggle}
+                className={`mt-1 w-4 h-4 text-blue-600 rounded border-gray-300 focus:ring-blue-500 ${!onToggle ? 'opacity-50 cursor-not-allowed' : ''}`}
             />
             <div className="flex-1 min-w-0">
                 {isEditing ? (
@@ -765,20 +826,24 @@ function ChecklistItemRow({
             </div>
             {!isEditing && (
                 <div className="flex items-center gap-1">
-                    <button
-                        onClick={() => setIsEditing(true)}
-                        className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
-                        title="Edit"
-                    >
-                        <Pencil className="w-3.5 h-3.5" />
-                    </button>
-                    <button
-                        onClick={onDelete}
-                        className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
-                        title="Delete"
-                    >
-                        <Trash2 className="w-3.5 h-3.5" />
-                    </button>
+                    {onUpdate && (
+                        <button
+                            onClick={() => setIsEditing(true)}
+                            className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors"
+                            title="Edit"
+                        >
+                            <Pencil className="w-3.5 h-3.5" />
+                        </button>
+                    )}
+                    {onDelete && (
+                        <button
+                            onClick={onDelete}
+                            className="p-1 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                            title="Delete"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                        </button>
+                    )}
                 </div>
             )}
         </li>

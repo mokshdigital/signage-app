@@ -1565,3 +1565,49 @@ New methods:
 - `fix(permissions): add missing roles:manage and users:manage to admin roles`
 - `fix(timesheets): fix timezone bug in date display - show correct local date`
 
+
+
+## Session - Granular Task Permissions
+
+### Date: December 29, 2025
+
+### Summary
+Replaced the broad `jobs:tasks:manage` permission with 13 granular permissions to control create, edit, delete, assign, blocking, status changes, comments, and checklists individually.
+
+### Detailed Changes
+
+#### 1. Database Schema
+- Created migration `039_granular_task_permissions.sql`
+- **Removed**: `jobs:tasks:manage` permission
+- **Added**: 13 new permissions:
+  - `jobs:tasks:create`, `jobs:tasks:edit`, `jobs:tasks:delete`
+  - `jobs:tasks:assign`
+  - `jobs:tasks:status`, `jobs:tasks:block`
+  - `jobs:tasks:comment`, `jobs:tasks:comment:edit_own`, `jobs:tasks:comment:delete_own`
+  - `jobs:tasks:checklist:add`, `jobs:tasks:checklist:toggle`, `jobs:tasks:checklist:edit`, `jobs:tasks:checklist:delete`
+- **Assigned**: Permissions to roles (super_admin, admin, supervisor, project_coordinator, technician)
+
+#### 2. UI Enforcment
+- **WorkOrderTasks v2**: 
+  - Updated props to accept `taskPermissions` object instead of boolean `canManage`
+  - Conditionally rendered "Add Task" button, edit/delete buttons, technician assignment, and status controls
+- **TaskCommentsPanel**:
+  - Added optional props `canComment`, `canEditOwn`, `canDeleteOwn`
+  - Enforced comment permissions on input area and edit/delete actions
+  - Passed granular permissions from parent
+- **ChecklistItemRow**:
+  - Made action handlers (`onToggle`, `onDelete`) optional
+  - Conditionally rendered checkboxes and action buttons
+
+### Files Created
+| File | Purpose |
+|------|---------|
+| `database_migrations/039_granular_task_permissions.sql` | Migration script for permissions |
+
+### Files Modified
+| File | Changes |
+|------|---------|
+| `app/dashboard/work-orders-v2/[id]/page.tsx` | Fetch and pass granular task permissions |
+| `components/work-orders/WorkOrderTasks.tsx` | Implement granular checks for task actions |
+| `components/work-orders/TaskCommentsPanel.tsx` | Implement granular comment permissions |
+| `PERMISSIONS.md` | Documented new permission set |

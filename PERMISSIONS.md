@@ -174,13 +174,25 @@ All permissions follow the format: `{resource}:{action}`
 | `clients:delete` | Delete clients and contacts |
 | `clients:manage` | Full control (includes portal account creation) |
 
-#### Jobs Tabs Resource (12 permissions)
+#### Jobs Tabs Resource (24 permissions)
 | Permission | Tab | Description |
 |------------|-----|-------------|
 | `jobs:requirements:view` | Requirements | View requirements tab |
 | `jobs:requirements:edit` | Requirements | Edit skills, permits, equipment, materials |
 | `jobs:tasks:view` | Tasks | View tasks tab |
-| `jobs:tasks:manage` | Tasks | Create/edit/delete tasks, comments, checklists |
+| `jobs:tasks:create` | Tasks | Create new tasks |
+| `jobs:tasks:edit` | Tasks | Edit task details |
+| `jobs:tasks:delete` | Tasks | Delete tasks |
+| `jobs:tasks:assign` | Tasks | Assign technicians |
+| `jobs:tasks:status` | Tasks | Change status (Pending/In Progress/Done) |
+| `jobs:tasks:block` | Tasks | Mark as Blocked + reason |
+| `jobs:tasks:comment` | Tasks | Add comments |
+| `jobs:tasks:comment:edit_own` | Tasks | Edit own comments |
+| `jobs:tasks:comment:delete_own` | Tasks | Delete own comments |
+| `jobs:tasks:checklist:add` | Tasks | Add checklist items |
+| `jobs:tasks:checklist:toggle` | Tasks | Toggle checklist items |
+| `jobs:tasks:checklist:edit` | Tasks | Edit checklist content |
+| `jobs:tasks:checklist:delete` | Tasks | Delete checklist items |
 | `jobs:technicians:view` | Technicians | View assigned technicians |
 | `jobs:technicians:assign` | Technicians | Assign/unassign technicians to job |
 | `jobs:team:view` | Team | View team roster and chat |

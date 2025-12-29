@@ -53,7 +53,22 @@ export default function WorkOrderDetailV2Page() {
     const { hasPermission } = usePermissions();
     const permissions = {
         requirements: { view: hasPermission('jobs:requirements:view'), edit: hasPermission('jobs:requirements:edit') },
-        tasks: { view: hasPermission('jobs:tasks:view'), manage: hasPermission('jobs:tasks:manage') },
+        tasks: {
+            view: hasPermission('jobs:tasks:view'),
+            create: hasPermission('jobs:tasks:create'),
+            edit: hasPermission('jobs:tasks:edit'),
+            delete: hasPermission('jobs:tasks:delete'),
+            assign: hasPermission('jobs:tasks:assign'),
+            status: hasPermission('jobs:tasks:status'),
+            block: hasPermission('jobs:tasks:block'),
+            comment: hasPermission('jobs:tasks:comment'),
+            commentEditOwn: hasPermission('jobs:tasks:comment:edit_own'),
+            commentDeleteOwn: hasPermission('jobs:tasks:comment:delete_own'),
+            checklistAdd: hasPermission('jobs:tasks:checklist:add'),
+            checklistToggle: hasPermission('jobs:tasks:checklist:toggle'),
+            checklistEdit: hasPermission('jobs:tasks:checklist:edit'),
+            checklistDelete: hasPermission('jobs:tasks:checklist:delete'),
+        },
         technicians: { view: hasPermission('jobs:technicians:view'), assign: hasPermission('jobs:technicians:assign') },
         team: { view: hasPermission('jobs:team:view'), manage: hasPermission('jobs:team:manage') },
         files: { view: hasPermission('jobs:files:view'), manage: hasPermission('jobs:files:manage') },
@@ -433,7 +448,7 @@ export default function WorkOrderDetailV2Page() {
                     <WorkOrderTasks
                         workOrderId={workOrderId}
                         availableTechnicians={technicians}
-                        canManage={permissions.tasks.manage}
+                        taskPermissions={permissions.tasks}
                     />
                 );
 

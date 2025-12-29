@@ -15,9 +15,20 @@ interface TaskCommentsPanelProps {
     onClose: () => void;
     task: WorkOrderTask;
     workOrderId: string;
+    canComment?: boolean;
+    canEditOwn?: boolean;
+    canDeleteOwn?: boolean;
 }
 
-export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCommentsPanelProps) {
+export function TaskCommentsPanel({
+    isOpen,
+    onClose,
+    task,
+    workOrderId,
+    canComment = true,
+    canEditOwn = true,
+    canDeleteOwn = true
+}: TaskCommentsPanelProps) {
     const [comments, setComments] = useState<TaskComment[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentUserId, setCurrentUserId] = useState<string | null>(null);
@@ -435,18 +446,22 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
                                                 {/* Actions */}
                                                 {currentUserId === comment.user_id && (
                                                     <div className="flex gap-2 mt-2">
-                                                        <button
-                                                            onClick={() => handleEdit(comment)}
-                                                            className="text-xs text-gray-500 hover:text-blue-600 flex items-center gap-1"
-                                                        >
-                                                            <Pencil className="w-3 h-3" /> Edit
-                                                        </button>
-                                                        <button
-                                                            onClick={() => handleDelete(comment.id)}
-                                                            className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1"
-                                                        >
-                                                            <Trash2 className="w-3 h-3" /> Delete
-                                                        </button>
+                                                        {canEditOwn && (
+                                                            <button
+                                                                onClick={() => handleEdit(comment)}
+                                                                className="text-xs text-gray-500 hover:text-blue-600 flex items-center gap-1"
+                                                            >
+                                                                <Pencil className="w-3 h-3" /> Edit
+                                                            </button>
+                                                        )}
+                                                        {canDeleteOwn && (
+                                                            <button
+                                                                onClick={() => handleDelete(comment.id)}
+                                                                className="text-xs text-gray-500 hover:text-red-600 flex items-center gap-1"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" /> Delete
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 )}
                                             </>
@@ -459,105 +474,107 @@ export function TaskCommentsPanel({ isOpen, onClose, task, workOrderId }: TaskCo
                 </div>
 
                 {/* Input Area */}
-                <div className="border-t border-gray-200 dark:border-gray-700 p-4">
-                    {/* Attachment previews */}
-                    {newAttachments.length > 0 && (
-                        <div className="flex flex-wrap gap-2 mb-3">
-                            {newAttachments.map((url, idx) => (
-                                <div key={idx} className="relative group">
-                                    {isImageFile(url) ? (
-                                        /* Image thumbnail preview */
-                                        <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
-                                            <img
-                                                src={url}
-                                                alt="attachment"
-                                                className="w-full h-full object-cover"
-                                            />
-                                        </div>
-                                    ) : (
-                                        /* PDF file preview */
-                                        <div className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
-                                            <FileText className="w-6 h-6 text-red-500" />
-                                            <span className="text-[8px] text-gray-500 mt-1">PDF</span>
-                                        </div>
-                                    )}
-                                    <button
-                                        onClick={() => handleRemoveAttachment(idx)}
-                                        className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
-                                    >
-                                        ×
-                                    </button>
-                                </div>
-                            ))}
-                        </div>
-                    )}
-
-                    <div className="flex gap-2">
-                        <div className="relative flex-1">
-                            {/* Mention dropdown - positioned above textarea */}
-                            {showMentionDropdown && filteredMentionUsers.length > 0 && (
-                                <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">
-                                    <div className="p-2 border-b border-gray-100 dark:border-gray-700">
-                                        <span className="text-xs text-gray-500 font-medium">Mention someone</span>
-                                    </div>
-                                    {filteredMentionUsers.map(user => (
+                {canComment && (
+                    <div className="border-t border-gray-200 dark:border-gray-700 p-4">
+                        {/* Attachment previews */}
+                        {newAttachments.length > 0 && (
+                            <div className="flex flex-wrap gap-2 mb-3">
+                                {newAttachments.map((url, idx) => (
+                                    <div key={idx} className="relative group">
+                                        {isImageFile(url) ? (
+                                            /* Image thumbnail preview */
+                                            <div className="w-16 h-16 rounded-lg overflow-hidden border border-gray-200 dark:border-gray-600">
+                                                <img
+                                                    src={url}
+                                                    alt="attachment"
+                                                    className="w-full h-full object-cover"
+                                                />
+                                            </div>
+                                        ) : (
+                                            /* PDF file preview */
+                                            <div className="w-16 h-16 rounded-lg border border-gray-200 dark:border-gray-600 bg-gray-100 dark:bg-gray-800 flex flex-col items-center justify-center">
+                                                <FileText className="w-6 h-6 text-red-500" />
+                                                <span className="text-[8px] text-gray-500 mt-1">PDF</span>
+                                            </div>
+                                        )}
                                         <button
-                                            key={`${user.type}-${user.id}`}
-                                            onClick={() => handleSelectMention(user)}
-                                            className="w-full text-left px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                                            onClick={() => handleRemoveAttachment(idx)}
+                                            className="absolute -top-1.5 -right-1.5 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
                                         >
-                                            <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-medium shadow-sm">
-                                                {user.name.charAt(0).toUpperCase()}
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <span className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</span>
-                                            </div>
-                                            <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
-                                                {user.type === 'technician' ? '🔧 Technician' : '👤 Staff'}
-                                            </span>
+                                            ×
                                         </button>
-                                    ))}
-                                </div>
-                            )}
+                                    </div>
+                                ))}
+                            </div>
+                        )}
 
-                            <Textarea
-                                ref={textareaRef}
-                                value={newContent}
-                                onChange={handleContentChange}
-                                placeholder="Type a comment... Use @ to mention someone"
-                                rows={2}
-                                className="resize-none pr-10"
-                            />
-                            <input
-                                ref={fileInputRef}
-                                type="file"
-                                accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
-                                multiple
-                                onChange={handleFileUpload}
-                                className="hidden"
-                            />
-                            <button
-                                onClick={() => fileInputRef.current?.click()}
-                                disabled={uploadingFiles || newAttachments.length >= 5}
-                                className="absolute right-2 bottom-2 p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
-                                title="Attach files (max 5)"
-                            >
-                                {uploadingFiles ? (
-                                    <LoadingSpinner size="sm" />
-                                ) : (
-                                    <Paperclip className="w-5 h-5" />
+                        <div className="flex gap-2">
+                            <div className="relative flex-1">
+                                {/* Mention dropdown - positioned above textarea */}
+                                {showMentionDropdown && filteredMentionUsers.length > 0 && (
+                                    <div className="absolute bottom-full left-0 right-0 mb-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg max-h-48 overflow-y-auto z-50">
+                                        <div className="p-2 border-b border-gray-100 dark:border-gray-700">
+                                            <span className="text-xs text-gray-500 font-medium">Mention someone</span>
+                                        </div>
+                                        {filteredMentionUsers.map(user => (
+                                            <button
+                                                key={`${user.type}-${user.id}`}
+                                                onClick={() => handleSelectMention(user)}
+                                                className="w-full text-left px-3 py-2.5 hover:bg-blue-50 dark:hover:bg-gray-700 flex items-center gap-3 transition-colors"
+                                            >
+                                                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-blue-600 flex items-center justify-center text-white text-sm font-medium shadow-sm">
+                                                    {user.name.charAt(0).toUpperCase()}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <span className="text-sm font-medium text-gray-900 dark:text-white">{user.name}</span>
+                                                </div>
+                                                <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 dark:bg-gray-600 text-gray-600 dark:text-gray-300">
+                                                    {user.type === 'technician' ? '🔧 Technician' : '👤 Staff'}
+                                                </span>
+                                            </button>
+                                        ))}
+                                    </div>
                                 )}
-                            </button>
+
+                                <Textarea
+                                    ref={textareaRef}
+                                    value={newContent}
+                                    onChange={handleContentChange}
+                                    placeholder="Type a comment... Use @ to mention someone"
+                                    rows={2}
+                                    className="resize-none pr-10"
+                                />
+                                <input
+                                    ref={fileInputRef}
+                                    type="file"
+                                    accept=".pdf,.jpg,.jpeg,.png,.gif,.webp"
+                                    multiple
+                                    onChange={handleFileUpload}
+                                    className="hidden"
+                                />
+                                <button
+                                    onClick={() => fileInputRef.current?.click()}
+                                    disabled={uploadingFiles || newAttachments.length >= 5}
+                                    className="absolute right-2 bottom-2 p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50"
+                                    title="Attach files (max 5)"
+                                >
+                                    {uploadingFiles ? (
+                                        <LoadingSpinner size="sm" />
+                                    ) : (
+                                        <Paperclip className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
+                            <Button
+                                onClick={handleAddComment}
+                                disabled={!newContent.trim() || submitting}
+                                className="self-end"
+                            >
+                                {submitting ? <LoadingSpinner size="sm" /> : <Send className="w-4 h-4" />}
+                            </Button>
                         </div>
-                        <Button
-                            onClick={handleAddComment}
-                            disabled={!newContent.trim() || submitting}
-                            className="self-end"
-                        >
-                            {submitting ? <LoadingSpinner size="sm" /> : <Send className="w-4 h-4" />}
-                        </Button>
                     </div>
-                </div>
+                )}
             </div>
 
             {/* File Viewer */}
