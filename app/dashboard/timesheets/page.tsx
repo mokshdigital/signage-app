@@ -4,7 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { timesheetsService } from '@/services';
 import { usePermissions } from '@/hooks/usePermissions';
-import { LogTimeForm, WeeklyTotalsWidget, PastDayRequestForm, ApprovalsQueue } from '@/components/timesheets';
+import { LogTimeForm, WeeklyTotalsWidget, PastDayRequestForm, ApprovalsQueue, MyTimesheetsTable } from '@/components/timesheets';
 import { LoadingSpinner, Button } from '@/components/ui';
 import { Pencil } from 'lucide-react';
 import type { TimesheetEntry, TimesheetDay, TimesheetDayRequest } from '@/types/database';
@@ -322,8 +322,8 @@ export default function TimesheetsPage() {
 
                 {/* My Timesheets Tab */}
                 {activeTab === 'my-timesheets' && (
-                    <div className="space-y-6">
-                        <WeeklyTotalsWidget userId={userId} />
+                    <div>
+                        <MyTimesheetsTable userId={userId} />
                     </div>
                 )}
 
