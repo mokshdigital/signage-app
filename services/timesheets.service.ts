@@ -517,8 +517,8 @@ export const timesheetsService = {
 
         // Extract work orders and filter active ones
         const workOrders = (data || [])
-            .map(d => d.work_order)
-            .filter((wo): wo is NonNullable<typeof wo> =>
+            .map((d: any) => d.work_order)
+            .filter((wo: any): wo is WorkOrder =>
                 wo !== null && wo.job_status !== 'Completed' && wo.job_status !== 'Cancelled'
             );
 
