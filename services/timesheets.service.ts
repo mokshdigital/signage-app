@@ -233,7 +233,12 @@ export const timesheetsService = {
                 *,
                 user:user_profiles!user_id(id, display_name, avatar_url),
                 approver:user_profiles!approved_by(id, display_name),
-                entries:timesheet_entries(*)
+                entries:timesheet_entries(
+                    *,
+                    activity_type:activity_types(*),
+                    location_chip:location_chips(*),
+                    work_order:work_orders(id, work_order_number)
+                )
             `)
             .order('work_date', { ascending: false });
 
