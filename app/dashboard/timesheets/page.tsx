@@ -192,7 +192,7 @@ export default function TimesheetsPage() {
                                 <div>
                                     <p className="text-sm text-amber-700 font-medium">Logging time for</p>
                                     <p className="text-xl font-bold text-slate-800">
-                                        {new Date(today).toLocaleDateString('en-US', {
+                                        {new Date(today + 'T00:00:00').toLocaleDateString('en-US', {
                                             weekday: 'long',
                                             month: 'long',
                                             day: 'numeric',

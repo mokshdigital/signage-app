@@ -1,7 +1,7 @@
 # Development Phase Log
 
 ## Phase 1: Project Setup & Foundation
-**Date**: December 10, 2024
+**Date**: December 10, 2025
 
 ### Completed Tasks
 - ✅ Created Next.js 15 project with TypeScript
@@ -18,7 +18,7 @@
 ---
 
 ## Phase 2: Database Schema Design
-**Date**: December 10, 2024
+**Date**: December 10, 2025
 
 ### Completed Tasks
 - ✅ Designed database schema for all entities
@@ -40,7 +40,7 @@
 ---
 
 ## Phase 3: Dashboard Layout & Navigation
-**Date**: December 10, 2024
+**Date**: December 10, 2025
 
 ### Completed Tasks
 - ✅ Created dashboard layout with sidebar
@@ -57,7 +57,7 @@
 ---
 
 ## Phase 4: CRUD Pages Implementation
-**Date**: December 10, 2024
+**Date**: December 10, 2025
 
 ### Completed Tasks
 - ✅ **Technicians Page** - Full CRUD (Create, Read, Delete)
@@ -90,7 +90,7 @@
 ---
 
 ## Phase 5: AI Integration & Work Order Processing
-**Date**: December 10, 2024
+**Date**: December 10, 2025
 
 ### Completed Tasks
 - ✅ Installed Google Gemini AI SDK (`@google/generative-ai`)
@@ -119,7 +119,7 @@
 ---
 
 ## Phase 6: Analysis View & UI Enhancements
-**Date**: December 10, 2024
+**Date**: December 10, 2025
 
 ### Completed Tasks
 - ✅ Created analysis view modal
@@ -149,7 +149,7 @@
 ---
 
 ## Phase 7: Bug Fixes & Model Updates
-**Date**: December 10, 2024
+**Date**: December 10, 2025
 
 ### Issues Resolved
 1. ✅ **RLS Policy Errors**
@@ -180,7 +180,7 @@
 ---
 
 ## Phase 8: Role-Based Access Control (RBAC)
-**Date**: December 11, 2024
+**Date**: December 11, 2025
 
 ### Completed Tasks
 - ✅ **Database Schema Design**
@@ -266,7 +266,7 @@
 ---
 
 ## Phase 9: Multi-file Work Orders & Upload Refactor
-**Date**: December 10-12, 2024
+**Date**: December 10-12, 2025
 
 ### Completed Tasks
 - ✅ **Refactored Upload System**
@@ -281,7 +281,7 @@
 ---
 
 ## Phase 10: RBAC Refinement & User Visibility
-**Date**: December 12-16, 2024
+**Date**: December 12-16, 2025
 
 ### Completed Tasks
 - ✅ **Admin UI Implementation**
@@ -309,7 +309,7 @@
 ---
 
 ## Phase 11: Clients & Project Managers Module
-**Date**: December 18, 2024
+**Date**: December 18, 2025
 
 ### Completed Tasks
 - ✅ **Database Schema**
@@ -358,7 +358,7 @@
 ---
 
 ## Phase 12: Advanced Work Order System (Sub-Phase A)
-**Date**: December 18, 2024
+**Date**: December 18, 2025
 **Objective**: Foundation for advanced work order features including logistics, numbering, and detailed tracking.
 
 ### Completed Tasks
@@ -401,7 +401,7 @@
 ---
 
 ## Phase 12-B: Work Order UI Workflows
-**Date**: December 18, 2024
+**Date**: December 18, 2025
 
 ### Completed Tasks
 - ✅ **UI Overhaul**
@@ -418,7 +418,7 @@
 ---
 
 ## Phase 13: Settings & Configuration
-**Date**: December 18, 2024
+**Date**: December 18, 2025
 
 ### Completed Tasks
 - ✅ **Unified Settings Module**
@@ -435,7 +435,7 @@
 
 
 ## Phase 12-C: Task Management & AI Checklists
-**Date**: December 18-19, 2024
+**Date**: December 18-19, 2025
 **Objective**: Implement granular task tracking, technician assignments, and AI-driven checklists for work orders.
 
 ### Completed Tasks
@@ -467,7 +467,7 @@
 ---
 
 ## Phase 14: AI Migration & UI Enhancements
-**Date**: December 19, 2024
+**Date**: December 19, 2025
 **Objective**: Migrate AI provider, add file viewer, and enhance task management UI.
 
 ### Completed Tasks
@@ -504,7 +504,7 @@
 ---
 
 ## Phase 15: Shipping Comments & Upload Flow Refactor
-**Date**: December 19, 2024
+**Date**: December 19, 2025
 **Objective**: Implement threaded shipping comments system and refactor work order upload into a two-step review workflow.
 
 ### Completed Tasks
@@ -569,7 +569,7 @@
 ---
 
 ## Phase 16: Task Comments System
-**Date**: December 19, 2024
+**Date**: December 19, 2025
 
 ### Overview
 Implemented a threaded comment system for individual work order tasks with @mention functionality and file attachments.
@@ -619,7 +619,7 @@ Implemented a threaded comment system for individual work order tasks with @ment
 ---
 
 ## Phase 17: Task Categories and Tags
-**Date**: December 19, 2024
+**Date**: December 19, 2025
 
 ### Overview
 Added two classification systems for tasks: WO-scoped categories (single-select) and global tags (multi-select), both with color support.
@@ -683,7 +683,7 @@ Added two classification systems for tasks: WO-scoped categories (single-select)
 ---
 
 ## Phase 18: File Categorization System
-**Date**: December 20, 2024
+**Date**: December 20, 2025
 
 ### Overview
 Implemented a robust file organization system with hierarchical folders (categories), RBAC enforcement, and drag-and-drop file management.
@@ -735,7 +735,7 @@ Implemented a robust file organization system with hierarchical folders (categor
 ---
 
 ## Phase 19: Work Order Scheduling & Review
-**Date**: December 22, 2024
+**Date**: December 22, 2025
 
 ### Overview
  implemented robust scheduling capabilities for work orders, including multi-date support, estimated duration, and a "Review Needed" workflow for incomplete work orders.
@@ -792,7 +792,7 @@ Implemented a robust file organization system with hierarchical folders (categor
 
 ---
 
-## Phase 21: Unified User Identity (December 22, 2024)
+## Phase 21: Unified User Identity (December 22, 2025)
 
 ### Objective
 Centralize user identity in `user_profiles` table and link `technicians`/`office_staff` as extension tables.
@@ -839,7 +839,7 @@ Centralize user identity in `user_profiles` table and link `technicians`/`office
 
 ---
 
-## Phase 22: Centrally Managed Identity - Auth Flow (December 22, 2024)
+## Phase 22: Centrally Managed Identity - Auth Flow (December 22, 2025)
 
 ### Objective
 Implement "Guest List" authentication - only pre-registered emails can access the app.
@@ -877,7 +877,7 @@ Implement "Guest List" authentication - only pre-registered emails can access th
 
 ---
 
-## Phase 23: Unified User Management UI (December 22, 2024)
+## Phase 23: Unified User Management UI (December 22, 2025)
 
 ### Objective
 Implement centralized user management in Settings > Users and refactor People directories.
@@ -925,7 +925,7 @@ Implement centralized user management in Settings > Users and refactor People di
 ---
 
 ## Phase 24: Invitation System & Auth Refinement
-**Date**: December 22, 2024
+**Date**: December 22, 2025
 
 ### Summary
 Implemented a proper invitation-based user registration system to fix authentication issues caused by FK constraints between `user_profiles` and `auth.users`. Replaced direct profile creation with an invitations table that allows admins to pre-register users by email.
@@ -975,7 +975,7 @@ Implemented a proper invitation-based user registration system to fix authentica
 ---
 
 ## Phase 25: Client Portal - Foundation
-**Date**: December 22, 2024
+**Date**: December 22, 2025
 
 ### Summary
 Implemented external client portal for Project Managers (client contacts) to access work order information via email/password authentication, separate from the internal Google OAuth flow.
@@ -1030,7 +1030,7 @@ ADD COLUMN user_profile_id UUID REFERENCES user_profiles(id);
 ---
 
 ## Phase 18: Team Tab & Real-Time Chat
-**Date**: December 23, 2024
+**Date**: December 23, 2025
 
 ### Overview
 Added a Team tab to Work Order detail pages that displays the complete WO team (owner, office staff, technicians) and provides a real-time team chat feature.
@@ -1101,7 +1101,7 @@ Team chat messages for work orders.
 - `024_work_order_team.sql`
 - `025_work_order_chat.sql`
 
-### People Directory Redesign (Dec 23, 2024)
+### People Directory Redesign (Dec 23, 2025)
 - **Unified Table**: Replaced Technician/Office tabs with `PeopleTable`.
 - **Role Filters**: Dynamic chips for active roles (`internal` only).
 - **Security**: Strict client-side filtering to exclude external users (e.g. Clients).
@@ -1109,7 +1109,7 @@ Team chat messages for work orders.
 ---
 
 ## Phase 26: Role-Based User Type System
-**Date**: December 23, 2024
+**Date**: December 23, 2025
 
 ### Overview
 Simplified the user type system by making `user_type` (`internal`/`external`) solely determined by the assigned RBAC role, rather than legacy `is_technician`/`is_office_staff` flags.
@@ -1163,7 +1163,7 @@ Simplified the user type system by making `user_type` (`internal`/`external`) so
 ---
 
 ## Phase 27: Company Settings
-**Date**: December 23, 2024
+**Date**: December 23, 2025
 
 ### Overview
 Implemented the Company Info settings page for managing company branding and contact information.
@@ -1192,7 +1192,7 @@ Implemented the Company Info settings page for managing company branding and con
 ---
 
 ## Phase 28: Client Hub
-**Date**: December 23, 2024
+**Date**: December 23, 2025
 
 ### Overview
 Implemented the Client Hub feature for client-facing communication on work orders. This enables authorized internal staff and external client contacts to communicate via a dedicated chat, separate from the internal Team Chat.
@@ -1272,7 +1272,7 @@ Added 10+ methods:
 
 
 ## Phase 29: Client Portal
-**Date**: December 23-24, 2024
+**Date**: December 23-24, 2025
 
 ### Overview
 Implemented the client-facing portal for external Project Managers to access work orders, communicate via chat, view shared files, and export chat history to PDF.
@@ -1364,7 +1364,7 @@ Implemented the client-facing portal for external Project Managers to access wor
 
 
 ## Phase 30: Timesheets V2 Views & Admin Permissions
-**Date**: December 29, 2024
+**Date**: December 29, 2025
 
 ### Overview
 Implemented comprehensive timesheet viewing interfaces for both end users and administrators, with robust filtering, pagination, and proper permission enforcement.

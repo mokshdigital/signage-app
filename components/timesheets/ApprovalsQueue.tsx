@@ -130,7 +130,7 @@ export function ApprovalsQueue({ currentUserId, onApprovalComplete }: ApprovalsQ
 
     // Format date
     const formatDate = (dateStr: string) => {
-        return new Date(dateStr).toLocaleDateString('en-US', {
+        return new Date(dateStr + 'T00:00:00').toLocaleDateString('en-US', {
             weekday: 'short',
             month: 'short',
             day: 'numeric',

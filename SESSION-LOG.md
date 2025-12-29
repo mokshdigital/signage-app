@@ -4,7 +4,7 @@ This document tracks development sessions and changes made to the application ov
 
 ---
 
-## Pre-Session History (Before December 11, 2024)
+## Pre-Session History (Before December 11, 2025)
 
 The following features were implemented before formal session logging began:
 
@@ -74,7 +74,7 @@ The AI extracts structured information from work orders:
 
 ## Session Log
 
-### Session 1 - December 11, 2024 (5:46 PM - 5:58 PM PST)
+### Session 1 - December 11, 2025 (5:46 PM - 5:58 PM PST)
 
 **Objective**: Implement user onboarding flow for Google sign-up users
 
@@ -129,7 +129,7 @@ The AI extracts structured information from work orders:
 
 ---
 
-### Session 2 - December 11, 2024 (6:02 PM - 8:34 PM PST)
+### Session 2 - December 11, 2025 (6:02 PM - 8:34 PM PST)
 
 **Objective**: Complete Phase 5 dashboard polish - Add toast notifications, error boundaries, and documentation updates
 
@@ -182,7 +182,7 @@ The AI extracts structured information from work orders:
 
 ---
 
-### Session 3 - December 11, 2024 (9:00 PM - 9:22 PM PST)
+### Session 3 - December 11, 2025 (9:00 PM - 9:22 PM PST)
 
 **Objective**: Implement Role-Based Access Control (RBAC) system with Super Admin role
 
@@ -236,7 +236,7 @@ The AI extracts structured information from work orders:
 
 ---
 
-### Session 4 - December 12, 2024 (4:43 AM - 5:28 AM PST)
+### Session 4 - December 12, 2025 (4:43 AM - 5:28 AM PST)
 
 **Objective**: Implement Admin Roles and Users Pages
 
@@ -254,7 +254,7 @@ The AI extracts structured information from work orders:
 
 ---
 
-### Session 5 - December 16, 2024 (2:43 PM - 3:10 PM PST)
+### Session 5 - December 16, 2025 (2:43 PM - 3:10 PM PST)
 
 **Objective**: Fix Sign-In Redirect Loop
 
@@ -268,7 +268,7 @@ The AI extracts structured information from work orders:
 
 ---
 
-### Session 6 - December 16, 2024 (3:38 PM - 8:02 PM PST)
+### Session 6 - December 16, 2025 (3:38 PM - 8:02 PM PST)
 
 **Objective**: Fix Build Errors and User Visibility
 
@@ -292,7 +292,7 @@ The AI extracts structured information from work orders:
 
 ---
 
-### Session 7 - December 18, 2024 (8:30 AM - 9:15 AM PST)
+### Session 7 - December 18, 2025 (8:30 AM - 9:15 AM PST)
 
 **Objective**: Implement Phase 11 - Clients & Project Managers Module
 
@@ -370,7 +370,7 @@ When starting a new development session, add an entry following this format:
 **Git Commit**: `[commit message]`
 
 ## Session: Enhancing Work Order System (Sub-Phase A)
-**Date**: December 18, 2024
+**Date**: December 18, 2025
 **Objective**: Implement advanced work order foundation, logistics, and work order numbering.
 
 ### Key Changes
@@ -397,7 +397,7 @@ When starting a new development session, add an entry following this format:
 ```
 
 ## Session: Implementing Work Order Requirements UI
-**Date**: December 18, 2024
+**Date**: December 18, 2025
 **Objective**: Implement UI for managing work order requirements (skills, permits, equipment, materials).
 
 ### Key Changes
@@ -416,7 +416,7 @@ When starting a new development session, add an entry following this format:
 ### Notes
 *   **Action Required**: Ensure `lucide-react` is installed (done automatically via `npm install`).
 
-## December 18, 2024 (Session 3)
+## December 18, 2025 (Session 3)
 **Objective**: Finalize Work Order Assignments and Detail View enhancements
 
 ### Key Changes
@@ -438,7 +438,7 @@ When starting a new development session, add an entry following this format:
 *   Verified requirement columns (`skills_required`, etc.) exist.
 
 
-## December 18, 2024 (Session 4)
+## December 18, 2025 (Session 4)
 **Objective**: Refactor Work Orders UI with Search, Filters, and improved layout.
 
 ### Key Changes
@@ -466,7 +466,7 @@ When starting a new development session, add an entry following this format:
 ### Git Commit
 `feat: Add Work Order search/filter and reorder columns`
 
-## December 18, 2024 (Session 5)
+## December 18, 2025 (Session 5)
 **Objective**: Unify Admin Tools under "Settings" and add Job Types management.
 
 ### Key Changes
@@ -487,7 +487,7 @@ When starting a new development session, add an entry following this format:
 ### Git Commit
 `feat: Refactor Admin to Settings tab and add Job Types management`
 
-## December 18, 2024 (Session 6)
+## December 18, 2025 (Session 6)
 **Objective**: Enhance Header with User Profile Dropdown.
 
 ### Key Changes
@@ -503,7 +503,7 @@ When starting a new development session, add an entry following this format:
 ### Git Commit
 `feat: Implement User Profile dropdown and Profile Settings page`
 
-## December 19, 2024 (Session 1)
+## December 19, 2025 (Session 1)
 **Objective**: Fix AI Work Order Prompt logic for better task extraction and field parsing.
 
 ### Key Changes
@@ -520,7 +520,7 @@ When starting a new development session, add an entry following this format:
 ### Git Commit
 `fix(work-orders): refine AI prompt logic for task extraction and date parsing`
 
-## December 19, 2024 (Session 2)
+## December 19, 2025 (Session 2)
 **Objective**: Fix AI processing, migrate to Gemini, enhance Tasks UI, add File Viewer.
 
 ### Key Changes
@@ -576,7 +576,7 @@ When starting a new development session, add an entry following this format:
 
 ---
 
-### Session 11 - December 19, 2024 (11:05 AM - 11:35 AM PST)
+### Session 11 - December 19, 2025 (11:05 AM - 11:35 AM PST)
 **Focus**: Work Order Fields Enhancement - WO Owner, Shipment Status, and Job Status
 
 #### Summary
@@ -707,7 +707,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 12 - December 19, 2024 (2:00 PM - 6:25 PM PST)
+### Session 12 - December 19, 2025 (2:00 PM - 6:25 PM PST)
 
 **Objective**: Implement Task Comments System and Task Categories/Tags
 
@@ -822,7 +822,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 13 - December 20, 2024 (Time: N/A)
+### Session 13 - December 20, 2025 (Time: N/A)
 
 **Objective**: Implement Work Order File Categorization System
 
@@ -915,7 +915,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-## Session Summary (Dec 19, 2024)
+## Session Summary (Dec 19, 2025)
 **Total Commits**: 5
 1. `feat: Implement file categorization system with hierarchical folders and RBAC`
 2. `fix: Prevent upload form UI clipping and improve workflow clarity`
@@ -935,7 +935,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 - AI processing path mismatch with new storage structure
 
 
-### Session 23 - December 22, 2024 (Logistics & Scheduling)
+### Session 23 - December 22, 2025 (Logistics & Scheduling)
 
 **Objective**: Implement work order scheduling fields, review workflow, and multi-date support.
 
@@ -966,7 +966,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 24 - December 22, 2024 (Invitation System & Auth Fix)
+### Session 24 - December 22, 2025 (Invitation System & Auth Fix)
 
 **Objective**: Fix authentication lockout and implement proper invitation-based user registration.
 
@@ -1020,7 +1020,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 25 - December 22, 2024 (1:45 PM PST)
+### Session 25 - December 22, 2025 (1:45 PM PST)
 
 **Objective**: Implement dedicated Client Login Page with email/password authentication.
 
@@ -1057,7 +1057,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 25 (Continued) - December 22, 2024 (2:00 PM PST)
+### Session 25 (Continued) - December 22, 2025 (2:00 PM PST)
 
 **Objective**: Add Admin UI for creating client portal accounts for Project Managers.
 
@@ -1091,7 +1091,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 26 - December 22, 2024 (3:15 PM PST)
+### Session 26 - December 22, 2025 (3:15 PM PST)
 
 **Objective**: Migrate work order assignments, task assignments, and task comment mentions to use unified `user_profile_id` instead of legacy `technician_id`.
 
@@ -1124,7 +1124,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 27 - December 23, 2024 (8:00 AM PST)
+### Session 27 - December 23, 2025 (8:00 AM PST)
 
 **Objective**: Implement Team Tab with roster and real-time chat for Work Order detail pages.
 
@@ -1181,7 +1181,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 13 - December 23, 2024 (10:00 AM - 11:30 AM PST)
+### Session 13 - December 23, 2025 (10:00 AM - 11:30 AM PST)
 
 **Objective**: User Type Simplification & Legacy Code Removal
 
@@ -1213,7 +1213,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 **Git Commit**: `refactor: Complete user type migration, UI updates, and build fixes`
 
-# December 23, 2024 (Session 2)
+# December 23, 2025 (Session 2)
 
 ## Redesign People Directory
 
@@ -1247,7 +1247,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 14 - December 23, 2024 (11:30 AM - 12:40 PM PST)
+### Session 14 - December 23, 2025 (11:30 AM - 12:40 PM PST)
 
 **Objective**: Role-Based User Type Simplification & Onboarding Improvements
 
@@ -1300,7 +1300,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 ---
 
-### Session 15 - December 23, 2024 (1:30 PM - 2:25 PM PST)
+### Session 15 - December 23, 2025 (1:30 PM - 2:25 PM PST)
 
 **Objective**: Implement Company Settings and Client Hub Features
 
@@ -1374,7 +1374,7 @@ Refactored the work order upload process into a two-step "Upload -> Analyze -> R
 
 
 ## Session 16: Client Portal Implementation
-**Date**: December 23-24, 2024
+**Date**: December 23-24, 2025
 
 ### Objectives
 1. Design and implement the client-facing portal view
@@ -1475,7 +1475,7 @@ New component for Client Hub tab:
 
 
 ## Session 17: Timesheets V2 Views & Permissions Fix
-**Date**: December 29, 2024
+**Date**: December 29, 2025
 
 ### Objectives
 1. Create new "My Timesheets" table view with filters and pagination
