@@ -1435,3 +1435,35 @@ Implemented comprehensive timesheet viewing interfaces for both end users and ad
 2. **Admin Permissions** - `roles:manage` and `users:manage` restored for admin roles
 3. **Timezone Date Display** - Fixed `new Date("YYYY-MM-DD")` parsing as UTC instead of local time
 
+---
+
+## Phase 28: Granular Task Permissions
+**Date**: December 29, 2025
+
+### Overview
+Refined the permission model for task management by replacing the broad `jobs:tasks:manage` permission with 13 granular permissions covering specific actions like create, edit, delete, comment, and checklists.
+
+### Completed Tasks
+- ✅ **Database Schema**
+  - Created migration `039_granular_task_permissions.sql`
+  - Replaced `jobs:tasks:manage` with 13 granular permissions
+  - Assigned permissions to appropriate roles
+
+- ✅ **UI Updates**
+  - Updated `WorkOrderTasks` to enforce granular controls
+  - Updated `TaskCommentsPanel` for detailed comment permissions
+  - Updated `ChecklistItemRow` for granular checklist actions
+
+### Key Files
+- `database_migrations/039_granular_task_permissions.sql`
+- `app/dashboard/work-orders-v2/[id]/page.tsx`
+- `components/work-orders/WorkOrderTasks.tsx`
+- `components/work-orders/TaskCommentsPanel.tsx`
+- `PERMISSIONS.md`
+
+### Current Status
+- ✅ Granular permissions implemented and enforced
+- ✅ Role assignments updated
+- ✅ Documentation modernized
+
+
