@@ -137,6 +137,8 @@ All permissions follow the format: `{resource}:{action}`
 | `work_orders:delete` | Delete work orders |
 | `work_orders:manage` | Full control over work orders |
 | `work_orders:assign` | Assign work orders to technicians |
+| `work_orders:view_all` | View ALL work orders in the list view |
+| `work_orders:view_assigned` | View only assigned work orders (where user is owner, technician, or team member) |
 
 #### Technicians Resource
 | Permission | Description |

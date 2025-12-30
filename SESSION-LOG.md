@@ -1611,3 +1611,56 @@ Replaced the broad `jobs:tasks:manage` permission with 13 granular permissions t
 | `components/work-orders/WorkOrderTasks.tsx` | Implement granular checks for task actions |
 | `components/work-orders/TaskCommentsPanel.tsx` | Implement granular comment permissions |
 | `PERMISSIONS.md` | Documented new permission set |
+
+---
+
+## Session: December 30, 2025 (Conversation ID: PENDING)
+
+### Objective: Work Order Visibility Permissions
+
+Implement permissions to control which work orders a user can see in the main list view.
+
+### Changes Made
+
+#### 1. New Permissions
+- Created migration `040_work_order_visibility_permissions.sql`
+- **Added**: 2 new visibility permissions:
+  - `work_orders:view_all`: User can see ALL work orders in the system
+  - `work_orders:view_assigned`: User can only see work orders where they are:
+    - WO Owner (owner_id)
+    - Assigned Technician (work_order_assignments)
+    - Team Member (work_order_team)
+
+#### 2. Role Assignments
+| Role | view_all | view_assigned |
+|------|----------|---------------|
+| super_admin | ✅ | |
+| admin | ✅ | |
+| supervisor | ✅ | |
+| project_coordinator | ✅ | |
+| technician | | ✅ |
+
+#### 3. Service Layer Enforcement
+- Modified `workOrdersService.getAll()` to:
+  - Fetch current user's permissions
+  - If `work_orders:view_all` → return all work orders
+  - If `work_orders:view_assigned` → filter by owner_id, assignments, or team membership
+  - If neither permission → return empty array
+
+### Files Created
+| File | Purpose |
+|------|---------|
+| `database_migrations/040_work_order_visibility_permissions.sql` | Migration script for visibility permissions |
+
+### Files Modified
+| File | Changes |
+|------|---------|
+| `services/work-orders.service.ts` | Permission-aware `getAll()` method |
+| `types/rbac.ts` | Added 'jobs' to PermissionResource type |
+| `PERMISSIONS.md` | Documented new permissions |
+
+### Next Steps
+- [ ] Run `040_work_order_visibility_permissions.sql` migration in Supabase Dashboard
+- [ ] Test with technician user to verify filtered view
+- [ ] Test with admin user to verify full access
+

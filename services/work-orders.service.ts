@@ -44,12 +44,105 @@ export const workOrdersService = {
 
     /**
      * Fetch all work orders with optional includes
+     * Respects visibility permissions:
+     * - work_orders:view_all: See all work orders
+     * - work_orders:view_assigned: Only see WOs where user is owner, assigned tech, or team member
      */
     async getAll(): Promise<WorkOrder[]> {
         const supabase = createClient();
+
+        // Get current user
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+            return [];
+        }
+
+        // Get user's permissions
+        const { data: profile } = await supabase
+            .from('user_profiles')
+            .select('role_id')
+            .eq('id', user.id)
+            .single();
+
+        if (!profile?.role_id) {
+            return [];
+        }
+
+        // Get all permission names for this role
+        const { data: rolePermissions } = await supabase
+            .from('role_permissions')
+            .select('permissions:permission_id(name)')
+            .eq('role_id', profile.role_id);
+
+        const permissions = (rolePermissions || [])
+            .map(rp => {
+                const perm = rp.permissions as unknown as { name: string } | null;
+                return perm?.name;
+            })
+            .filter((name): name is string => !!name);
+
+        const hasViewAll = permissions.includes('work_orders:view_all');
+        const hasViewAssigned = permissions.includes('work_orders:view_assigned');
+
+        // If user has neither permission, return empty
+        if (!hasViewAll && !hasViewAssigned) {
+            return [];
+        }
+
+        // If user has view_all, return all work orders
+        if (hasViewAll) {
+            const { data, error } = await supabase
+                .from('work_orders')
+                .select('*, client:clients(*), job_type:job_types(*), owner:user_profiles!owner_id(id, display_name, avatar_url)')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error('Error fetching work orders:', error);
+                throw new Error(`Failed to fetch work orders: ${error.message}`);
+            }
+
+            return (data || []) as WorkOrder[];
+        }
+
+        // If user has view_assigned only, filter by assignment
+        // Get work order IDs where user is:
+        // 1. Owner
+        // 2. Assigned technician
+        // 3. Team member
+
+        // Get WOs where user is owner
+        const { data: ownedWOs } = await supabase
+            .from('work_orders')
+            .select('id')
+            .eq('owner_id', user.id);
+
+        // Get WOs where user is assigned technician
+        const { data: assignedWOs } = await supabase
+            .from('work_order_assignments')
+            .select('work_order_id')
+            .eq('user_profile_id', user.id);
+
+        // Get WOs where user is team member
+        const { data: teamWOs } = await supabase
+            .from('work_order_team')
+            .select('work_order_id')
+            .eq('user_profile_id', user.id);
+
+        // Combine all work order IDs
+        const woIds = new Set<string>();
+        (ownedWOs || []).forEach(wo => woIds.add(wo.id));
+        (assignedWOs || []).forEach(wo => woIds.add(wo.work_order_id));
+        (teamWOs || []).forEach(wo => woIds.add(wo.work_order_id));
+
+        if (woIds.size === 0) {
+            return [];
+        }
+
+        // Fetch full work order data for the filtered IDs
         const { data, error } = await supabase
             .from('work_orders')
             .select('*, client:clients(*), job_type:job_types(*), owner:user_profiles!owner_id(id, display_name, avatar_url)')
+            .in('id', Array.from(woIds))
             .order('created_at', { ascending: false });
 
         if (error) {

@@ -65,7 +65,8 @@ export type PermissionResource =
     | 'vehicles'
     | 'reports'
     | 'settings'
-    | 'dashboard';
+    | 'dashboard'
+    | 'jobs';
 
 // Permission name format
 export type PermissionName = `${PermissionResource}:${PermissionAction}`;
