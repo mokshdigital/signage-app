@@ -270,6 +270,47 @@ export const workOrdersService = {
         }
     },
 
+    /**
+     * Cleanup a failed work order upload
+     * Deletes the work order record and all associated files from storage
+     * Used when AI fails to extract WO# or duplicate is detected
+     */
+    async cleanupFailedUpload(workOrderId: string): Promise<void> {
+        console.log('[cleanupFailedUpload] Cleaning up work order:', workOrderId);
+        try {
+            await this.delete(workOrderId);
+            console.log('[cleanupFailedUpload] Cleanup successful');
+        } catch (error) {
+            console.error('[cleanupFailedUpload] Cleanup failed:', error);
+            // Don't throw - this is a best-effort cleanup
+        }
+    },
+
+    /**
+     * Check if a work order number already exists
+     * Returns the existing work order ID if found, null otherwise
+     */
+    async checkDuplicateWorkOrderNumber(workOrderNumber: string): Promise<{ exists: boolean; existingId?: string }> {
+        const supabase = createClient();
+
+        const { data, error } = await supabase
+            .from('work_orders')
+            .select('id')
+            .eq('work_order_number', workOrderNumber)
+            .limit(1);
+
+        if (error) {
+            console.error('Error checking duplicate WO#:', error);
+            return { exists: false };
+        }
+
+        if (data && data.length > 0) {
+            return { exists: true, existingId: data[0].id };
+        }
+
+        return { exists: false };
+    },
+
     // =============================================
     // WORK ORDER FILES
     // =============================================

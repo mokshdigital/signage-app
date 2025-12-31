@@ -2,6 +2,7 @@
 
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { WorkOrder, WorkOrderFile, Client, ProjectManager, JobType, JobStatus } from '@/types/database';
 import { workOrdersService } from '@/services/work-orders.service';
@@ -9,7 +10,7 @@ import { clientsService } from '@/services/clients.service';
 import { useCrud, useModal, useConfirmDialog } from '@/hooks';
 import { Button, Card, Badge, ConfirmDialog, Alert, LoadingOverlay, Modal, LoadingSpinner, Input, UploadIcon } from '@/components/ui';
 import { DataTable, Column } from '@/components/tables';
-import { Search, Filter, X } from 'lucide-react';
+import { Search, Filter, X, AlertTriangle, ExternalLink } from 'lucide-react';
 import {
     WorkOrderUploadForm,
     WorkOrderFilesModal,
@@ -21,6 +22,8 @@ import { safeRender } from '@/lib/utils/helpers';
 import { formatTableDate } from '@/lib/utils/formatters';
 
 export default function WorkOrdersPage() {
+    const router = useRouter();
+
     // CRUD Hook
     const {
         items: workOrders,
@@ -80,6 +83,15 @@ export default function WorkOrdersPage() {
     // Review Modal State
     const [isReviewOpen, setIsReviewOpen] = useState(false);
     const [currentWorkOrder, setCurrentWorkOrder] = useState<WorkOrder | null>(null);
+
+    // Upload Result Modal State (for errors and duplicates)
+    const [uploadResultModal, setUploadResultModal] = useState<{
+        isOpen: boolean;
+        type: 'error' | 'duplicate' | null;
+        title: string;
+        message: string;
+        existingWorkOrderId?: string;
+    }>({ isOpen: false, type: null, title: '', message: '' });
 
     // Map of user IDs to profiles for "Uploaded By" column
     const [uploaders, setUploaders] = useState<Record<string, { name: string }>>({});
@@ -302,19 +314,56 @@ export default function WorkOrdersPage() {
             setIsProcessing(true);
             const processResult = await workOrdersService.processWithAI(order.id);
 
-            let updatedOrder = order;
-
+            // Handle AI processing result
             if (!processResult.success) {
-                toast.warning('Work order uploaded, but AI processing failed', {
-                    description: processResult.error
+                // Check for specific error types
+                const errorType = (processResult as any).error;
+                const errorMessage = (processResult as any).message || processResult.error || 'AI processing failed';
+
+                if (errorType === 'no_work_order_number') {
+                    // AI couldn't extract WO# - cleanup and show error
+                    await workOrdersService.cleanupFailedUpload(order.id);
+                    setIsUploadModalOpen(false);
+                    setUploadResultModal({
+                        isOpen: true,
+                        type: 'error',
+                        title: 'Upload Failed',
+                        message: errorMessage
+                    });
+                    return;
+                }
+
+                if (errorType === 'duplicate_work_order') {
+                    // Duplicate WO# found - cleanup and show duplicate modal
+                    const existingId = (processResult as any).existingWorkOrderId;
+                    await workOrdersService.cleanupFailedUpload(order.id);
+                    setIsUploadModalOpen(false);
+                    setUploadResultModal({
+                        isOpen: true,
+                        type: 'duplicate',
+                        title: 'Duplicate Work Order',
+                        message: errorMessage,
+                        existingWorkOrderId: existingId
+                    });
+                    return;
+                }
+
+                // Generic AI failure - still allow review but warn
+                toast.warning('Work order uploaded, but AI processing had issues', {
+                    description: errorMessage
                 });
-            } else {
-                if (processResult.analysis) {
-                    updatedOrder = { ...order, analysis: processResult.analysis };
-                    const analysis: any = processResult.analysis;
-                    if (analysis.site_address) {
-                        updatedOrder.site_address = analysis.site_address;
-                    }
+            }
+
+            // Success - prepare updated order data
+            let updatedOrder = order;
+            if (processResult.analysis) {
+                updatedOrder = { ...order, analysis: processResult.analysis };
+                const analysis: any = processResult.analysis;
+                if (analysis.site_address) {
+                    updatedOrder.site_address = analysis.site_address;
+                }
+                if (analysis.work_order_number) {
+                    updatedOrder.work_order_number = analysis.work_order_number;
                 }
             }
 
@@ -760,6 +809,46 @@ export default function WorkOrdersPage() {
             {isProcessing && (
                 <LoadingOverlay text="Submitting and Starting AI Analysis..." />
             )}
+
+            {/* Upload Result Modal (Error / Duplicate) */}
+            <Modal
+                isOpen={uploadResultModal.isOpen}
+                onClose={() => setUploadResultModal({ isOpen: false, type: null, title: '', message: '' })}
+                title={uploadResultModal.title}
+                size="sm"
+            >
+                <div className="space-y-4">
+                    <div className="flex items-start gap-3">
+                        <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${uploadResultModal.type === 'duplicate'
+                                ? 'bg-amber-100 text-amber-600'
+                                : 'bg-red-100 text-red-600'
+                            }`}>
+                            <AlertTriangle className="w-5 h-5" />
+                        </div>
+                        <p className="text-gray-700 pt-2">{uploadResultModal.message}</p>
+                    </div>
+
+                    <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
+                        {uploadResultModal.type === 'duplicate' && uploadResultModal.existingWorkOrderId ? (
+                            <Button
+                                onClick={() => {
+                                    setUploadResultModal({ isOpen: false, type: null, title: '', message: '' });
+                                    router.push(`/dashboard/work-orders/${uploadResultModal.existingWorkOrderId}`);
+                                }}
+                            >
+                                <ExternalLink className="w-4 h-4 mr-2" />
+                                View Existing Work Order
+                            </Button>
+                        ) : (
+                            <Button
+                                onClick={() => setUploadResultModal({ isOpen: false, type: null, title: '', message: '' })}
+                            >
+                                OK
+                            </Button>
+                        )}
+                    </div>
+                </div>
+            </Modal>
         </div>
     );
 }

@@ -233,6 +233,46 @@ export async function POST(request: NextRequest) {
             );
         }
 
+        // ============================================
+        // CHECK 1: Verify WO# was extracted
+        // ============================================
+        const extractedWoNumber = analysis.work_order_number;
+        if (!extractedWoNumber || String(extractedWoNumber).trim() === '') {
+            console.log('[process-work-order] No work order number extracted from AI analysis');
+            return NextResponse.json({
+                success: false,
+                error: 'no_work_order_number',
+                message: 'Could not detect work order number from uploaded files. Please ensure the document contains a visible work order number.',
+                workOrderId: workOrderId  // Return ID so frontend can cleanup
+            }, { status: 422 });
+        }
+
+        const woNumber = String(extractedWoNumber).trim();
+        console.log('[process-work-order] Extracted WO#:', woNumber);
+
+        // ============================================
+        // CHECK 2: Check for duplicate WO#
+        // ============================================
+        const { data: existingWO } = await supabase
+            .from('work_orders')
+            .select('id')
+            .eq('work_order_number', woNumber)
+            .neq('id', workOrderId)  // Exclude current WO being processed
+            .limit(1);
+
+        if (existingWO && existingWO.length > 0) {
+            console.log('[process-work-order] Duplicate WO# found:', woNumber, 'Existing ID:', existingWO[0].id);
+            return NextResponse.json({
+                success: false,
+                error: 'duplicate_work_order',
+                message: `Work Order #${woNumber} already exists in the system.`,
+                existingWorkOrderId: existingWO[0].id,
+                workOrderId: workOrderId  // Return ID so frontend can cleanup
+            }, { status: 409 });
+        }
+
+        console.log('[process-work-order] No duplicate found, proceeding with update');
+
         // Extract key fields from AI analysis for direct database columns
         const workOrderUpdate: Record<string, any> = {
             processed: true,

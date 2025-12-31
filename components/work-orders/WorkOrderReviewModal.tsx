@@ -266,6 +266,22 @@ export function WorkOrderReviewModal({
                     </Alert>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        {/* Work Order Number (Read-Only) */}
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1">
+                                Work Order Number
+                            </label>
+                            <Input
+                                value={workOrder?.work_order_number || ''}
+                                readOnly
+                                disabled
+                                className="bg-gray-50 text-gray-700 font-medium"
+                            />
+                            <p className="text-xs text-gray-500 mt-1">
+                                Extracted from document (cannot be changed)
+                            </p>
+                        </div>
+
                         {/* WO Owner */}
                         <div>
                             <Select

@@ -1664,3 +1664,56 @@ Implement permissions to control which work orders a user can see in the main li
 - [ ] Test with technician user to verify filtered view
 - [ ] Test with admin user to verify full access
 
+---
+
+## Session: December 30, 2025 (Part 2)
+
+### Objective: Prevent Duplicate Work Order Uploads
+
+Implement validation to prevent uploading work orders with duplicate work order numbers.
+
+### Changes Made
+
+#### 1. Service Layer
+- Added `cleanupFailedUpload(workOrderId)` method to delete temp WO + files on failure
+- Added `checkDuplicateWorkOrderNumber(woNumber)` method for duplicate detection
+
+#### 2. API Route (`/api/process-work-order`)
+After AI analysis, the route now:
+1. **Checks if WO# was extracted** → If not, returns `error: 'no_work_order_number'`
+2. **Checks for duplicate WO#** → If exists, returns `error: 'duplicate_work_order'` with `existingWorkOrderId`
+
+Response codes:
+- `422` - No WO# extracted
+- `409` - Duplicate WO# found
+
+#### 3. Upload Page (`app/dashboard/work-orders/page.tsx`)
+- Added `uploadResultModal` state for error/duplicate feedback
+- On failure: cleanup temp WO, show modal with appropriate message
+- Duplicate modal has "View Existing Work Order" button that navigates to existing WO
+
+#### 4. Review Modal (`WorkOrderReviewModal.tsx`)
+- Added read-only Work Order Number field at top of form
+- WO# is extracted by AI and cannot be edited by user
+
+### Flow Summary
+```
+Upload → AI Analysis → 
+  ├─ No WO# → Cleanup + Error Modal
+  ├─ Duplicate → Cleanup + "View Existing" Modal
+  └─ Success → Review Modal (WO# read-only)
+```
+
+### Files Modified
+| File | Changes |
+|------|---------|
+| `services/work-orders.service.ts` | Added cleanup and duplicate check methods |
+| `app/api/process-work-order/route.ts` | Added validation checks after AI analysis |
+| `app/dashboard/work-orders/page.tsx` | Handle errors, show result modal |
+| `components/work-orders/WorkOrderReviewModal.tsx` | Added read-only WO# field |
+
+### Next Steps
+- [ ] Test with duplicate WO# to verify rejection flow
+- [ ] Test with document missing WO# to verify error handling
+- [ ] Future: Add UNIQUE constraint after data wipe
+
